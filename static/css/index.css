@@ -1,0 +1,218 @@
+body, div, dl, dt, dd, ul, ol, li, h1, h2, h3, h4, h5, h6, pre, code, form, fieldset, legend, input, textarea, p, blockquote, th, td {
+    margin: 0;
+    padding: 0;
+}
+body{
+    width: 100%;
+    height: 100%;
+    background: #0b0c1b;
+    color: #1cbfff;
+    background-image: url("https://d3nvrufajko3tj.cloudfront.net/bg_main.png");
+  background-repeat: no-repeat;
+  background-size: 150% 150%;
+  background-position: center;
+}
+*:focus {
+    outline: none;
+}
+
+
+.top_bar{
+    position: absolute;
+    width: 100%;
+    height: 42px;
+    top: 0;
+    left: 0;
+    font: 15px 'Helvetica Neue', Helvetica, Arial, 'lucida grande', tahoma, verdana, arial, sans-serif;
+    color: white;
+    box-sizing: border-box;
+    padding: 4px 1.2%;
+    display: flex;
+    justify-content: space-between;
+    white-space: nowrap;
+    background: #FF574D;
+    opacity: 0.9;
+    text-align: center;
+    vertical-align: middle;
+
+
+}
+
+.login{
+    padding-top: 10vh;
+    width: 100%;
+    max-width: 400px;
+    margin: 0 auto;
+    position: relative;
+    left: 15px;
+}
+
+.login_holder{
+    border-radius: 18px;
+    padding: 20px;
+    max-width: 280px;
+    margin: 0 auto;
+    border: solid 1px #1cbfff;
+}
+.input_inner{
+    display: flex;
+    width: 100%;
+    align-items: center;
+}
+.account_x{
+    display: none;
+}
+.pass_x{
+    display: none;
+}
+.title{
+width: 100%;
+}
+.signup{
+    margin-top: 50px;
+    position: relative;
+}
+.signup_holder{
+    border-radius: 20px;
+    padding: 20px;
+    color: #1cbfff;
+
+    max-width: 540px;
+    margin: 0 auto;
+    text-align: left;
+    margin-top: 40px;
+}
+input{
+    width: 95%;
+    background: none;
+    font-size: 18px;
+    padding: 5px 7px;
+    border: 0;
+    text-align: left;
+    color: #1cbfff;
+}
+
+.input_section{
+    margin-bottom: 12px;
+
+}
+.input_holder{
+    position: relative;
+    padding: 4px 10px;
+    border-bottom: #1cbfff 1px solid;
+    color: #FFF;
+    display: flex;
+    align-items: center;
+}
+.loading{
+    display: none;
+}
+.check_ok{
+    display: none;
+}
+
+.input_holder select{
+    font-size: 18px;
+    border: 0;
+    margin: 2px 6px;
+    color: #FFF;
+    background: none;
+}
+.url_preview{
+    margin-top: 3px;
+    margin-bottom: 3px;
+    margin-left: 12px;
+    font-size: 15px;
+    color: #1cbfff;
+}
+
+.preview_span{
+    font-size: 15px;
+    color: #1cbfff;
+}
+.pass_remind{
+    text-align: right;
+
+}
+
+
+.login_submit{
+    font-weight: bold;
+    font-size: 16px;
+    width: 100%;
+    margin-top: 20px;
+    border: 0;
+    vertical-align: middle;
+    cursor: pointer;
+    outline: none;
+    box-shadow: none;
+    border-radius: 999px;
+    display: inline-block;
+    background: #0b0c1b;
+    color: #1cbfff;
+    padding: 9px 13px;
+    font-size: 13px;
+    line-height: 1;
+    border: solid 1px #1cbfff;
+}
+.login_submit:hover{
+    border-color: #5fd0fd;
+    color: #FFF;
+    box-shadow: 0 5px 15px rgba(145, 92, 182, .4);
+}
+.login_submit:active{
+    background-color: #FFF;
+    color: #000;
+}
+.signup_btn{
+    display: flex;
+    justify-content: center;
+
+}
+.signup_submit{
+    font-weight: bold;
+    font-size: 16px;
+    width: 87%;
+    margin-top: 20px;
+    border: 0;
+    vertical-align: middle;
+    cursor: pointer;
+    outline: none;
+    box-shadow: none;
+    border-radius: 999px;
+    display: inline-block;
+    background: #0b0c1b;
+    color: #1cbfff;
+    padding: 9px 13px;
+    font-size: 13px;
+    line-height: 1;
+    border: solid 1px #1cbfff;
+}
+
+.signup_submit:hover{
+    border-color: #5fd0fd;
+    color: #FFF;
+    box-shadow: 0 5px 15px rgba(145, 92, 182, .4);
+}
+.signup_submit:active{
+    background-color: #FFF;
+    color: #000;
+}
+.outer_check{
+    display: flex;
+    justify-content: flex-end;
+}
+.signup_check{
+    opacity: 0;
+    
+}
+.label{
+    display: inline-block;
+    font-size: 18px;
+    padding: 6px 0 6px 8px;
+    line-height: 1.2;
+    margin: 2px 4px 2px 0;
+}
+input::-webkit-input-placeholder{
+    color:white;
+}

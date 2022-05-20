@@ -1,0 +1,163 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta http-equiv="X-UA-Compatible" content="IE=edge">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <link rel="shortcut icon" href="#">
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/socket.io/4.0.1/socket.io.js" integrity="sha512-q/dWJ3kcmjBLU4Qc47E4A9kTB4m3wuTY7vkFJDTZKjTs8jhyGQnaUrxa0Ytd0ssMZhbNua9hE+E7Qv1j+DyZwA==" crossorigin="anonymous"></script>
+    <script src="https://unpkg.com/boxicons@2.1.2/dist/boxicons.js"></script>
+    <link rel="stylesheet" href="css/member.css"/>     
+    <title>MotiveTag</title>
+</head>
+<body>
+    <nav class="top_bar">
+        <div class="top_left">
+            <div class="top_left_inner">
+                
+                <input type="image" src="/img/title_member.png" class="mark">
+            </div>
+        </div>
+
+        <box-icon class="refresh" name='revision' color='#1cbfff' id="windowed"  onclick="search_build_blocks(this.id)"></box-icon>
+
+        <div class="top_right">
+            <div id="unread_notifis" class="unread_notifis"></div>
+            <box-icon class="notifi" id="notifi_bell" name='bell' color="#1cbfff" style="cursor:pointer"></box-icon>
+            <!-- <button class="signout_btn" id="signout">SignOut</button> -->
+            <box-icon name='log-out' class="logout" color="#1cbfff" id="signout" style="cursor:pointer"></box-icon>
+        </div>
+        <div class="notifi_list" id="notifi_list"></div>
+    </nav>
+    <section class="main_frame">
+        <div class="member_functions">
+            <div class="m_f_mytags">
+                <div class="my_tags_search">
+                    <input class="tag_searcher" type="text" id="tag_searcher" placeholder="TAG Search">                    
+                </div>
+                <button class="tag_search_btn" id="tag_search_btn">MotiveTag</button>
+                <div class="tag_box" id="tag_box">
+                    <!-- tag put here -->
+                </div>
+            </div>
+            <div class="m_f_hottags">
+                <div class="hot_holder"><p>Trend</p></div>
+                <div class="hot_box" id="hot_box"></div>
+            </div>
+                <section class="m_f_me">
+        <div class="bottom_inner">
+            <div class="block_creator">
+                <div class="block_user">
+                    <div>
+                        <img class="user_icon" id="user_main_avatar" src="img/user-regular-24.png">
+                    
+                     <div class="image-upload">
+                        <label for="upload_user_avatar">
+                            <img style="width: 15px;cursor: pointer;" src="img/upload-regular-24.png"/>
+                        </label>
+                        <input id="upload_user_avatar" onchange="upload_user_img()" type="file" style="display:none;" />
+                    </div>
+                    </div>
+
+
+              
+                    <div class="user_info">
+                        <div id="user_account" class="user_info_in"><box-icon name='game' color='#1cbfff' ></box-icon></div>
+                        <div id="user_mail" class="user_info_in"><box-icon name='envelope' color='#1cbfff' ></box-icon></div>
+                        <div id="user_firstday" class="user_info_in"><box-icon name='calendar-star' color='#1cbfff' ></box-icon></div>
+                        <!-- <box-icon type='logo' name='steam' color='#1cbfff'></box-icon> -->
+                    </div>
+                    <div class="level">Level</div>
+                    
+                </div>
+
+            </div>
+        </div>
+    </section>
+        </div>
+
+
+
+
+        <div class="member_blocks" id="member_blocks">
+                        <div class="blockor">
+
+                <div class="blockor_inner" id="blockor_inner">
+                    <div class="block_title">
+                        <select class="block_submit_btn" id="blockor_type" placeholder="Type">
+                            <option>PUBLIC</option>                      
+                            <option>SECRET</option>
+                        </select>
+                    </div>
+                    <textarea class="blockor_content" id="blockor_content" type="text" placeholder="Any thoughts?"></textarea>
+                    <div class="block_submit">
+                        <button class="block_submit_btn" id="block_submit_btn">Build</button>
+                    </div>
+                </div>
+                <div class="img_pre_box" id="img_pre_box">
+                    <img src="#" id="upload_preview" class="upload_img_preview">
+                    <p onclick="cancel_upload()">取消</p>
+                </div>
+                <div class="block_tools">
+                    <div class="block_tools_inner">
+                        <box-icon name='mask' id="mask" color='#e20cfc' onclick="anonymous_mode()"></box-icon>
+                        <div>
+                            <label for="upload_block_img">
+                                <box-icon name='image-alt' color="#09ed5b" for="upload_user_avatar"></box-icon>
+                            </label>
+                            <input id="upload_block_img" onchange="upload_block_img_preview()" type="file" style="display: none;"/>
+                        </div>
+                        <box-icon name='poll' color="#ed096d"></box-icon>
+                        <box-icon name='face' type='solid' color='#e9ed09' ></box-icon>
+                        <box-icon name='location-plus' color='#fcb00c' ></box-icon>
+                    </div>
+                </div>
+            </div>
+            <div class="block_box" id="block_box">
+                <!-- <div class="a_block">我是一個block!</div>
+                <div class="a_block">我是一個block!</div>
+                <div class="a_block">我是一個block!</div> -->
+            </div>
+        </div>
+        <div class="member_chats">
+            <div class="m_f_mytags">
+                <div class="my_tags_search">
+                    <input class="tag_searcher" id="friend_searcher" type="text" placeholder="Who to find?">                    
+                </div>
+                <button class="tag_search_btn" id="friend_search_btn">Request a friend</button>
+            </div>
+            <div class="member_list">
+                <div  class="friend_list" id="friend_list">
+                    <p class="friend_in">Friends</p>
+                </div>
+                <div class="request_list" id="request_list">
+                    <p class="friend_in">Request</p>
+
+                </div>
+                <div class="waiting_list" id="waiting_list">
+                    <p class="friend_in">Waiting</p>
+
+                </div>
+            </div>
+            <!-- <div class="chat_holder" id="chat_holder">
+
+            </div> -->
+        </div>         
+    </section>
+    <!-- <div class="chat_holder" id="chat_holder"></div> -->
+
+
+    <footer class="footer">
+        <div class="chat_holder" id="chat_holder"></div>
+    </footer>
+
+<script type="text/javascript" src="js/member.js"></script>
+<script type="text/javascript" src="js/block.js"></script>
+<script type="text/javascript" src="js/tag.js"></script>
+<script type="text/javascript" src="js/friend.js"></script>
+<script type="text/javascript" src="js/notifi.js"></script>
+<script type="text/javascript" src="js/chat.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/moment.js/2.29.3/moment.min.js"></script>
+
+</body>
+</html>

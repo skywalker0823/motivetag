@@ -1,0 +1,103 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta http-equiv="X-UA-Compatible" content="IE=edge">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <script src="https://unpkg.com/boxicons@2.1.2/dist/boxicons.js"></script>
+    <link rel="stylesheet" href="css/index.css"/>    
+    <title>Login</title>
+</head>
+<body>
+
+
+    <section class="login">
+            <img class="title" src="/img/title.png">
+        <div class="login_holder">
+                <div class="input_holder">
+                    <div class="input_inner">
+                        <input type="text" id="account" placeholder="帳號" autocomplete="off">
+                        <box-icon name='x' color='#f7071f' id="account_x" class="account_x"></box-icon>
+                    </div>
+                </div>
+                <div class="input_holder">
+                    <div class="input_inner">
+                        <input type="password" id="password" placeholder="密碼" autocomplete="current-password">
+                        <box-icon name='x' color='#f7071f' id="pass_x" class="pass_x"></box-icon>
+                    </div>
+                </div>
+
+        </div>
+            <div class="pass_remind">
+                <div class="url_preview">忘記密碼?</div>
+            </div>
+            <button id="login_submit" class="login_submit">登入</button>
+    </section>
+
+    <section class="signup">
+
+
+        <div class="signup_holder">
+                <div class="signup_input_holder">
+
+
+                    <div class="input_section">
+                        <div class="input_holder">
+                            <input type="text" id="sign_account" placeholder="帳號" autocomplete="off">
+                            <box-icon name='check' color='#0bf707' id="check_ok" class="check_ok"></box-icon>
+                            <box-icon name='x' color='#f7071f' id="x" style="display: none;"></box-icon>
+                            <box-icon name='loader-alt' rotate='90' animation='spin' color='#10fc0c' id="loading" class="loading"></box-icon>
+                        </div>
+                        <span class="url_preview">https://motivetag.xyz/</span><span id="preview_span" class="preview_span"></span>
+                        <div class="error_msg"></div>
+                    </div>
+
+
+
+                    <div class="input_section">
+                        <div class="input_holder">
+                            <input type="password" id="sign_password" placeholder="密碼">
+                        </div>
+                        
+                    </div>
+                    <div class="input_section">
+                        <div class="input_holder">
+                            <input type="email" id="sign_email" placeholder="信箱">
+                        </div>
+                    </div>
+                    <div class="input_section">
+                        <div class="input_holder">
+                            <span class="label">生日</span>
+                            <select name="year" autocomplete="bday-year" id="b_year">
+                                <option value="null">年</option>
+
+                            </select>
+                            <span class="date_sep">/</span>
+                            <select name="year" autocomplete="bday-month" id="b_month">
+                                <option value="null">月</option>
+                            </select>
+                            <span class="date_sep">/</span>
+                            <select name="year" autocomplete="bday-day" id="b_day">
+                                <option value="null">日</option>
+                            </select>
+                        </div>
+                    </div>
+                </div>
+            <div class="signup_btn">
+                <button id="signup_submit" class="signup_submit">註冊</button>
+            </div>
+            <div class="outer_check">
+                <box-icon id="signup_check" class="signup_check" name='check-double' color='#0cfc23' ></box-icon>
+            </div>
+
+            
+        </div>
+
+
+
+    </section>
+    
+
+<script type="text/javascript" src="js/index.js"></script>
+</body>
+</html>

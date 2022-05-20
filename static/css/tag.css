@@ -1,0 +1,22 @@
+body, div, dl, dt, dd, ul, ol, li, h1, h2, h3, h4, h5, h6, pre, code, form, fieldset, legend, input, textarea, p, blockquote, th, td {
+    margin: 0;
+    padding: 0;
+}
+body{
+    width: 100%;
+    height: 100%;
+    color: #1cbfff;
+    background: #0b0c1b;
+}
+
+.key_box{
+    font-size: 50px;
+    padding: 25px;
+}
+
+.word_records{
+    padding: 25px;
+}
+.records{
+    margin-top: 25px;
+}
