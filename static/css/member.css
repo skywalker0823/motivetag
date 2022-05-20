@@ -593,6 +593,7 @@ cursor: pointer;
 .friend_box{
     display: flex;
     margin-top: 7px;
+    justify-content: space-between;
 }
 
 .friend_avatar{

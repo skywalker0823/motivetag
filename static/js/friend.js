@@ -164,10 +164,18 @@ render_ur_friend = (req_f, req_t, status, friend_ship_id) => {
   mess_img.setAttribute("id","mess_to"+friend)
   mess_img.setAttribute("onclick","start_chat(this.id)")
 
+  // <box-icon name='user-x' color='#1cbfff' ></box-icon>
+  bye_friend = document.createElement("box-icon")
+  bye_friend.setAttribute("class", "bye_f");
+  bye_friend.setAttribute("name","user-x")
+  bye_friend.setAttribute("color","#f71523")
+  bye_friend.setAttribute("id","del_fr"+friend_ship_id)
+  bye_friend.setAttribute("onclick","delete_friend(this.id)")
 
   friend_box.appendChild(friend_avatar);
   friend_box.appendChild(a_friend);
-  friend_box.appendChild(mess_img)
+  friend_box.appendChild(mess_img);
+  friend_box.appendChild(bye_friend);
   friend_list.appendChild(friend_box);
 };
 
@@ -196,11 +204,20 @@ befriend = async(id)=>{
     mess_img.setAttribute("id", "mess_to" + friend);
     mess_img.setAttribute("onclick", "start_chat(this.id)");
 
+    bye_friend = document.createElement("box-icon");
+    bye_friend.setAttribute("class","bye_f")
+    bye_friend.setAttribute("name", "user-x");
+    bye_friend.setAttribute("color", "#f71523");
+    bye_friend.setAttribute("id", "del_fr" + friend_ship_id);
+    bye_friend.setAttribute("onclick", "delete_friend(this.id)");
+
+
     friend_box.setAttribute("id", "friend_box" + friend_ship_id);
     friend_box.setAttribute("class","friend_box")
     friend_box.appendChild(friend_avatar);
     friend_box.appendChild(a_friend);
-    friend_box.appendChild(mess_img)
+    friend_box.appendChild(mess_img);
+    friend_box.appendChild(bye_friend);
     friend_list.appendChild(friend_box);
     document.getElementById("a_wait" + friend_ship_id).remove();
   }
@@ -248,4 +265,18 @@ not_friend = async(friend_ship_id) =>{
     return { ok: true };
   }
   console.log("forge friend error", result);
+}
+
+delete_friend = async(id) =>{
+  console.log(id)
+  let fr_id = id.split("del_fr")[1]
+  console.log(fr_id)
+  result = await not_friend(fr_id)
+  if(result.ok){
+    console.log("del friend complete")
+    document.getElementById("friend_box"+fr_id).remove()
+    return
+  }
+  console.log("del friend fail")
+
 }
