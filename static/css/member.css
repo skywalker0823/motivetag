@@ -95,11 +95,17 @@ cursor: pointer;
     right:5px;
     background-color: #000;
 }
+.notifi_box{
+    border-bottom: 1px solid gray;
+}
 .one_notify{
-    padding: 15px;
+    padding: 10px;
     color: #1cbfff;
-    font-size: 15px;
+    font-size: 12px;
 
+}
+.notify_time{
+    
 }
 .signout_btn{
     height: 25px;

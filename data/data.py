@@ -421,15 +421,16 @@ class Notification:
             return {"error": "GET notifi error"}
 
 
-    def post_notifi(me,who,content):
+    def post_notifi(me,who,content,time):
         try:
             with connection.cursor() as cursor:
                 cursor.execute("""
                 INSERT INTO notifi(
                     sender_id,
                     reciever_id,
-                    content
-                )VALUES(%s,(SELECT member_id FROM member WHERE account=%s),%s)""", (me, who, content)
+                    content,
+                    read_time
+                )VALUES(%s,(SELECT member_id FROM member WHERE account=%s),%s,%s)""", (me, who, content,time)
                 )
             connection.commit()
             return {"ok":"Notification send"}

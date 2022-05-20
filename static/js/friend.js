@@ -26,6 +26,7 @@ document.getElementById("friend_search_btn").addEventListener("click", async () 
         forge_relation(friend_ship_id)
         result["type"]="friend"
         result["content"] = "新好友成立"
+        result["time"] = moment().format("YYYY-MM-DD HH:mm:ss");
         send_notifi(result)
         return
     }else{
@@ -41,6 +42,7 @@ document.getElementById("friend_search_btn").addEventListener("click", async () 
 
         result["type"] = "friend";
         result["content"] = "你有一則好友邀請來自:" + me;
+        result["time"] = moment().format("YYYY-MM-DD HH:mm:ss");
         send_notifi(result)
       }
   }
@@ -226,10 +228,19 @@ befriend = async(id)=>{
 //拒絕與刪除好友都走這
 byefriend = async(id) =>{
   let friend_ship_id = id.split("friend_no_")[1];
+  let friend_account = document.getElementById("req_f"+friend_ship_id).innerHTML
   let result = await not_friend(friend_ship_id)
   if (result.ok) {
     console.log("start bye friend render");
     document.getElementById("a_wait" + friend_ship_id).remove();
+    let data = {
+      me: my_id,
+      someone_else: friend_account,
+      type: "deny_friend_request",
+      content: me + " 拒絕了你的好友邀請。Sad!",
+      time: moment().format("YYYY-MM-DD HH:mm:ss"),
+    };
+    send_notifi(data)
 
   } 
 }
