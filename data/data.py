@@ -103,11 +103,14 @@ class Block:
                                                                UNION
                                                                SELECT request_to AS ids FROM friendship WHERE status="0" AND(request_from=%s OR request_to=%s)) AND content_type <> "SECRET"
                                                                UNION
+                                                               SELECT (SELECT account FROM member WHERE member_id=block.member_id)AS account,block_id, block.member_id, content_type, content, build_time,good,bad,block_img FROM block WHERE member_id=%s
+                                                               UNION
                                                                SELECT (SELECT account FROM member WHERE member_id=block.member_id)AS account,block_id,block.member_id,content_type,content,build_time,good,bad,block_img FROM block WHERE block_id IN(SELECT block_id FROM block_tag WHERE tag_id IN(SELECT tag_id FROM member_tags WHERE member_id=%s))
                                  ORDER BY build_time DESC
                                  LIMIT %s,%s"""
-            got = cursor.execute(sql_all, (member_id, member_id,  member_id, member_id,member_id,page,5))
+            got = cursor.execute(sql_all, (member_id, member_id, member_id, member_id, member_id,member_id,page,5))
             result = cursor.fetchall()
+            print(result)
             connection.commit()
             if got == 0:
                 return {"msg":"No blocks found"}
@@ -441,3 +444,9 @@ class Notification:
 
     def patch_notifi(member_id):
         return None
+
+    def delete_notifi(member_id):
+        with connection.cursor() as cursor:
+            cursor.execute("DELETE FROM notifi WHERE reciever_id=%s",(member_id))
+            connection.commit()
+            return {"ok":"notifi read"}

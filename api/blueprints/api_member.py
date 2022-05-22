@@ -1,8 +1,12 @@
+from crypt import methods
 from data.data import Member
 from flask import request, session
 import traceback
 from . import api_member
 
+# import google.oauth2.credentials
+# import google_auth_oauthlib.flow
+# import googleapiclient.discovery
 
 
 #狀態取得session 與使用者全資料
@@ -64,4 +68,9 @@ def sign_out_member():
     session["account"] = None
     return {"ok":True}
 
+
+
+
+# @api_member.route("/api/google_sign_in",methods=["POST"])
+# def g_login():
 

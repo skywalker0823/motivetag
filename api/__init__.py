@@ -1,9 +1,14 @@
 
 
 from flask import Flask, redirect, session, render_template as rt
+from requests import request
 from config import config_sets
 from flask_socketio import SocketIO
+import os
+from dotenv import load_dotenv
 socketio = SocketIO()
+load_dotenv()
+
 
 
 def create_app(config_name):
@@ -27,14 +32,14 @@ def create_app(config_name):
     app.register_blueprint(api_notification)
     app.register_blueprint(api_chat)
     app.register_blueprint(api_tag_page)
-
+    GOOGLE_OAUTH2_CLIENT_ID = os.getenv("GOOGLE_CLIENT_ID")
     
     @app.route("/")
     def index():
         if session.get("account"):
             return redirect("/"+session["account"])
         else:
-            return rt("index.html")
+            return rt("index.html", google_oauth2_client_id=GOOGLE_OAUTH2_CLIENT_ID)
 
 
     @app.route("/tag/<tag_name>")

@@ -279,12 +279,9 @@ not_friend = async(friend_ship_id) =>{
 }
 
 delete_friend = async(id) =>{
-  console.log(id)
   let fr_id = id.split("del_fr")[1]
-  console.log(fr_id)
   result = await not_friend(fr_id)
   if(result.ok){
-    console.log("del friend complete")
     document.getElementById("friend_box"+fr_id).remove()
     return
   }

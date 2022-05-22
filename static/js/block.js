@@ -279,7 +279,6 @@ document
 
       block_builder(result);
       document.getElementById("blockor_content").value = "";
-      console.log(document.getElementById("upload_block_img").files);
     } else {
       console.log(result.msg, result.msg2);
     }
@@ -341,6 +340,10 @@ block_click = async (id) => {
 
       let mess_avatar = document.createElement("img");
       mess_avatar.setAttribute("class", "mess_avatar");
+      mess_avatar.setAttribute(
+        "onerror",
+        "this.onerror=null;this.src='/img/ghost-regular-24.png';"
+      );
       mess_avatar.setAttribute(
         "src",
         "https://d3nvrufajko3tj.cloudfront.net/avatar_" + a_message.member_id
@@ -421,6 +424,10 @@ leave_message = async (message_block_id) => {
     let mess_avatar = document.createElement("img");
     mess_avatar.setAttribute("class", "mess_avatar");
     mess_avatar.setAttribute(
+      "onerror",
+      "this.onerror=null;this.src='/img/ghost-regular-24.png';"
+    );
+    mess_avatar.setAttribute(
       "src",
       "https://d3nvrufajko3tj.cloudfront.net/avatar_" + result.member_id
     );
@@ -471,7 +478,6 @@ leave_message = async (message_block_id) => {
 //讚
 gooder = async (id) => {
   let target = id.split("good")[1];
-  console.log(target);
   const options = {
     method: "PATCH",
     headers: { "content-type": "application/json" },
@@ -482,9 +488,7 @@ gooder = async (id) => {
   const response = await fetch("/api/blocks", options);
   const result = await response.json();
   if (result.ok) {
-    console.log("good complete");
     let add_this = document.getElementById("good_count" + target);
-    console.log(add_this);
     if (add_this.innerHTML == "") {
       add_this.innerHTML = "1";
       return;
@@ -498,7 +502,6 @@ gooder = async (id) => {
 //讚
 badder = async (id) => {
   let target = id.split("bad")[1];
-  console.log(target);
   const options = {
     method: "PUT",
     headers: { "content-type": "application/json" },
@@ -509,9 +512,7 @@ badder = async (id) => {
   const response = await fetch("/api/blocks", options);
   const result = await response.json();
   if (result.ok) {
-    console.log("bad complete");
     let add_this = document.getElementById("bad_count" + target);
-    console.log(add_this);
     if (add_this.innerHTML == "") {
       add_this.innerHTML = "1";
       return;
@@ -643,36 +644,3 @@ anonymous_mode = () => {
   inner.placeholder = thought;
   anonymous = false;
 };
-
-////////////////////YOUTUBE API////////////////////
-
-// var player;
-// window.onYouTubeIframeAPIReady=()=>{
-//   player = new YT.Player("player_here", {
-//     width: "100%",
-//     videoId: url_now,
-//     events: {
-//       onReady: onPlayerReady,
-//       onStateChange: onPlayerStateChange,
-//     },
-//   });
-// }
-
-// // 4. The API will call this function when the video player is ready.
-// function onPlayerReady(event) {
-//   event.target.playVideo();
-// }
-
-// // 5. The API calls this function when the player's state changes.
-// //    The function indicates that when playing a video (state=1),
-// //    the player should play for six seconds and then stop.
-// var done = false;
-// function onPlayerStateChange(event) {
-//   if (event.data == YT.PlayerState.PLAYING && !done) {
-//     setTimeout(stopVideo, 6000);
-//     done = true;
-//   }
-// }
-// function stopVideo() {
-//   player.stopVideo();
-// }

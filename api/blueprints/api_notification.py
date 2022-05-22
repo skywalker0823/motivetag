@@ -48,4 +48,5 @@ def posting_notifi():
 @api_notification.route("/api/notifi", methods=["DELETE"])
 def reading_notifi():
     member_id = session.get("member_id")
-    return None
+    result = Notification.delete_notifi(member_id)
+    return result

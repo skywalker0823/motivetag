@@ -41,7 +41,6 @@ socket.on("awake_result", (data) => {
         call.setAttribute("animation", "none");
     }else if(data[friend]=="on_calling"){
         if (is_on.includes(friend)){
-            console.log("已經在聊天了!")
             call = document.getElementById("mess_to" + friend);
             call.setAttribute("animation", "none");
             document
@@ -85,7 +84,6 @@ start_chat = (account) =>{
   }
 
   //同意開始/開新，隱藏其他房間，並且創造
-  console.log("start chat with", account);
   is_on.push(account);
 
   //聊天房間open
@@ -177,11 +175,7 @@ init_chat_with = (account) =>{
     socket.emit("init_room",{account:account,me:me})
     socket.on("init_result",(result)=>{
         if(result.ok){
-            console.log("ROOM OK!",result.ok)
             chatting_list[account]=result.room
-            console.log("目前使用者與房間對",chatting_list)
-            console.log("目前作用中的聊天",is_on)
-
             return
         }
         console.log(result.error)
@@ -218,10 +212,8 @@ socket.on("message",(data)=>{
 //送出:訊息
 send_chat = (btn_id) =>{
     //藉由id來知道是給誰的訊息
-    console.log("send!")
     account = btn_id.split("send_btn")[1]
     if(!chatting_list[account]){
-        console.log("對方尚未加入房間")
         return
     }
     room = chatting_list[account]
@@ -235,11 +227,8 @@ send_chat = (btn_id) =>{
 
 
 end_chat = (account) =>{
-    console.log(account.split("close_tag")[1]);
     let who = account.split("close_tag")[1]
-    console.log("yaya", chatting_list,who);
     room = chatting_list[who]
-    console.log("close chat with",who,"and room",room)
     socket.emit("left",{"room":room,"me":me,"account":who})
 
     //關閉視窗
@@ -251,7 +240,6 @@ end_chat = (account) =>{
     if (index >= 0) {
       is_on.splice(index, 1);
     }
-    console.log(is_on)
 }
 
 //系統訊息(進入離開或其他訊息)

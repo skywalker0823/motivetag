@@ -64,7 +64,7 @@ const interval = setInterval(async function () {
             notifies = result
         }
     }
-}, 15000);
+}, 12000);
 
 
 //通知被打開並打PATCH清除過去通知(其實好像可以刪除舊通知)
@@ -110,18 +110,19 @@ document.getElementById("notifi_bell").addEventListener("click",async () => {
             notifi_box.appendChild(one_notify)
             notifi_list.appendChild(notifi_box);
         }
+        const options = {
+            method: "DELETE",
+            headers: { "content-type": "application/json" },
+            body: JSON.stringify({
+            me: me,
+            content: "content here will be use in near future",
+            }),
+        };
+        const response = await fetch("/api/notifi", options);
+        const result = await response.json();
+        if(result.ok){
+            console.log("notifi read and deleted")
+        }
         
     }
-    // const options = {
-    //     method: "DELETE",
-    //     headers: { "content-type": "application/json" },
-    //     body: JSON.stringify({
-    //     me: me,
-    //     who: whom,
-    //     type: type,
-    //     content: content,
-    //     }),
-    // };
-    // const response = await fetch("/api/notifi", options);
-    // const result = await response.json();
 });
