@@ -222,6 +222,14 @@ befriend = async(id)=>{
     friend_box.appendChild(bye_friend);
     friend_list.appendChild(friend_box);
     document.getElementById("a_wait" + friend_ship_id).remove();
+    let data = {
+      me: my_id,
+      someone_else: friend,
+      type: "accept_friend_request",
+      content: me + " 同意了你的好友邀請。Good!",
+      time: moment().format("YYYY-MM-DD HH:mm:ss"),
+    };
+    send_notifi(data);
   }
 }
 

@@ -719,19 +719,26 @@ footer{
     display: flex;
     flex-direction: column;
     overflow-y: scroll;
-
+    padding: 0px;
 }
 .my_mess{
-    font-size: 21px;
+    font-size: 18px;
     color: #FFF;
-    padding: 3px;
+    padding: 5px;
     text-align: left;
+    margin-top: 5px;
+    margin-left: 0px;
+    border-top: 1px solid #1cbfff;
+
 }
 .who_mess{
     text-align: right;
-    font-size: 21px;
+    font-size: 18px;
     color: #FFF;
-    padding: 3px;
+    padding: 5px;
+    margin-top: 5px;
+    margin-right: 0px;
+    border-top: 1px solid #1cbfff;
 }
 
 .level{

@@ -1,7 +1,6 @@
 
 
 from flask import Flask, redirect, session, render_template as rt
-from requests import request
 from config import config_sets
 from flask_socketio import SocketIO
 import os
