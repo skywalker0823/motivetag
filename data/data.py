@@ -1,4 +1,5 @@
 
+from numpy import block
 import pymysql
 import os, traceback
 from dbutils.pooled_db import PooledDB
@@ -101,7 +102,7 @@ class Block:
                                      SELECT request_from AS ids FROM friendship WHERE status="0" 
                                      AND(request_from=%s OR request_to=%s) 
                                                                UNION
-                                                               SELECT request_to AS ids FROM friendship WHERE status="0" AND(request_from=%s OR request_to=%s)) AND content_type <> "SECRET"
+                                                               SELECT request_to AS ids FROM friendship WHERE status="0" AND(request_from=%s OR request_to=%s)) AND content_type <> "SECRET" AND content_type <> "Anonymous"
                                                                UNION
                                                                SELECT (SELECT account FROM member WHERE member_id=block.member_id)AS account,block_id, block.member_id, content_type, content, build_time,good,bad,block_img FROM block WHERE member_id=%s
                                                                UNION
@@ -110,7 +111,6 @@ class Block:
                                  LIMIT %s,%s"""
             got = cursor.execute(sql_all, (member_id, member_id, member_id, member_id, member_id,member_id,page,5))
             result = cursor.fetchall()
-            print(result)
             connection.commit()
             if got == 0:
                 return {"msg":"No blocks found"}
@@ -228,9 +228,11 @@ class Member_tags:
             connection.commit()
             return {"ok":True,"count":result}
 
-
-
-
+    def new_bie_tag(member_id, tag):
+        with connection.cursor() as cursor:
+            cursor.execute("INSERT INTO member_tags(member_id,tag_id)VALUES(%s,(SELECT tag_id FROM tag WHERE name=%s))",(member_id,tag))
+            connection.commit()
+            return None
 
 class Tag:
     def getting_tags_global():
@@ -240,28 +242,6 @@ class Tag:
             result = cursor.fetchall()
             connection.commit()
             return result
-    # def find_id_of(tag):
-    #     with connection.cursor() as cursor:
-    #         tag_count=cursor.execute("SELECT tag_id FROM tag WHERE name=%s",(tag,))
-    #         connection.commit()
-    #         if tag_count == 0:
-    #             #首生tag 產生後取id
-    #             with connection.cursor() as cursor:
-    #                 cursor.execute("INSERT INTO tag (name) VALUES (%s)",(tag,))
-    #                 cursor.execute("SELECT tag_id FROM tag WHERE name=%s",(tag,))
-    #                 result = cursor.fetchone()
-    #                 connection.commit()
-    #                 return result
-    #         else:
-    #             #已出現tag +1後取id
-    #             with connection.cursor() as cursor:
-    #                 cursor.execute(
-    #                     "UPDATE tag SET popularity=popularity+1 WHERE name=%s", (tag,))
-    #                 cursor.execute(
-    #                     "SELECT tag_id FROM tag WHERE name=%s", (tag,))
-    #                 result = cursor.fetchone()
-    #                 connection.commit()
-    #                 return result
 
     def adjust_global_tag(tag,member_id):
         #自適應傳入tag若有重複將會增加pop 若無將會創新
@@ -450,3 +430,67 @@ class Notification:
             cursor.execute("DELETE FROM notifi WHERE reciever_id=%s",(member_id))
             connection.commit()
             return {"ok":"notifi read"}
+
+
+class Vote_table:
+    def get_vote(block_id):
+        with connection.cursor() as cursor:
+            cursor.execute(
+                "SELECT * FROM vote_options WHERE block_id=%s", (block_id))
+            data = cursor.fetchall()
+            connection.commit()
+        return data
+    def create_vote(block_id,votes):
+        print("正在登記vote")
+        try:
+            with connection.cursor() as cursor:
+                for vote in votes:
+                    cursor.execute("""
+                    INSERT INTO vote_options(
+                        block_id,
+                        option_name
+                    )VALUES(%s,%s)""", (block_id,vote)
+                    )
+                cursor.execute("SELECT * FROM vote_options WHERE block_id=%s",(block_id))
+                data = cursor.fetchall()
+                connection.commit()
+            return {"msg":data}
+        except Exception as e:
+            print(e)
+            return {"msg":"vote create error"}
+
+class Vote:
+    #檢查使用者有無投過 會回傳此block投過的資料
+    def check_vote(member_id,block_id):
+        with connection.cursor() as cursor:
+            result = cursor.execute(
+                "SELECT * FROM votes where member_id=%s and vote_option_id IN (SELECT vote_option_id FROM vote_options WHERE block_id=%s)", (member_id,block_id))
+            data = cursor.fetchone()
+            connection.commit()
+        return {"count":result,"data":data}
+
+    def do_vote(member_id,vote_option_id):
+        with connection.cursor() as cursor:
+            cursor.execute("""INSERT INTO votes(
+                member_id,
+                vote_option_id
+            )VALUES(%s,%s)""",(member_id,vote_option_id))
+            connection.commit()
+        return  {"ok":True}
+
+    #回傳此block的計票狀況(不記名)
+    def get_vote(block_id):
+        with connection.cursor() as cursor:
+            cursor.execute("""
+            SELECT * FROM votes WHERE vote_option_id IN (SELECT vote_option_id FROM vote_options WHERE block_id=%s)
+            """,(block_id))
+            data = cursor.fetchall()
+            connection.commit()
+        return data
+
+
+
+    def change_vote():
+        return
+    def del_vote():
+        return

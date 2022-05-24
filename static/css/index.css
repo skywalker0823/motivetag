@@ -160,6 +160,10 @@ input{
     color: #FFF;
     box-shadow: 0 5px 15px rgba(145, 92, 182, .4);
 }
+.mighty_google{
+    display: flex;
+    justify-content: center;
+}
 .login_submit:active{
     background-color: #FFF;
     color: #000;

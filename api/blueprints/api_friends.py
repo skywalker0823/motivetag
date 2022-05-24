@@ -22,7 +22,6 @@ def to_member(account):
             # elif check["redirect_to"][0]["status"]=="0":
             #     return rt("member.html")
             # else:
-        print("go back to where you belong")
         return redirect("/")
 
 

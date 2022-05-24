@@ -9,5 +9,6 @@ api_message = Blueprint('message', __name__, template_folder="templates")
 api_notification = Blueprint('notification', __name__, template_folder="templates")
 api_tags = Blueprint('tags', __name__, template_folder="templates")
 api_tag_page = Blueprint('tag_page', __name__, template_folder="templates")
+api_vote = Blueprint('vote', __name__, template_folder="templates")
 
 

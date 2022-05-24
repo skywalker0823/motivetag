@@ -240,11 +240,6 @@ end_chat = (account) =>{
 
     //關閉視窗
     op_ele = document.getElementById("a_room"+who)
-      // document
-      //   .getElementById("chat_input" + who)
-      //   .removeEventListener("keypress", () => {
-      //     console.log("listener removed!");
-      //   });
     op_ele.remove();
 
     // is_on.pop(who)

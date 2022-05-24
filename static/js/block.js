@@ -50,7 +50,6 @@ block_builder = async (data) => {
     if (!bad) {
       bad = "";
     }
-
     a_block = document.createElement("div");
     a_block.setAttribute("class", "a_block");
     a_block.setAttribute("id", block_id);
@@ -60,21 +59,32 @@ block_builder = async (data) => {
     block_title.setAttribute("class", "block_titler");
     typer = document.createTextNode(content_type);
     block_typer = document.createElement("div");
-    block_typer.setAttribute("class", "block_typer");
+    if(content_type=="Anonymous"){
+      block_typer.setAttribute("class", "block_anonymous");
+    }else{block_typer.setAttribute("class", "block_typer");}
     block_typer.appendChild(typer);
 
     //user_avatar
     block_avatar = document.createElement("img");
     block_avatar.setAttribute("onerror","this.onerror=null;this.src='/img/ghost-regular-24.png';")
     block_avatar.setAttribute("class", "block_avatar");
-    block_avatar.setAttribute(
-      "src",
-      "https://d3nvrufajko3tj.cloudfront.net/avatar_" + member_id
-    );
+    if(content_type=="Anonymous"){
+      block_avatar.setAttribute("src", "/img/ghost-regular-24.png");
+    }else{
+      block_avatar.setAttribute(
+        "src",
+        "https://d3nvrufajko3tj.cloudfront.net/avatar_" + member_id
+      );
+    }
+
 
     //account
     author = document.createElement("div");
-    who = document.createTextNode(" @" + account);
+    if(content_type=="Anonymous"){
+      who = document.createTextNode("")
+    }else{
+      who = document.createTextNode(" @" + account);
+    }
     author.appendChild(who);
     block_typer.appendChild(author);
 
@@ -135,6 +145,52 @@ block_builder = async (data) => {
       );
     }
 
+
+    let vote_display = document.createElement("div");
+    let chart_holder = document.createElement("div");
+    if(block.votes.length!=0){
+    vote_display.setAttribute("class","vote_display")
+    for(vote of block.votes){
+      let a_vote_box = document.createElement("div")
+      let vote_name = document.createElement("div")
+      let vote_btn = document.createElement("button")
+      let vote_result = document.createElement("div")
+      a_vote_box.setAttribute("class","a_vote_box")
+      vote_btn.setAttribute(
+        "id",
+        "vote_btn" + vote.vote_option_id + "block_id" + block.block_id
+      );
+      vote_btn.innerHTML="Vote"
+      vote_btn.setAttribute("onclick","vote_this(this.id)")
+      vote_btn.setAttribute("class","vote_btn")
+      vote_name.appendChild(document.createTextNode(vote.option_name));
+      vote_name.setAttribute("id", "vote_option_id" + vote.vote_option_id);
+      vote_result.setAttribute("id", "vote_result" + vote.vote_option_id);
+      
+      a_vote_box.appendChild(vote_name)
+      a_vote_box.appendChild(vote_btn)
+      // a_vote_box.appendChild(vote_result)
+
+      vote_display.appendChild(a_vote_box)
+    }
+    let see_result = document.createElement("button")
+    see_result.innerHTML="See result"
+    see_result.setAttribute("id", "vote_result" + block.block_id);
+    see_result.setAttribute("class","see_result")
+    see_result.setAttribute("onclick","see_vote_result(this.id)")
+    vote_display.appendChild(see_result)
+
+    //圖表
+    chart_holder.setAttribute("class","chart_holder")
+    chart_holder.setAttribute("id", "chart_holder" + block.block_id);
+    the_canvas = document.createElement("canvas")
+    the_canvas.setAttribute("id","canvas"+block.block_id)
+    the_canvas.setAttribute("class","the_canvas")
+    chart_holder.appendChild(the_canvas)
+    
+  }
+    
+
     //讚box
     good_box = document.createElement("div");
     good_box.setAttribute("class", "good_box");
@@ -173,13 +229,15 @@ block_builder = async (data) => {
     good_box.appendChild(bad_box);
 
     //分享(預定)
-    share_btn = document.createElement("box-icon");
-    share_btn.setAttribute("name", "share");
-    share_btn.setAttribute("color", "#1cbfff");
-    share_btn.setAttribute("id", "share" + block.block_id);
-    share_btn.setAttribute("onclick", "share(this.id)");
-    share_btn.setAttribute("class", "share");
-    good_box.appendChild(share_btn);
+    if(content_type!="SECRET"){
+      share_btn = document.createElement("box-icon");
+      share_btn.setAttribute("name", "share");
+      share_btn.setAttribute("color", "#1cbfff");
+      share_btn.setAttribute("id", "share" + block.block_id);
+      share_btn.setAttribute("onclick", "share(this.id)");
+      share_btn.setAttribute("class", "share");
+      good_box.appendChild(share_btn);
+    }
 
     //時間
     block_time = document.createElement("div");
@@ -210,10 +268,17 @@ block_builder = async (data) => {
     block_message_control.appendChild(guest_input);
     block_message_control.appendChild(guest_input_btn);
 
+    //投票所裝箱
+    vote_boss = document.createElement("div")
+    vote_boss.setAttribute("class","vote_boss")
+    vote_boss.appendChild(vote_display)
+    vote_boss.appendChild(chart_holder)
+
     a_block.appendChild(block_title);
     a_block.appendChild(block_content);
     // a_block.appendChild(ytplayer);
     a_block.appendChild(block_image);
+    a_block.appendChild(vote_boss);
     a_block.appendChild(good_box);
     a_block.appendChild(block_time);
     a_block.appendChild(block_message_control);
@@ -241,12 +306,42 @@ block_builder = async (data) => {
 document
   .getElementById("block_submit_btn")
   .addEventListener("click", async () => {
+    document.getElementById("block_guard").innerHTML="";
     let type = document.getElementById("blockor_type").value;
     let content = document.getElementById("blockor_content").value;
     let time = moment().format("YYYY-MM-DD HH:mm:ss");
     let tags = tag_appender();
+    let vote_box=[]
+    console.log(type,content)
+    if(type=="SECRET" && anonymous){
+      document.getElementById("block_guard").innerHTML =
+        "Tips: You cannot anonymous with secret";
+      return;
+    }
+    if(type=="SECRET" && content.indexOf("#")!=-1){
+      document.getElementById("block_guard").innerHTML =
+        "Tips: You cannot use tags in secret mode";
+      return
+    }
+    if(anonymous){
+      type = "Anonymous";
+      tags = "Anonymous";
+    }else{tags=null}
     if (!content) {
       return;
+    }
+    if (vote_up) {
+      let votes = document.getElementsByClassName("option_input");
+      for (vote of votes) {
+        if (vote.value == "") {
+          continue;
+        }
+        vote_box.push(vote.value);
+      }
+      if (vote_box.length == 0) {
+        console.log("nothing to vote!");
+        vote_box=null
+      }
     }
     const options = {
       method: "POST",
@@ -256,6 +351,7 @@ document
         content: content,
         time: time,
         tags: tags,
+        vote_box: vote_box,
       }),
     };
     const response = await fetch("/api/blocks", options);
@@ -276,8 +372,8 @@ document
         document.getElementById("img_pre_box").style.display = "none";
         block_img_uploader(result);
       }
-
       block_builder(result);
+      console.log(result)
       document.getElementById("blockor_content").value = "";
     } else {
       console.log(result.msg, result.msg2);
@@ -615,10 +711,12 @@ nice = async (id) => {
 
 let anonymous = false;
 anonymous_mode = () => {
+  document.getElementById("block_guard").innerHTML="";
   console.log("anonymous mode");
   let blockor = document.getElementById("blockor_inner");
   let inner = document.getElementById("blockor_content");
   if (!anonymous) {
+    document.getElementById("blockor_type").value="PUBLIC"
     anonymous = true;
     blockor.style.border = "#e20cfc 1px solid";
     inner.placeholder = "Anonymous";

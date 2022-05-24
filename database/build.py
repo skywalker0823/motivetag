@@ -17,7 +17,7 @@ def build_member(conn):
         account varchar(50) UNIQUE KEY NOT NULL,
         password varchar(50) NOT NULL,
         email varchar(100) NOT NULL,
-        birthday DATE NOT NULL,
+        birthday DATE,
         first_signup DATE NOT NULL,
         last_signin DATETIME,
         member_img varchar(100)
@@ -33,7 +33,8 @@ def build_global_tag(conn):
         name varchar(100) UNIQUE KEY,
         popularity INT,
         create_date DATE,
-        create_by INT NOT NULL
+        create_by INT,
+        prime_level INT
     )"""
     cursor.execute(sql)
     conn.commit()
@@ -117,6 +118,48 @@ def build_table_nofiti(conn):
     cursor.execute(sql)
     conn.commit()
 
+#投票
+def vote_options(conn):
+    cursor.execute("DROP TABLE IF EXISTS vote_options")
+    sql = """CREATE TABLE vote_options(
+        vote_option_id INT NOT NULL AUTO_INCREMENT PRIMARY KEY,
+        block_id INT NOT NULL,
+        option_name TEXT
+    )"""
+    cursor.execute(sql)
+    conn.commit()
+
+
+def votes(conn):
+    cursor.execute("DROP TABLE IF EXISTS votes")
+    sql = """CREATE TABLE votes(
+        vote_id INT NOT NULL AUTO_INCREMENT PRIMARY KEY,
+        member_id INT NOT NULL,
+        vote_option_id INT NOT NULL
+    )"""
+    cursor.execute(sql)
+    conn.commit()
+
+def goods(conn):
+    cursor.execute("DROP TABLE IF EXISTS goods")
+    sql = """CREATE TABLE goods(
+        good_id INT NOT NULL AUTO_INCREMENT PRIMARY KEY,
+        member_id INT NOT NULL,
+        block_id INT NOT NULL
+    )"""
+    cursor.execute(sql)
+    conn.commit()
+
+def c_goods(conn):
+    cursor.execute("DROP TABLE IF EXISTS c_goods")
+    sql = """CREATE TABLE c_goods(
+        c_good_id INT NOT NULL AUTO_INCREMENT PRIMARY KEY,
+        comment_id INT NOT NULL,
+        block_id INT NOT NULL,
+        member_id INT NOT NULL
+    )"""
+    cursor.execute(sql)
+    conn.commit()
 
 
 
@@ -126,15 +169,15 @@ def build_foreign_key_ref(conn):
     ADD FOREIGN KEY (create_by) REFERENCES member(member_id)
     """
     sql2 = """ALTER TABLE member_tags
-    ADD FOREIGN KEY (member_id) REFERENCES member(member_id),
+    ADD FOREIGN KEY (member_id) REFERENCES member(member_id) ON DELETE CASCADE,
     ADD FOREIGN KEY (tag_id) REFERENCES tag(tag_id)
     """
     sql3 = """ALTER TABLE friendship
-    ADD FOREIGN KEY (request_from) REFERENCES member(member_id),
-    ADD FOREIGN KEY (request_to) REFERENCES member(member_id)
+    ADD FOREIGN KEY (request_from) REFERENCES member(member_id) ON DELETE CASCADE,
+    ADD FOREIGN KEY (request_to) REFERENCES member(member_id) ON DELETE CASCADE
     """
     sql4 = """ALTER TABLE block
-    ADD FOREIGN KEY (member_id) REFERENCES member(member_id)
+    ADD FOREIGN KEY (member_id) REFERENCES member(member_id) ON DELETE CASCADE
     """
     sql5 = """ALTER TABLE block_tag
     ADD FOREIGN KEY (block_id) REFERENCES block(block_id) ON DELETE CASCADE,
@@ -145,8 +188,27 @@ def build_foreign_key_ref(conn):
     ADD FOREIGN KEY (member_id) REFERENCES member(member_id)
     """
     sql7 = """ALTER TABLE notifi
-    ADD FOREIGN KEY (sender_id) REFERENCES member(member_id),
-    ADD FOREIGN KEY (reciever_id) REFERENCES member(member_id)
+    ADD FOREIGN KEY (sender_id) REFERENCES member(member_id) ON DELETE CASCADE,
+    ADD FOREIGN KEY (reciever_id) REFERENCES member(member_id) ON DELETE CASCADE
+    """
+
+    sql8 = """ALTER TABLE vote_options
+    ADD FOREIGN KEY (block_id) REFERENCES block(block_id) ON DELETE CASCADE
+    """
+
+    sql9 = """ALTER TABLE votes
+    ADD FOREIGN KEY (member_id) REFERENCES member(member_id) ON DELETE CASCADE,
+    ADD FOREIGN KEY (vote_option_id) REFERENCES vote_options(vote_option_id) ON DELETE CASCADE
+    """
+
+    sql10 = """ALTER TABLE goods
+    ADD FOREIGN KEY (member_id) REFERENCES member(member_id) ON DELETE CASCADE,
+    ADD FOREIGN KEY (block_id) REFERENCES block(block_id) ON DELETE CASCADE
+    """
+    sql11 = """ALTER TABLE c_goods
+    ADD FOREIGN KEY (member_id) REFERENCES member(member_id) ON DELETE CASCADE,
+    ADD FOREIGN KEY (block_id) REFERENCES block(block_id) ON DELETE CASCADE,
+    ADD FOREIGN KEY (comment_id) REFERENCES block_comment(comment_id) ON DELETE CASCADE
     """
     cursor.execute(sql1)
     cursor.execute(sql2)
@@ -155,6 +217,10 @@ def build_foreign_key_ref(conn):
     cursor.execute(sql5)
     cursor.execute(sql6)
     cursor.execute(sql7)
+    cursor.execute(sql8)
+    cursor.execute(sql9)
+    cursor.execute(sql10)
+    cursor.execute(sql11)
     conn.commit()
 
 def auto_increment_set(conn):
@@ -164,6 +230,11 @@ def auto_increment_set(conn):
     cursor.execute(sql1)
     cursor.execute(sql2)
     cursor.execute(sql3)
+    conn.commit()
+
+def pre_insert_tags(conn):
+    cursor.execute("INSERT INTO tag(name,popularity,prime_level)VALUES(%s,%s,%s)",("新手引導",0,1))
+    cursor.execute("INSERT INTO tag(name,popularity,prime_level)VALUES(%s,%s,%s)",("Anonymous",0,1))
     conn.commit()
 
 
@@ -181,7 +252,13 @@ if __name__ == "__main__":
     build_table_block_tag(conn)
     build_table_block_comment(conn)
     build_table_nofiti(conn)
+    vote_options(conn)
+    votes(conn)
+    goods(conn)
+    c_goods(conn)
+    #關聯開始
     build_foreign_key_ref(conn)
     auto_increment_set(conn)
+    pre_insert_tags(conn)
     cursor.close()
     conn.close()

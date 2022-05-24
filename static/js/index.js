@@ -125,13 +125,11 @@ account_checker = () => {
       check_ok.style.display = "none";
       x.style.display = "block";
     return}
-  console.log("onchange!")
   //輸入停止一段時間後 執行一次帳號檢查
   const interval = setInterval(async()=>{
     if(!changing){return}
     const response = await fetch("/api/member?account_check="+sign_account.value);
     const result = await response.json();
-    console.log(result)
     if(result.ok==null && !result.error){
       console.log("this account OK!")
       changing = false
@@ -142,7 +140,6 @@ account_checker = () => {
       preview_span.innerHTML = sign_account.value;
 
     }else{
-      console.log("same account",result)
       changing = false
       loading.style.display = "none";
       check_ok.style.display = "none";
@@ -190,15 +187,41 @@ render_dates = () => {
 
 // GOOGLE AUTH
 
-  function handleCredentialResponse(response) {
-    // decodeJwtResponse() is a custom function defined by you
-    // to decode the credential response.
-    const responsePayload = decodeJwtResponse(response.credential);
+handleCredentialResponse = (response) => {
+  const responsePayload = decodeJwtResponse(response.credential);
+  google_login(responsePayload)
+}
 
-    console.log("ID: " + responsePayload.sub);
-    console.log("Full Name: " + responsePayload.name);
-    console.log("Given Name: " + responsePayload.given_name);
-    console.log("Family Name: " + responsePayload.family_name);
-    console.log("Image URL: " + responsePayload.picture);
-    console.log("Email: " + responsePayload.email);
-  }
+function decodeJwtResponse(token) {
+  var base64Url = token.split(".")[1];
+  var base64 = base64Url.replace(/-/g, "+").replace(/_/g, "/");
+  var jsonPayload = decodeURIComponent(
+    atob(base64)
+      .split("")
+      .map(function (c) {
+        return "%" + ("00" + c.charCodeAt(0).toString(16)).slice(-2);
+      })
+      .join("")
+  );
+
+  return JSON.parse(jsonPayload);
+};
+
+google_login = async(user_data)=>{
+    const options = {
+      method: "POST",
+      headers: { "content-type": "application/json" },
+      body: JSON.stringify({ user_data:user_data }),
+    };
+    const response = await fetch("/api/google_sign_in", options);
+    const result = await response.json();
+    if(result.ok=="let_in"){
+      window.location.href = result.account;
+      return
+    }
+    if(result.ok=="again"){
+      google_login(user_data);
+      return
+    }
+    console.log(result.error)
+}

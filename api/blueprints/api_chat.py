@@ -16,8 +16,8 @@ rooms = {}  # {socket_id : {who?:room,who2:room2...}} #兩個人都要有一樣�
 @socketio.on('awake')
 def init_chat(data):
     online[data["account"]]=request.sid#1.簽到
-    print("ONLINE狀態:",online)
-    print("ROOMS狀態:", rooms)
+    # print("ONLINE狀態:",online)
+    # print("ROOMS狀態:", rooms)
     friend_list = data["check_who_is_awake_too"]#{111:"off",222:"off"}
     online_box = {}
     for a_friend in friend_list:#2.查寢
@@ -76,7 +76,7 @@ def send_mess(data):
 #uid status
 @socketio.on('connect')
 def test_connect():
-    print('Client connected',request.sid)
+    # print('Client connected',request.sid)
     emit("connected",{"data":"connected confirm"})
 
 #User logout clear all the room created
@@ -84,7 +84,7 @@ def test_connect():
 def test_disconnect():
     if request.sid in rooms:
         del rooms[request.sid]
-    print('Client disconnected',request.sid)
+    # print('Client disconnected',request.sid)
 
 @socketio.on('left')
 def left(message):

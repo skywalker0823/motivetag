@@ -177,12 +177,6 @@ cursor: pointer;
     color:#1cbfff;
 }
 
-
-
-.block_submit{
-
-}
-
 .block_submit_btn{
     font-weight: bold;
     font-size: 16px;
@@ -197,7 +191,11 @@ cursor: pointer;
     padding: 9px 13px;
 }
 
-
+.block_guard{
+    text-align: center;
+    color: gray;
+    cursor: pointer;
+}
 
 .main_frame{
     display: flex;
@@ -308,6 +306,10 @@ cursor: pointer;
     text-decoration: none;
     color: #FFF;
 }
+.a_prime_name{
+    text-decoration: none;
+    color: rgb(226, 12, 252)
+}
 .del_tag{
     width: 8px;
     height: 8px;
@@ -403,7 +405,10 @@ cursor: pointer;
 .a_hot_tag{
     cursor: pointer;
 }
-
+.a_prime_tag{
+    cursor: pointer;
+    color: rgb(226, 12, 252);
+}
 
 .main_frame .member_blocks{
     width: 50%;
@@ -450,6 +455,10 @@ cursor: pointer;
 .block_typer{
     margin-left: 15px;
 }
+.block_anonymous{
+    margin-left: 15px;
+    color: rgb(226, 12, 252);
+}
 .block_content{
     overflow-wrap: break-word;
     margin-top: 25px;
@@ -472,6 +481,71 @@ cursor: pointer;
 .block_time{
     font-size: 9px;
     text-align: end;
+}
+.vote_boss{
+    display: flex;
+}
+.vote_display{
+    border-left: 1px solid #1cbfff;
+    display: flex;
+    flex-direction: column;
+    justify-content: space-around;
+    padding: 15px;
+    border-radius: 15px;
+    margin-bottom: 15px;
+    width: 49%;
+}
+.a_vote_box{
+    display: flex;
+    margin: 3px;
+    justify-content: space-between;
+}
+.chart_holder{
+    border-right: 1px solid #1cbfff;
+    padding: 15px;
+    border-radius: 15px;
+    margin-bottom: 15px;
+    width: 49%;
+}
+.vote_btn{
+    font-weight: bold;
+    border: 0;
+    cursor: pointer;
+    outline: none;
+    box-shadow: none;
+    border-radius: 999px;
+    display: inline-block;
+    /* background: #0b0c1b; */
+    background: none;
+    color: #1cbfff;
+    font-size: 13px;
+    border: solid 1px #1cbfff;
+}
+.vote_btn:active{
+    background-color: #FFF;
+    color: #000;
+}
+
+.the_canvas{
+    width: 100%;
+    height: 100%;
+}
+.see_result{
+    font-weight: bold;
+    border: 0;
+    cursor: pointer;
+    outline: none;
+    box-shadow: none;
+    border-radius: 999px;
+    /* background: #0b0c1b; */
+    background: none;
+    color: #1cbfff;
+    font-size: 15px;
+    border: solid 1px #1cbfff;
+}
+.see_result:active{
+    background-color: #FFF;
+    color: #000;
 }
 .good_box{
     display: flex;
@@ -757,3 +831,49 @@ footer{
 
 /* 預留色 */
 /* border-image: -webkit-linear-gradient(red,yellow) 30 30; */
+
+.voter{
+    width: 75%;
+    background: none;
+    display: none;
+    border-radius: 15px;
+    border-left: 1px #1cbfff solid;
+    border-right: 1px #1cbfff solid;
+    padding: 15px;
+    margin: 0 auto;
+    margin-top: 15px;
+}
+.del_vote{
+    width: 25px;
+    cursor: pointer;
+}
+.vote_header{
+    display: flex;
+    justify-content: space-between;
+}
+.vote_holder{
+
+}
+.a_option{
+    display: flex;
+}
+.option_input{
+    background: none;
+    border: 0;
+    border-bottom: solid 1px #1cbfff;
+    color: #FFF;
+    width: 100%;
+    font-size: 18px;
+}
+.option_input:focus{
+    outline: none;
+}
+
+.more_option{
+    width: 25px;
+    cursor: pointer;
+}
+.del_option{
+    width: 25px;
+    cursor: pointer;
+}

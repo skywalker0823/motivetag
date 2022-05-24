@@ -5,7 +5,7 @@
     <meta http-equiv="X-UA-Compatible" content="IE=edge">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <script src="https://unpkg.com/boxicons@2.1.2/dist/boxicons.js"></script>
-    <script src="https://accounts.google.com/gsi/client" onload="console.log('OAuth2.0')" async defer></script>   
+    <script src="https://accounts.google.com/gsi/client" async defer></script>   
     <link rel="stylesheet" href="css/index.css"/>
     <title>Login</title>
 </head>
@@ -32,21 +32,21 @@
             </div>
             <button id="login_submit" class="login_submit">登入</button>
             
-
+            <div class="mighty_google">
             <div id="g_id_onload"
             data-client_id="{{ google_oauth2_client_id }}"
-            data-login_uri="http://localhost:3000/api/google_sign_in"
+            data-callback="handleCredentialResponse"
             data-auto_prompt="false">
             </div>
             <div class="g_id_signin"
             data-type="standard"
-            data-size="medium"
+            data-size="large"
             data-theme="outline"
             data-text="sign_in_with"
             data-shape="pill"
             data-logo_alignment="left">
             </div>
-
+            </div>
 
     </section>
 

@@ -126,7 +126,9 @@ user_append_tag=(result)=>{
     a_tag.setAttribute("id", "tag"+result.member_tag_id);
     let tag_content = document.createTextNode(result.tag);
     word.appendChild(tag_content)
-    word.setAttribute("class","a_tag_name")
+    if(result.tag=="Anonymous"){
+        word.setAttribute("class","a_prime_name")
+    }else{word.setAttribute("class", "a_tag_name");}
     word.setAttribute("href","/tag/"+result.tag)
     a_tag.appendChild(word);
     a_tag.appendChild(del_tag);
@@ -154,7 +156,11 @@ render_hot_tags = (hot_tags) =>{
         let name = document.createTextNode(hot_tag.name)
         let pop = document.createTextNode(hot_tag.popularity)
         tag_name.setAttribute("onclick","append_from_hot(this.innerHTML)")
-        tag_name.setAttribute("class","a_hot_tag")
+        if (hot_tag.name == "Anonymous") {
+          tag_name.setAttribute("class", "a_prime_tag");
+        } else {
+          tag_name.setAttribute("class", "a_hot_tag");
+        }
         a_tag.setAttribute("class","a_hot_box")
         ranking.appendChild(document.createTextNode(rank));
         tag_name.appendChild(name)

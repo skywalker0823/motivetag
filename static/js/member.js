@@ -52,7 +52,9 @@ init_render_tags = (tags) => {
     del_tag.setAttribute("onclick","del_tag(this.id)")
     let tag_content = document.createTextNode(tags[tag].name);
     tag_name.setAttribute("href", "/tag/" + tags[tag].name);
-    tag_name.setAttribute("class","a_tag_name")
+    if(tags[tag].name=="Anonymous"){
+        tag_name.setAttribute("class", "a_prime_name");
+    }else{tag_name.setAttribute("class", "a_tag_name");}
     tag_name.appendChild(tag_content)
     a_tag.appendChild(tag_name);
     a_tag.appendChild(del_tag)
@@ -100,7 +102,3 @@ upload_user_img = async() => {
     document.getElementById("user_main_avatar").setAttribute("src", "https://d3nvrufajko3tj.cloudfront.net/avatar_"+my_id);
   }
 }
-
-// render_user_img = async() => {
-//   let who = //url
-// }

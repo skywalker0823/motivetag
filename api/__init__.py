@@ -22,6 +22,7 @@ def create_app(config_name):
     from api.blueprints.api_notification import api_notification
     from api.blueprints.api_chat import api_chat
     from api.blueprints.api_tag_page import api_tag_page
+    from api.blueprints.api_vote import api_vote
     app.register_blueprint(api_member)
     app.register_blueprint(api_blocks)
     app.register_blueprint(api_tags)
@@ -31,6 +32,7 @@ def create_app(config_name):
     app.register_blueprint(api_notification)
     app.register_blueprint(api_chat)
     app.register_blueprint(api_tag_page)
+    app.register_blueprint(api_vote)
     GOOGLE_OAUTH2_CLIENT_ID = os.getenv("GOOGLE_CLIENT_ID")
     
     @app.route("/")

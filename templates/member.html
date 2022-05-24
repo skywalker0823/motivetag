@@ -94,6 +94,15 @@
                         <button class="block_submit_btn" id="block_submit_btn">Build</button>
                     </div>
                 </div>
+                <div class="block_guard" id="block_guard" onclick="bye_guard(this.id)"></div>
+                <div class="voter" id="voter">
+                    <div class="vote_header"><p>投票設定(至多五項)</p><img id="del_vote" class="del_vote" src="/img/x.png"></div>
+                        <div class="vote_holder" id="vote_holder">
+                            <div class="a_option"><input class="option_input" type="text" placeholder="選項"></div>
+                            <div class="a_option"><input class="option_input" type="text" placeholder="選項"></div>
+                        </div>
+                        <div><img class="more_option" onclick="more_options()" src="/img/plus.png"></div>
+                </div>
                 <div class="img_pre_box" id="img_pre_box">
                     <img src="#" id="upload_preview" class="upload_img_preview">
                     <p onclick="cancel_upload()">取消</p>
@@ -107,7 +116,7 @@
                             </label>
                             <input id="upload_block_img" onchange="upload_block_img_preview()" type="file" style="display: none;"/>
                         </div>
-                        <box-icon name='poll' color="#ed096d"></box-icon>
+                        <box-icon name='poll' color="#ed096d" onclick="start_poll()"></box-icon>
                         <box-icon name='face' type='solid' color='#e9ed09' ></box-icon>
                         <box-icon name='location-plus' color='#fcb00c' ></box-icon>
                     </div>
@@ -158,6 +167,7 @@
 <script type="text/javascript" src="js/notifi.js"></script>
 <script type="text/javascript" src="js/chat.js"></script>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/moment.js/2.29.3/moment.min.js"></script>
-
+<script type="text/javascript" src="js/vote.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/2.5.0/Chart.min.js"></script>
 </body>
 </html>
