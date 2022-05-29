@@ -15,7 +15,6 @@ document.getElementById("del_vote").addEventListener("click",()=>{
 more_options = () =>{
     if(voter_counter>=5){
         console.log("Full!")
-        
         return
     }
     voter_counter=0
@@ -110,9 +109,9 @@ see_vote_result = async (id) => {
         labels: xValues,
         datasets: [
           {
-            backgroundColor: "rgba(219, 107, 129, 86)",
+            backgroundColor: "#1cbfff",
             data: yValues,
-            borderColor: "rgba(86, 129, 108, 86)",
+            borderColor: "#FFF",
             borderWidth: 1,
           },
         ],

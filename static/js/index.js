@@ -62,6 +62,7 @@ signin = async() => {
   let password = document.querySelector("#password").value;
   let account_x = document.getElementById("account_x")
   let pass_x = document.getElementById("pass_x")
+  let time = moment().format("YYYY-MM-DD HH:mm:ss");
   if(!account){
     account_x.style.display="block"
     return
@@ -73,7 +74,11 @@ signin = async() => {
   const options = {
     method: "PUT",
     headers: { "content-type": "application/json" },
-    body: JSON.stringify({account:account,password:password}),
+    body: JSON.stringify({
+      account:account,
+      password:password,
+      time:time
+    }),
   };
   const response = await fetch("/api/member",options)
   const result = await response.json();

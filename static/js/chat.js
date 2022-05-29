@@ -185,7 +185,13 @@ init_chat_with = (account) =>{
             chatting_list[account]=result.room
             return
         }
-        console.log(result.error)
+        let notifi={}
+        notifi["me"]=my_id;
+        notifi["someone_else"] = account
+        notifi["type"]="chat request"
+        notifi["content"] = me + "想找你聊天但你不在!";
+        notifi["time"] = moment().format("YYYY-MM-DD HH:mm:ss");
+        send_notifi(notifi)
     })
 }
 
@@ -219,9 +225,13 @@ socket.on("message",(data)=>{
 //送出:訊息
 send_chat = (btn_id) =>{
     //藉由id來知道是給誰的訊息
-    account = btn_id.split("send_btn")[1]
+      account = btn_id.split("send_btn")[1];
     if(!chatting_list[account]){
         return
+    }
+    if (document.getElementById("chat_input" + account).value == "") {
+      console.log("null input")
+      return;
     }
     room = chatting_list[account]
     message = document.getElementById("chat_input"+account).value

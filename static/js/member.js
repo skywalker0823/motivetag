@@ -3,6 +3,7 @@ let my_id
 
 document.addEventListener("DOMContentLoaded", async() => {
   result = await check_user_identity();//1 個人資料
+  console.log(result)
   me = result.data.account
   my_id = result.data.member_id
   init_render_user(result)
@@ -54,7 +55,10 @@ init_render_tags = (tags) => {
     tag_name.setAttribute("href", "/tag/" + tags[tag].name);
     if(tags[tag].name=="Anonymous"){
         tag_name.setAttribute("class", "a_prime_name");
-    }else{tag_name.setAttribute("class", "a_tag_name");}
+    }else{
+      tag_name.setAttribute("class", "a_tag_name");
+      tag_name.setAttribute("id", "a_tag_name" + tags[tag].member_tag_id);
+  }
     tag_name.appendChild(tag_content)
     a_tag.appendChild(tag_name);
     a_tag.appendChild(del_tag)
@@ -67,6 +71,7 @@ init_render_user = (user_data) => {
   let account = document.createTextNode(user_data.data.account);
   let email = document.createTextNode(user_data.data.email)
   let first_signup = document.createTextNode(user_data.data.first_signup.slice(0,17))
+  let exp = user_data.data.exp
   let member_img = user_data.data.member_img
   let user_account = document.getElementById("user_account");
   let user_mail = document.getElementById("user_mail");
@@ -80,6 +85,7 @@ init_render_user = (user_data) => {
   user_account.appendChild(account)
   user_mail.appendChild(email)
   user_firstday.appendChild(first_signup)
+  render_level(exp)
 }
 
 upload_user_img = async() => {

@@ -50,22 +50,23 @@ def get_tags_global():
     return {"ok": True, "hot_tags": result}
 
 #增加此tag pop
-@api_tags.route("/api/tags", methods=["PATCH"])
-def adjust_global_tag():
+@api_tags.route("/api/tag", methods=["PATCH"])
+def upgrade_global_tag():
     data = request.get_json()
     tag = data["tag"]
     member_id = session.get("member_id")
-    tag_global_update = Tag.adjust_global_tag(tag, member_id)
+    tag_global_update = Tag.upping_global_tag(tag, member_id)
     return {"msg": tag_global_update}
 
 #減低此tag pop
-@api_tags.route("/api/tags", methods=["DELETE"])
-def delete_tag():
+@api_tags.route("/api/tag", methods=["DELETE"])
+def down_tag():
     data = request.get_json()
     tag = data["tag"]
-    id = session.get("id")
-    tag_update = Tag.adjust_global_tag(id, tag)
-    return {"ok":tag_update}
+    tag_update = Tag.downing_global_tag(tag)
+    if(tag_update==1):
+        return {"ok":tag_update}
+    return {"error":"dowing failed"}
 
 
 

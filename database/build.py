@@ -20,7 +20,9 @@ def build_member(conn):
         birthday DATE,
         first_signup DATE NOT NULL,
         last_signin DATETIME,
-        member_img varchar(100)
+        member_img varchar(100),
+        follower INT default 0,
+        exp INT default 0
     )"""
     cursor.execute(sql)
     conn.commit()
@@ -75,7 +77,8 @@ def build_table_block(conn):
         build_time DATETIME,
         good INT DEFAULT 0,
         bad INT DEFAULT 0,
-        block_img varchar(100)
+        block_img varchar(100),
+        total_score INT DEFAULT 0
     )"""
     cursor.execute(sql)
     conn.commit()
@@ -100,7 +103,8 @@ def build_table_block_comment(conn):
         block_id INT NOT NULL,
         content TEXT,
         build_time DATETIME,
-        nice_comment INT DEFAULT 0
+        nice_comment INT DEFAULT 0,
+        given_score INT DEFAULT 0
     )"""
     cursor.execute(sql)
     conn.commit()
@@ -113,7 +117,7 @@ def build_table_nofiti(conn):
         sender_id INT NOT NULL,
         reciever_id INT NOT NULL,
         content TEXT,
-        read_time DATETIME
+        send_time DATETIME
     )"""
     cursor.execute(sql)
     conn.commit()
@@ -124,6 +128,7 @@ def vote_options(conn):
     sql = """CREATE TABLE vote_options(
         vote_option_id INT NOT NULL AUTO_INCREMENT PRIMARY KEY,
         block_id INT NOT NULL,
+        best_before datetime,
         option_name TEXT
     )"""
     cursor.execute(sql)
@@ -155,13 +160,62 @@ def c_goods(conn):
     sql = """CREATE TABLE c_goods(
         c_good_id INT NOT NULL AUTO_INCREMENT PRIMARY KEY,
         comment_id INT NOT NULL,
-        block_id INT NOT NULL,
         member_id INT NOT NULL
     )"""
     cursor.execute(sql)
     conn.commit()
 
 
+def bads(conn):
+    cursor.execute("DROP TABLE IF EXISTS bads")
+    sql = """CREATE TABLE bads(
+        bad_id INT NOT NULL AUTO_INCREMENT PRIMARY KEY,
+        member_id INT NOT NULL,
+        block_id INT NOT NULL
+    )"""
+    cursor.execute(sql)
+    conn.commit()
+
+
+def bricks(conn):
+    cursor.execute("DROP TABLE IF EXISTS bricks")
+    sql = """CREATE TABLE bricks(
+        brick_id INT NOT NULL AUTO_INCREMENT PRIMARY KEY,
+        member_id INT,
+        tag_id INT,
+        title varchar(100),
+        content TEXT,
+        classifi varchar(100),
+        feedbacks INT default 0,
+        popularity INT default 0,
+        time DATETIME
+    )
+    """
+    cursor.execute(sql)
+    conn.commit()
+
+def brick_discuss(conn):
+    cursor.execute("DROP TABLE IF EXISTS brick_discuss")
+    sql = """CREATE TABLE brick_discuss(
+        brick_discuss_id INT NOT NULL AUTO_INCREMENT PRIMARY KEY,
+        member_id INT,
+        brick_id INT,
+        content TEXT,
+        time datetime
+    )
+    """
+    cursor.execute(sql)
+    conn.commit()
+
+def follower(conn):
+    cursor.execute("DROP TABLE IF EXISTS follower")
+    sql = """CREATE TABLE follower(
+        follow_id INT NOT NULL AUTO_INCREMENT PRIMARY KEY,
+        member_id INT NOT NULL,
+        follow_who INT NOT NULL
+    )"""
+    cursor.execute(sql)
+    conn.commit()
 
 #references
 def build_foreign_key_ref(conn):
@@ -207,9 +261,26 @@ def build_foreign_key_ref(conn):
     """
     sql11 = """ALTER TABLE c_goods
     ADD FOREIGN KEY (member_id) REFERENCES member(member_id) ON DELETE CASCADE,
-    ADD FOREIGN KEY (block_id) REFERENCES block(block_id) ON DELETE CASCADE,
     ADD FOREIGN KEY (comment_id) REFERENCES block_comment(comment_id) ON DELETE CASCADE
     """
+    sql12 = """ALTER TABLE bads
+    ADD FOREIGN KEY (member_id) REFERENCES member(member_id) ON DELETE CASCADE,
+    ADD FOREIGN KEY (block_id) REFERENCES block(block_id) ON DELETE CASCADE
+    """
+    sql13 = """ALTER TABLE bricks
+    ADD FOREIGN KEY (member_id) REFERENCES member(member_id) ON DELETE SET NULL,
+    ADD FOREIGN KEY (tag_id) REFERENCES tag(tag_id) ON DELETE SET NULL
+    """
+    sql14 = """ALTER TABLE brick_discuss
+    ADD FOREIGN KEY (member_id) REFERENCES member(member_id) ON DELETE SET NULL,
+    ADD FOREIGN KEY (brick_id) REFERENCES bricks(brick_id) ON DELETE SET NULL
+    """
+    sql15 = """ALTER TABLE follower
+    ADD FOREIGN KEY (member_id) REFERENCES member(member_id) ON DELETE CASCADE,
+    ADD FOREIGN KEY (follow_who) REFERENCES member(member_id) ON DELETE CASCADE
+    """
+
+
     cursor.execute(sql1)
     cursor.execute(sql2)
     cursor.execute(sql3)
@@ -221,6 +292,10 @@ def build_foreign_key_ref(conn):
     cursor.execute(sql9)
     cursor.execute(sql10)
     cursor.execute(sql11)
+    cursor.execute(sql12)
+    cursor.execute(sql13)
+    cursor.execute(sql14)
+    cursor.execute(sql15)
     conn.commit()
 
 def auto_increment_set(conn):
@@ -233,8 +308,10 @@ def auto_increment_set(conn):
     conn.commit()
 
 def pre_insert_tags(conn):
-    cursor.execute("INSERT INTO tag(name,popularity,prime_level)VALUES(%s,%s,%s)",("新手引導",0,1))
+    cursor.execute("INSERT INTO tag(name,popularity,prime_level)VALUES(%s,%s,%s)",("新手引導",0,5))
+    cursor.execute("INSERT INTO tag(name,popularity,prime_level)VALUES(%s,%s,%s)",("BroadCast",0,3))
     cursor.execute("INSERT INTO tag(name,popularity,prime_level)VALUES(%s,%s,%s)",("Anonymous",0,1))
+    cursor.execute("INSERT INTO tag(name,popularity,prime_level)VALUES(%s,%s,%s)",("MotiveTag",0,None))
     conn.commit()
 
 
@@ -256,6 +333,10 @@ if __name__ == "__main__":
     votes(conn)
     goods(conn)
     c_goods(conn)
+    bads(conn)
+    bricks(conn)
+    brick_discuss(conn)
+    follower(conn)
     #關聯開始
     build_foreign_key_ref(conn)
     auto_increment_set(conn)

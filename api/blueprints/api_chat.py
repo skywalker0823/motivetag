@@ -59,7 +59,6 @@ def init_room(data):
         return
     #自開
     new_room = "room"+str(randint(10000, 99999))+str(time.time())
-    print(new_room)
     if request.sid not in rooms or len(rooms[request.sid]) == 0:
         rooms[request.sid] = {who_to_chat:new_room}
     else:
@@ -93,7 +92,6 @@ def left(message):
     emit("message", {"type": "message", "to": message["account"], "from": message["me"],
                      "content": message["me"]+" 離開了QQ!", "room": message["room"]}, room=message["room"])
     del rooms[request.sid][message["account"]]
-    print(message)
     room = message["room"]
     emit('status', {'msg': session.get("account") +
          ' has left the room.'}, room=room)

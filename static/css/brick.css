@@ -1,0 +1,111 @@
+body, div, dl, dt, dd, ul, ol, li, h1, h2, h3, h4, h5, h6, pre, code, form, fieldset, legend, input, textarea, p, blockquote, th, td {
+    margin: 0;
+    padding: 0;
+}
+body{
+    width: 100%;
+    height: 100%;
+    color: #1cbfff;
+    background: #0b0c1b;
+    cursor:default;
+}
+
+
+.tag_nav{
+    display: flex;
+    justify-content: space-between;
+
+    height: 42px;
+    top: 0;
+    left: 0;
+    font: 15px 'Helvetica Neue', Helvetica, Arial, 'lucida grande', tahoma, verdana, arial, sans-serif;
+    color: #FFF;
+    box-sizing: border-box;
+    padding: 4px 1.2%;
+    display: flex;
+    justify-content: space-between;
+    white-space: nowrap;
+
+    opacity: 0.9;
+    text-align: center;
+    align-items: center;
+
+
+}
+.back{
+    cursor: pointer;
+}
+.tag_title{
+    display: flex;
+    align-items: flex-end;
+}
+.key_box{
+    font-size: 50px;
+    padding: 25px;
+}
+
+.content_holder{
+    width: 85%;
+    margin: 0 auto;
+    font-size: 35px;
+    margin-top: 15px;
+    margin-bottom: 15px;
+}
+.content{
+    color: #f6f3ed;
+}
+
+.feedback_holder{
+    width: 85%;
+    margin: 0 auto;
+}
+.feedback{
+    width: 100%;
+    text-align: center;
+}
+.feedback_input{
+    width: 75%;
+    border: none;
+    background: none;
+    border-radius: 6px;
+    color: #000;
+    border-bottom: #1cbfff 1px solid;
+    color: #1cbfff;
+    font-size: 25px;
+    resize: none;
+    padding: 5px;
+}
+.feedback_input:focus{
+    outline: none;
+}
+.feedback_btn{
+    font-weight: bold;
+    font-size: 16px;
+    border: 0;
+    cursor: pointer;
+    font-weight: bold;
+    background-color: #0b0c1b;
+    color: #1cbfff;
+}
+.brick_discuss{
+    width: 85%;
+    margin: 0 auto;
+    margin-top: 30px;
+}
+.a_discuss_box{
+    display: flex;
+    justify-content: space-around;
+}
+
+.account_box{
+    color: white;
+}
+
+.content_box{
+    margin-left: 15px;
+}
+
+.time_box{
+    color: gray;
+    margin-left: 15px;
+}

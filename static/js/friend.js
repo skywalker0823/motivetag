@@ -44,6 +44,8 @@ document.getElementById("friend_search_btn").addEventListener("click", async () 
         result["content"] = "你有一則好友邀請來自:" + me;
         result["time"] = moment().format("YYYY-MM-DD HH:mm:ss");
         send_notifi(result)
+        invite=""
+
       }
   }
 });
@@ -83,6 +85,10 @@ render_friend_status=(data)=>{
       // console.log(one_data)
         let req_f = one_data.req_from
         let req_t = one_data.req_to
+
+        let req_f_id = one_data.req_from_id
+        let req_t_id = one_data.req_to_id
+
         let status = one_data.status
         let friend_ship_id = one_data.friend_ship_id;
         if(req_t==me && status=="1"){
@@ -92,7 +98,7 @@ render_friend_status=(data)=>{
             render_ur_request(req_t,friend_ship_id)
 
         }else{
-            render_ur_friend(req_f, req_t, status, friend_ship_id);
+            render_ur_friend(req_f, req_t, status, friend_ship_id,req_f_id,req_t_id);
         }
     }
 }
@@ -138,12 +144,14 @@ render_ur_request = (req_t, friend_ship_id) => {
 };
 
 //載入時render好友
-render_ur_friend = (req_f, req_t, status, friend_ship_id) => {
+render_ur_friend = (req_f, req_t, status, friend_ship_id,req_f_id,req_t_id) => {
   let friend_list = document.getElementById("friend_list");
   if (me == req_f) {
     friend = req_t;
+    friend_id = req_t_id
   } else {
     friend = req_f;
+    friend_id = req_f_id
   }
   a_friend = document.createTextNode(friend);
   friend_box = document.createElement("div");
@@ -152,8 +160,9 @@ render_ur_friend = (req_f, req_t, status, friend_ship_id) => {
   friend_avatar = document.createElement("box-icon");
   friend_avatar.setAttribute("name", "user");
   friend_avatar.setAttribute("color", "#f71523");
-  friend_avatar.setAttribute("id","friend_avatar"+friend)
+  friend_avatar.setAttribute("id","friend_avatar"+friend_id)
   friend_avatar.setAttribute("class", "friend_avatar");
+  friend_avatar.setAttribute("onclick", "display_member_info(this.id)");
 
 
   friend_box.setAttribute("id","friend_box"+friend_ship_id)
@@ -230,6 +239,9 @@ befriend = async(id)=>{
       time: moment().format("YYYY-MM-DD HH:mm:ss"),
     };
     send_notifi(data);
+    document.getElementById("pop_add").innerHTML = "已是好友";
+    document.getElementById("pop_add").style.color = "#1cbfff";
+    document.getElementById("pop_add").setAttribute("onclick", "#");
   }
 }
 
@@ -296,3 +308,12 @@ delete_friend = async(id) =>{
   console.log("del friend fail")
 
 }
+
+
+
+pop_add_friend = (id) =>{
+  document.getElementById("friend_searcher").value = id;
+  document.getElementById("friend_search_btn").click();
+  document.getElementById("pop_add").innerHTML="已送出邀請"
+}
+

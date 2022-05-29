@@ -1,4 +1,5 @@
 
+from crypt import methods
 from data.data import Block,Block_tags,Vote_table
 from module import tag_filter
 from flask import request, session
@@ -9,8 +10,9 @@ from . import api_blocks
 @api_blocks.route("/api/blocks", methods=["GET"])
 def check_blocks():
     page = request.args.get("page")
+    key = request.args.get("key")
     member_id = session.get("member_id")
-    result = Block.get_block(member_id,page)
+    result = Block.get_block(member_id,page,key)
     if result["msg"]=="No blocks found":
         return {"error":"No Blocks"}
     for a_block in result["datas"]:
@@ -23,6 +25,8 @@ def check_blocks():
         return {"ok":True,"data":result["datas"]}
     else:
         return {"error":True,"msg":result["msg"]}
+
+
 
 
 @api_blocks.route("/api/blocks", methods=["POST"])
@@ -50,6 +54,10 @@ def gooding_blocks():
     try:
         data = request.get_json()
         block_id = data["block_id"]
+        member_id = session.get("member_id")
+        checker = Block.good_block_checker(member_id,block_id)
+        if checker==0:
+            return {"error":"you pressed this good  before"}
         result = Block.good_block(block_id)
         return result
     except Exception as e:
@@ -63,6 +71,10 @@ def bading_blocks():
     try:
         data = request.get_json()
         block_id = data["block_id"]
+        member_id = session.get("member_id")
+        checker = Block.bad_block_checker(member_id, block_id)
+        if checker == 0:
+            return {"error": "you pressed this boo before"}
         result = Block.bad_block(block_id)
         return result
     except Exception as e:

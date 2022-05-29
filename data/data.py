@@ -1,5 +1,4 @@
 
-from numpy import block
 import pymysql
 import os, traceback
 from dbutils.pooled_db import PooledDB
@@ -65,9 +64,10 @@ class Member:
             print(traceback.format_exc())
             return "sign up database error"
         #登入
-    def sign_in(account,password):
+    def sign_in(account,password,time):
         # try:
         with connection.cursor() as cursor:
+            cursor.execute("UPDATE member SET last_signin=%s WHERE account=%s",(time,account))
             got=cursor.execute("SELECT * FROM member WHERE account=%s", (account,))
             result = cursor.fetchone()
             connection.commit()
@@ -83,10 +83,16 @@ class Member:
         #刪除
         return None
 
+    def getting_data_without_private(member_id):
+        with connection.cursor() as cursor:
+            cursor.execute("SELECT account,birthday,first_signup,last_signin,follower,exp FROM member WHERE member_id=%s",(member_id))
+            data = cursor.fetchone()
+            return data
+
 
 class Block:
   #預設內容 自己all+朋友all+tag內容
-    def get_block(member_id,page,member_tags=None):
+    def get_block(member_id,page,obseve_key=None):
         page=int(page)
         with connection.cursor() as cursor:
             #此Query已經可以完整抓出自己與好友的貼文 時間排序 limit10 
@@ -94,7 +100,9 @@ class Block:
             #最後的query專注在取出此使用者關注tag的所有文章
             #分拆Query 依照每次要求來組合Query UNION為分界點
             sql_me=None
-            sql_key=None
+            sql_observe_key = """SELECT account,block_id, block.member_id, content_type, content, build_time,good,bad,block_img
+                                 FROM block RIGHT JOIN member ON member.member_id=block.member_id
+                                 WHERE block_id IN(SELECT block_id FROM block_tag WHERE tag_id=(SELECT tag_id FROM tag WHERE name=%s))ORDER BY build_time DESC LIMIT %s,%s"""
             sql_friend=None
             sql_all = """SELECT account,block_id, block.member_id, content_type, content, build_time,good,bad,block_img
                                  FROM block RIGHT JOIN member ON member.member_id=block.member_id
@@ -109,7 +117,10 @@ class Block:
                                                                SELECT (SELECT account FROM member WHERE member_id=block.member_id)AS account,block_id,block.member_id,content_type,content,build_time,good,bad,block_img FROM block WHERE block_id IN(SELECT block_id FROM block_tag WHERE tag_id IN(SELECT tag_id FROM member_tags WHERE member_id=%s))
                                  ORDER BY build_time DESC
                                  LIMIT %s,%s"""
-            got = cursor.execute(sql_all, (member_id, member_id, member_id, member_id, member_id,member_id,page,5))
+            if obseve_key==None:
+                got = cursor.execute(sql_all, (member_id, member_id, member_id, member_id, member_id,member_id,page,5))
+            else:
+                got = cursor.execute(sql_observe_key,(obseve_key,page,5))
             result = cursor.fetchall()
             connection.commit()
             if got == 0:
@@ -151,6 +162,14 @@ class Block:
             result=cursor.execute("UPDATE block SET good=good+1 WHERE block_id=%s",(block_id))
             connection.commit()
             return {"ok":result}
+    def good_block_checker(member_id,block_id):
+        with connection.cursor() as cursor:
+            result = cursor.execute(
+                "INSERT INTO goods(member_id,block_id) SELECT * FROM (SELECT %s,%s) AS tmp WHERE NOT exists (SELECT member_id,block_id FROM goods WHERE member_id=%s AND block_id=%s) LIMIT 1;", (member_id, block_id, member_id, block_id))
+            connection.commit()
+            return result
+
+    
 
     def bad_block(block_id):
         with connection.cursor() as cursor:
@@ -158,6 +177,12 @@ class Block:
                 "UPDATE block SET bad=bad+1 WHERE block_id=%s", (block_id))
             connection.commit()
             return {"ok": result}
+    def bad_block_checker(member_id,block_id):
+        with connection.cursor() as cursor:
+            result = cursor.execute(
+                "INSERT INTO bads(member_id,block_id) SELECT * FROM (SELECT %s,%s) AS tmp WHERE NOT exists (SELECT member_id,block_id FROM bads WHERE member_id=%s AND block_id=%s) LIMIT 1;", (member_id, block_id, member_id, block_id))
+            connection.commit()
+            return result
     def modify_block(key,value):
         with connection.cursor() as cursor:
             result = cursor.execute("UPDATE block SET block_img=%s WHERE block_id=%s",(value,key))
@@ -243,7 +268,7 @@ class Tag:
             connection.commit()
             return result
 
-    def adjust_global_tag(tag,member_id):
+    def upping_global_tag(tag,member_id):
         #自適應傳入tag若有重複將會增加pop 若無將會創新
         try:
             with connection.cursor() as cursor:
@@ -254,6 +279,12 @@ class Tag:
             print("type error: " + str(e))
             print(traceback.format_exc())
             return {"msg": "global tag adjust database error"}
+
+    def downing_global_tag(tag):
+        with connection.cursor() as cursor:
+            result = cursor.execute("UPDATE tag SET popularity=popularity-1 WHERE name=%s",(tag))
+            connection.commit()
+            return result
 
 
 class Friend:
@@ -268,7 +299,7 @@ class Friend:
             #GET ALL FRIEND
             with connection.cursor() as cursor:
                 result = cursor.execute(
-                    "SELECT friend_ship_id,(SELECT account FROM member WHERE request_from=member_id)AS req_from,(SELECT account FROM member WHERE request_to=member_id)AS req_to,status FROM friendship WHERE (request_from=%s OR request_to=%s)AND(status=%s OR status=%s)", (me, me, "0", "1"))
+                    "SELECT friend_ship_id,request_from AS req_from_id,request_to AS req_to_id,(SELECT account FROM member WHERE request_from=member_id)AS req_from,(SELECT account FROM member WHERE request_to=member_id)AS req_to,status FROM friendship WHERE (request_from=%s OR request_to=%s)AND(status=%s OR status=%s)", (me, me, "0", "1"))
                 data = cursor.fetchall()
                 connection.commit()
             return {"data":data,"count":result,"msg":"friend status fetch"}
@@ -336,13 +367,23 @@ class Friend:
             return {"ok":"Delete Frind success","result":result}
 
 
+    #吞兩者id 吐出True/False 是不是朋友 一翻兩瞪眼
+    def friend_ship_checker(member_id,target_id):
+        with connection.cursor() as cursor:
+            cursor.execute("SELECT * FROM friendship WHERE (request_from=%s AND request_to=%s)OR(request_from=%s AND request_to=%s)",(member_id,target_id,target_id,member_id))
+            result = cursor.fetchone()
+        return result
+
+
+
+
 
 
 class Message:
     def get_message_of_a_block(block_id):
         with connection.cursor() as cursor:
             cursor.execute("""
-                SELECT (SELECT account FROM member WHERE block_comment.member_id=member.member_id)AS account,comment_id,member_id,content,build_time,nice_comment FROM block_comment WHERE block_id=%s
+                SELECT (SELECT account FROM member WHERE block_comment.member_id=member.member_id)AS account,comment_id,member_id,content,build_time,nice_comment,given_score FROM block_comment WHERE block_id=%s
             """,(block_id))
             data = cursor.fetchall()
             connection.commit()
@@ -355,9 +396,10 @@ class Message:
                     member_id,
                     block_id,
                     content,
-                    build_time
-                )VALUES(%s,%s,%s,%s);
-            """,(member_id,message["block_id"],message["message"],message["time"]))
+                    build_time,
+                    given_score
+                )VALUES(%s,%s,%s,%s,%s);
+            """,(member_id,message["block_id"],message["message"],message["time"],message["score"]))
             cursor.execute("SELECT LAST_INSERT_ID()")
             id = cursor.fetchone()
             connection.commit()
@@ -365,14 +407,24 @@ class Message:
                 return {"ok":id}
             return {"error":"message POST Error"}
 
-    def nice_block(comment_id):
+    def nice_message(comment_id):
         with connection.cursor() as cursor:
             result = cursor.execute(
                 "UPDATE block_comment SET nice_comment=nice_comment+1 WHERE comment_id=%s", (comment_id))
             connection.commit()
             return {"ok": result}
-
-
+    def nice_message_checker(member_id,message_id):
+        with connection.cursor() as cursor:
+            result = cursor.execute(
+                "INSERT INTO c_goods(member_id,comment_id) SELECT * FROM (SELECT %s,%s) AS tmp WHERE NOT exists (SELECT member_id,comment_id FROM c_goods WHERE member_id=%s AND comment_id=%s) LIMIT 1;", (member_id, message_id, member_id, message_id))
+            connection.commit()
+            return result
+    
+# with connection.cursor() as cursor:
+#     result = cursor.execute(
+#         "INSERT INTO goods(member_id,block_id) SELECT * FROM (SELECT %s,%s) AS tmp WHERE NOT exists (SELECT member_id,block_id FROM goods WHERE member_id=%s AND block_id=%s) LIMIT 1;", (member_id, block_id, member_id, block_id))
+#     connection.commit()
+#     return result
 
 
 
@@ -412,7 +464,7 @@ class Notification:
                     sender_id,
                     reciever_id,
                     content,
-                    read_time
+                    send_time
                 )VALUES(%s,(SELECT member_id FROM member WHERE account=%s),%s,%s)""", (me, who, content,time)
                 )
             connection.commit()
@@ -441,7 +493,6 @@ class Vote_table:
             connection.commit()
         return data
     def create_vote(block_id,votes):
-        print("正在登記vote")
         try:
             with connection.cursor() as cursor:
                 for vote in votes:
@@ -494,3 +545,77 @@ class Vote:
         return
     def del_vote():
         return
+
+class Tag_info:
+    def get_tag_info(tag_name):
+        #取得該Tag文章資料(除內文外)
+        with connection.cursor() as cursor:
+            cursor.execute("""
+            SELECT brick_id,(SELECT account FROM member WHERE member.member_id=bricks.member_id)AS account,tag_id,title,classifi,popularity,feedbacks,time FROM bricks WHERE tag_id=(SELECT tag_id FROM tag WHERE name=%s) ORDER BY time DESC
+            """,(tag_name))
+            data = cursor.fetchall()
+            connection.commit()
+        return data
+    def post_tag_info(data):
+        with connection.cursor() as cursor:
+            result = cursor.execute("""INSERT INTO bricks(
+                member_id,
+                tag_id,
+                title,
+                content,
+                classifi,
+                time
+            )VALUES(%s,(SELECT tag_id FROM tag WHERE name=%s),%s,%s,%s,%s)
+            """,(data["member_id"],data["tag_name"],data["title"],data["content"],data["classifi"],data["time"]))
+            connection.commit()
+        return result
+
+    def modify_tag_info(brick_id):
+                with connection.cursor() as cursor:
+                    result = cursor.execute("UPDATE bricks SET popularity=popularity+1 WHERE brick_id=%s",(brick_id))
+                    connection.commit()
+                    return result
+
+
+class Level:
+    def get_current_exp(member_id):
+        return
+    def exp_up(member_id,exp):
+        with connection.cursor() as cursor:
+            result = cursor.execute("UPDATE member SET exp=exp+%s WHERE member_id=%s",(exp,member_id))
+            connection.commit()
+        return result
+    def exp_down(member_id,exp):
+        return
+
+
+
+class Bricks:
+    #取得該Tag某文章
+    def getting_brick(brick_id):
+        with connection.cursor() as cursor:
+            cursor.execute("SELECT brick_id,(SELECT account FROM member WHERE bricks.member_id=member.member_id)AS account,tag_id,title,content,classifi,feedbacks,popularity,time FROM bricks WHERE brick_id=%s",(brick_id))
+            result = cursor.fetchall()
+            connection.commit()
+        return result
+
+
+    def getting_brick_discuss(brick_id):
+        with connection.cursor() as cursor:
+            cursor.execute("SELECT (SELECT account FROM member WHERE member.member_id=brick_discuss.member_id)AS account,content,time FROM brick_discuss WHERE brick_id=%s ORDER BY time DESC",(brick_id))
+            datas = cursor.fetchall()
+            connection.commit()
+            return datas
+
+
+    def posting_brick_discuss(datas):#內含member_id,content,time,brick_id
+        with connection.cursor() as cursor:
+            result = cursor.execute("INSERT INTO brick_discuss(member_id,brick_id,content,time)VALUES(%s,%s,%s,%s)",(datas["member_id"],datas["brick_id"],datas["content"],datas["time"]))
+            connection.commit()
+            return result
+
+    def patching_brick_discuss(brick_id):
+        with connection.cursor() as cursor:
+            result = cursor.execute("UPDATE bricks SET feedbacks=feedbacks+1 WHERE brick_id=%s",(brick_id))
+            connection.commit()
+            return result

@@ -7,6 +7,7 @@ body{
     height: 100%;
     color: #1cbfff;
     background: #0b0c1b;
+    cursor:default;
 }
 box-icon{
     cursor:pointer
@@ -14,10 +15,7 @@ box-icon{
 ::-webkit-scrollbar {
   width: 5px;
 }
-/* Track */
-::-webkit-scrollbar-track {
-  /* background: #000;  */
-}
+
 
 /* Handle */
 ::-webkit-scrollbar-thumb {
@@ -53,9 +51,38 @@ box-icon{
     display: flex;
 }
 .refresh{
-    position: relative;
-    right:120px
+
 }
+.observer_holder{
+    display: flex;
+}
+.tag_observer{
+    width: 100%;
+    background: none;
+    border: 0;
+    border-bottom: solid 1px #1cbfff;
+    color: #FFF;
+    font-size: 15px;
+
+}
+.tag_observer:focus{
+    outline: none;
+}
+.observer_btn{
+    font-weight: bold;
+    font-size: 12px;
+    border: 0;
+    cursor: pointer;
+    outline: none;
+    border-radius: 999px;
+    background: none;
+    color: #1cbfff;
+    padding: 5px;
+    border: solid 1px #1cbfff;
+}
+
+
+
 
 .top_left_inner{
     display: flex;
@@ -350,15 +377,20 @@ cursor: pointer;
 }
 
 .block_tools{
-    padding: 15px;
-    width: 25%;
+    width: 100%;
+    margin-top: 15px;
+    display: flex;
+    justify-content: space-around;
 
 }
 .block_tools_inner{
     display: flex;
     justify-content: space-around;
+    width: 90%;
+    user-select: none;
 
 }
+
 .user_icon{
     width: 86px;
     height: 86px;
@@ -380,6 +412,27 @@ cursor: pointer;
 .image-upload{
 
     opacity: 1;
+}
+.user_control{
+    margin-top: 3px;
+    width: 100%;
+    display: flex;
+    justify-content: space-around;
+    color: #1cbfff;
+}
+.status{
+    cursor: pointer;
+}
+
+.skill{
+    cursor: pointer;
+    width: 50%;
+    text-align: center;
+}
+.talent{
+    cursor: pointer;
+    width: 50%;
+    text-align: center;
 }
 
 .hot_holder{
@@ -451,6 +504,10 @@ cursor: pointer;
 }
 .block_header{
     display: flex;
+    align-items: center;
+}
+.block_counter{
+    font-size: 15px;
 }
 .block_typer{
     margin-left: 15px;
@@ -550,6 +607,7 @@ cursor: pointer;
 .good_box{
     display: flex;
     align-items: center;
+    user-select: none;
 }
 .good{
     cursor: pointer;
@@ -566,6 +624,14 @@ cursor: pointer;
     display: flex;
     flex-direction: column;
     align-items: flex-end;
+}
+.guest_input_holder{
+    width: 100%;
+    display: flex;
+    justify-content: flex-end;
+    align-items: center;
+    margin-top: 15px;
+    user-select: none;
 }
 .guest_input{
     /* background-color: #0b0c1b; */
@@ -585,17 +651,21 @@ cursor: pointer;
     cursor: pointer;
     outline: none;
     box-shadow: none;
-    border-radius: 999px;
+    border-radius: 7px;
     display: inline-block;
     background: #0b0c1b;
     color: #1cbfff;
     line-height: 1;
     border: solid 1px #1cbfff;
     font-size: 18px;
-    margin-top: 15px;
     width: 20%;
+    margin-right: 6px;
     
 }
+
+
+
+
 .guest_input_btn:hover{
     border-color: #5fd0fd;
     color: #FFF;
@@ -611,7 +681,7 @@ cursor: pointer;
     flex-direction: column;
     margin-top: 18px;
     overflow-y: scroll;
-    max-height: 250px;
+    max-height: 180px;
 }
 
 .one_mess{
@@ -669,6 +739,7 @@ cursor: pointer;
 .friend_in{
     font-size: 15px;
     color: #1cbfff;
+    text-align: center;
 }
 .friend_box{
     display: flex;
@@ -690,6 +761,7 @@ cursor: pointer;
     border-radius: 10px;
     margin-top: 20px;
     background-color: none;
+    text-align: center;
 }
 .waiting_list{
     margin: 2px;
@@ -802,7 +874,7 @@ footer{
     text-align: left;
     margin-top: 5px;
     margin-left: 0px;
-    border-top: 1px solid #1cbfff;
+    border-top: 1px solid #3e7182;
 
 }
 .who_mess{
@@ -812,12 +884,23 @@ footer{
     padding: 5px;
     margin-top: 5px;
     margin-right: 0px;
-    border-top: 1px solid #1cbfff;
+    border-top: 1px solid #3e7182;
 }
 
+.leveler{
+    width: 100%;
+}
 .level{
     width: 100%;
-    color: gold;
+    background-color: #FFF;
+}
+.level_display{
+    margin-left: 3px;
+}
+.level_bar{
+    background-color: #1cbfff;
+    height: 3px;
+    width: 0%;
 }
 
 /* 
@@ -833,7 +916,7 @@ footer{
 /* border-image: -webkit-linear-gradient(red,yellow) 30 30; */
 
 .voter{
-    width: 75%;
+    width: 50%;
     background: none;
     display: none;
     border-radius: 15px;
@@ -856,6 +939,7 @@ footer{
 }
 .a_option{
     display: flex;
+    margin-top: 2px;
 }
 .option_input{
     background: none;
@@ -876,4 +960,129 @@ footer{
 .del_option{
     width: 25px;
     cursor: pointer;
+}
+
+.mask{
+    position: absolute;
+    width: 100%;
+    height: 100%;
+    left: 0px;
+    top: 0px;
+    background: #000000;
+    opacity: 0.25;
+    display: none;
+    z-index: 250;
+}
+
+.user_info_sq{
+    position: fixed; /* positioning in center of page */
+    top: 400px;
+    left: 50vw;
+    transform: translate(-50%,-50%);
+    width: 33%;
+    display: none;
+    
+    z-index: 500;
+    border-radius: 6px;
+    color: #FFF;
+    padding: 25px;
+    background: none;
+    border: 1px solid #1cbfff;
+    backdrop-filter: blur(3px); 
+}
+.popup_header{
+    display: flex;
+    justify-content: space-between;
+}
+.pop_account{
+    margin-left: 15px;
+}
+.pop_close{
+    width: 30px;
+    height: 30px;
+    cursor: pointer;
+}
+.popup_header_inner{
+    display: flex;
+    align-items: center;
+}
+.popup_body{
+    margin-top: 5px;
+    padding: 5px;
+}
+.pop_title{
+    color:#1cbfff;
+    margin-right: 7px;
+}
+.pop_items{
+    display: flex;
+    margin-top: 5px;
+}
+.pop_interact{
+    display: flex;
+    width: 100%;
+    justify-content: space-around;
+}
+.pop_friend{
+    width: 45%;
+    display: none;
+    font-weight: bold;
+    font-size: 12px;
+    border: 0;
+    cursor: pointer;
+    outline: none;
+    background: none;
+    color: #1cbfff;
+    padding: 5px;
+    border: solid 1px #1cbfff;
+    border-radius: 5px;
+}
+.pop_follow{
+    width: 45%;
+    display: none;
+    font-weight: bold;
+    font-size: 12px;
+    border: 0;
+    cursor: pointer;
+    outline: none;
+    background: none;
+    color: #1cbfff;
+    padding: 5px;
+    border: solid 1px #1cbfff;
+    border-radius: 5px;
+}
+
+.talent_sq{
+    position: fixed; /* positioning in center of page */
+    top: 250px;
+    left: 50vw;
+    transform: translate(-50%,-50%);
+    width: 90%;
+    display: none;
+    
+    z-index: 500;
+    border-radius: 6px;
+    color: #FFF;
+    padding: 10px;
+    background: none;
+    border: 1px solid #1cbfff;
+    backdrop-filter: blur(3px);
+}
+.talent_attack{
+    width: 33%;
+    text-align: center;
+    display: flex;
+    flex-direction: column;
+}
+.talent_defence{
+    width: 33%;
+    text-align: center;
+    display: flex;
+    flex-direction: column;
+}
+.talent_support{
+    width: 33%;
+    text-align: center;
+    display: flex;
+    flex-direction: column;
 }

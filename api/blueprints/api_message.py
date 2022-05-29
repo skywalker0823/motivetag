@@ -17,7 +17,8 @@ def getting_message():
     return {"ok": result}
 
 #POST新增留言
-#接受message統一規格{block_id,內容,時間}
+#接受message統一規格{block_id,內容,時間,分數(+-5)}
+##接受圖片上傳
 @api_message.route("/api/message", methods=["POST"])
 def posting_message():
     message = request.get_json()
@@ -32,5 +33,9 @@ def posting_message():
 def nice_message():
     data = request.get_json()
     message_id = data["message_id"]
-    result = Message.nice_block(message_id)
+    member_id = session.get("member_id")
+    checker = Message.nice_message_checker(member_id,message_id)
+    if checker == 0:
+        return {"error": "you pressed this good message before"}
+    result = Message.nice_message(message_id)
     return result

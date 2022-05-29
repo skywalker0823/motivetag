@@ -7,20 +7,74 @@
     <link rel="stylesheet" href="../css/tag.css"/> 
     <title>Tag</title>
 </head>
-<body>
-    <nav></nav>
+<body>    
+    <div class="mask" id="mask"></div>
+    <div class="po_sq" id="po_sq">
+        <div class="po_title_holder">
+            <input class="po_title" id="po_title" type="text" placeholder="標題">
+            <img class="close_po" onclick="close_po()" src="/img/x.png">
+        </div>
+        <div class="po_bar">
 
-    <header>
+            
+            <input type="radio" id="chats" name="content_type" value="CHATS">
+            <label for="chats">閒聊</label><br>
+            <input type="radio" id="quiz" name="content_type" value="QUIZ">
+            <label for="quiz">問題</label><br>
+            <input type="radio" id="others" name="content_type" value="OTHERS">
+            <label for="others">其他</label>
+
+
+
+
+            
+        </div>
+        <div>
+            <textarea class="po_content" id="po_content" placeholder="內容"></textarea>
+            <button class="send_po" onclick="send_po()">送出</button>
+        </div>
+    </div>
+
+
+
+
+
+    <nav class="tag_nav">
+        <div class="back" onclick="back()">Back to MotiveTag</div>
+        <div class="mid">預設</div>
+        <div class="right">預設</div>
+    </nav>
+
+
+
+
+
+
+
+    <header class="tag_title">
         <div id="the_word"></div>
+        <button class="join_tagger">加入</button>
+        <div></div>
     </header>
-    <section class="word_records">
-        <div class="records">首次出現時間</div>
-        <div class="records">創建者</div>
-        <div class="records">話題度</div>
-        <div class="records">圖表</div>
-        <div class="records">最棒文章</div>
-        <div class="records">最爛文章</div>
+    <div class="control_list">
+        <button onclick="po_up()" class="po_btn">發文</button>
+        <button  class="po_btn">預定1</button>
+        <button  class="po_btn">預定2</button>
+    </div>
+    <div class="po_nav">
+        <div class="nav_type">分類</div>
+        <div class="nav_titler">標題</div>
+        <div class="nav_author">作者</div>
+        <div class="nav_popu">人氣/回覆</div>
+        <div class="nav_time">發表時間</div>
+    </div>
+    <section class="tag_page_holder">
+    <div class="Acheron" id="Acheron">
+        <!-- start-here -->
+    </div>
     </section>
     <script type="text/javascript" src="../js/tag_page.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/moment.js/2.29.3/moment.min.js"></script>
+
 </body>
 </html>

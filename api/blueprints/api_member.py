@@ -1,4 +1,5 @@
-from data.data import Member,Member_tags
+from operator import methodcaller
+from data.data import Member,Member_tags,Friend
 from flask import request, session
 import random
 from datetime import datetime
@@ -16,12 +17,9 @@ def check_member():
     elif request.args.get("account_check"):
 
         account = request.args.get("account_check")
-        print("檢查",account)
         data = Member.get_member(account)
-        print("ok",data)
         return {"ok":data}
     else:
-        print("no")
         return {"error":"not loged in"}
 
 #註冊
@@ -46,7 +44,8 @@ def sign_in_member():
     data = request.get_json()
     account = data["account"]
     password = data["password"]
-    result = Member.sign_in(account,password)
+    time = data["time"]
+    result = Member.sign_in(account,password,time)
     if session.get("FIRST_TIME") and session["FIRST_TIME"] == "YES" and result["msg"] == "ok":
         #給予使用者教學標籤 確保辦完帳號只會被執行一次~
         Member_tags.new_bie_tag(result["data"]["member_id"],"新手引導")
@@ -101,3 +100,15 @@ def g_login():
     #別忘記session很重要 account 與 member_id
         return {"ok": "let_in", "account": account_check["account"]}
 
+
+
+@api_member.route("/api/get_user_sp",methods=["GET"])
+def get_user_sp():
+    target_id = request.args.get("member_id")
+    member_id = session.get("member_id")
+    user_basic_data = Member.getting_data_without_private(target_id)
+    checker = Friend.friend_ship_checker(member_id,target_id)
+    #1.已是朋友(出現已是) 2.已發邀請(出現已發) 3.對方有發邀請(出現接受) 4.非朋友(出現邀請)
+    #其實可以抓出資料回去給JS判斷就好 flask很忙
+    #拿來確認關係用的本人id
+    return {"ok":True,"data":user_basic_data,"is_friend":checker}

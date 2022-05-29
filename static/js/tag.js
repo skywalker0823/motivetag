@@ -13,7 +13,6 @@ document.addEventListener("DOMContentLoaded", async() => {
 
 
 del_tag = async(tag) =>{
-    console.log("進入刪除個人tag環節", tag);
     tag = tag.split("tag_img")[1]
     const options = {
       method: "DELETE",
@@ -23,9 +22,22 @@ del_tag = async(tag) =>{
     const response = await fetch("/api/member_tags", options);
     const result = await response.json();
     if(result.ok){
-        console.log(tag)
         target = document.getElementById("tag"+tag)
-        target.remove()
+        //進行調整全球tag排行
+        let tag_name = document.getElementById("a_tag_name"+tag).innerHTML
+        const options2 = {
+          method: "DELETE",
+          headers: { "content-type": "application/json" },
+          body: JSON.stringify({ tag: tag_name }),
+        };
+        const response = await fetch("/api/tag", options2);
+        const result = await response.json();
+        if(result.ok){
+            target.remove();
+            return
+        }
+        console.log(result.error)
+
     }
 }
 
@@ -45,7 +57,6 @@ document.getElementById("tag_search_btn").addEventListener("click",async()=>{
         console.log("gloal adjust fail")
         return
     }
-    console.log("global tag調整完畢")
     result = await adjust_my_tag(tag);//調整會員tag
     //這裡只應該追回最新的tag name and tag id
     if(!result.ok){
@@ -82,7 +93,7 @@ adjust_global_tag = async(tag) =>{
         headers: { "content-type": "application/json" },
         body: JSON.stringify({ tag: tag }),
     };
-    const response = await fetch("/api/tags", options);
+    const response = await fetch("/api/tag", options);
     const result = await response.json();
     return result
 }
@@ -128,7 +139,11 @@ user_append_tag=(result)=>{
     word.appendChild(tag_content)
     if(result.tag=="Anonymous"){
         word.setAttribute("class","a_prime_name")
-    }else{word.setAttribute("class", "a_tag_name");}
+        word.setAttribute("id","a_tag_name"+result.member_tag_id)
+    }else{
+        word.setAttribute("class", "a_tag_name");
+        word.setAttribute("id", "a_tag_name" + result.member_tag_id);
+    }
     word.setAttribute("href","/tag/"+result.tag)
     a_tag.appendChild(word);
     a_tag.appendChild(del_tag);

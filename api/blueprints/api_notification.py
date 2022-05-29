@@ -39,7 +39,6 @@ def posting_notifi():
     type = data["type"]
     time = data["time"]
     content = data["content"]
-    print("抓到時間",time)
     result = Notification.post_notifi(me,who,content,time)
     return result
 

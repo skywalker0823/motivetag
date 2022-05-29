@@ -1,0 +1,43 @@
+<!DOCTYPE html>
+<html lang="zh-TW">
+<head>
+    <meta charset="UTF-8">
+    <meta http-equiv="X-UA-Compatible" content="IE=edge">
+    <link rel="stylesheet" href="../../css/brick.css"/> 
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>A brick</title>
+</head>
+<body>
+
+    
+    <nav class="tag_nav">
+        <div class="back" onclick="history.back()">Back to Tag</div>
+        <div class="mid">預設</div>
+        <div class="right">預設</div>
+    </nav>
+    <header class="tag_title">
+        <div id="the_word"></div>
+        <span>By.</span><span id="by_who"></span>
+    </header>
+
+    <section class="content_holder">
+        <div class="content" id="content"></div>
+    </section>
+
+    <section class="feedback_holder">
+        <div class="feedback">
+            <input class="feedback_input" id="feedback_input" type="text" placeholder="回覆">
+            <button class="feedback_btn" id="feedback_btn" onclick="discuss_sender()">回覆</button>
+        </div>
+    </section>
+
+    <section class="discuss_holder">
+        <div class="brick_discuss" id="brick_discuss">
+            <!-- 從這開始放 -->
+        </div>
+    </section>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/moment.js/2.29.3/moment.min.js"></script>
+    <script type="text/javascript" src="../../js/brick.js"></script>
+
+</body>
+</html>
