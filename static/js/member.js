@@ -82,7 +82,7 @@ init_render_user = (user_data) => {
     document.getElementById("user_main_avatar").setAttribute("src", "https://d3nvrufajko3tj.cloudfront.net/avatar_"+my_id);
   }
   if(mood==null){
-    mood="今天心情如何?"
+    mood_text.innerHTML = "今天心情如何?";
   }else{
     mood_text.innerHTML=mood
   }
