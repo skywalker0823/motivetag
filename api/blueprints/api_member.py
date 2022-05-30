@@ -1,4 +1,4 @@
-from operator import methodcaller
+from unicodedata import category
 from data.data import Member,Member_tags,Friend
 from flask import request, session
 import random
@@ -61,7 +61,14 @@ def sign_in_member():
 #修改
 @api_member.route("/api/member", methods=["PATCH"])
 def modify_member():
-    return None
+    data = request.get_json()
+    member_id = session.get("member_id")
+    content = data["content"]
+    category = data["category"]
+    result = Member.patch_user_data(member_id,category,content)
+    if result!=1:
+        return {"error":"update user data fail"}
+    return {"ok":"Update data success"}
 
 #登出
 @api_member.route("/api/member",methods=["DELETE"])

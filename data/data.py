@@ -79,6 +79,13 @@ class Member:
                 else:
                     return {"msg":"wrong password"}
 
+    def patch_user_data(member_id,category,content):
+        if category=="mood":
+            with connection.cursor() as cursor:
+                result = cursor.execute("UPDATE member SET mood=%s WHERE member_id=%s",(content,member_id))
+                connection.commit()
+            return result
+
     def delete(account):
         #刪除
         return None

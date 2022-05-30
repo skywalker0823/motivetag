@@ -3,6 +3,7 @@
 from flask import Flask, redirect, session, render_template as rt
 from config import config_sets
 from flask_socketio import SocketIO
+import redis
 import os
 from dotenv import load_dotenv
 socketio = SocketIO()
@@ -12,6 +13,7 @@ load_dotenv()
 
 def create_app(config_name):
     app = Flask(__name__, static_folder="../static",static_url_path="/", template_folder="../templates")
+    cache = redis.Redis(host='redis', port=6379)
     app.config.from_object(config_sets[config_name])
     from api.blueprints.api_member import api_member
     from api.blueprints.api_blocks import api_blocks

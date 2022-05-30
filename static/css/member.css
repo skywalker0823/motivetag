@@ -101,6 +101,7 @@ cursor: pointer;
     display: flex;
     justify-content: flex-end;
     align-items: center;
+    user-select: none;
 }
 
 .logout{
@@ -508,6 +509,7 @@ cursor: pointer;
 }
 .block_counter{
     font-size: 15px;
+    margin-right: 5px;
 }
 .block_typer{
     margin-left: 15px;
@@ -1099,4 +1101,8 @@ footer{
     text-align: center;
     display: flex;
     flex-direction: column;
+}
+
+.mood_input{
+    display: none;
 }

@@ -1,0 +1,21 @@
+version: '3'
+
+services:
+  app:
+    platform: linux/amd64
+
+    build: . 
+
+    ports:
+      - "3000:3000"
+
+    volumes:
+      - .:/app
+
+    links:
+      - redis
+
+  redis:
+    platform: linux/amd64
+    
+    image: redis

@@ -83,6 +83,8 @@ init_render_user = (user_data) => {
   }
   if(mood==null){
     mood="今天心情如何?"
+  }else{
+    mood_text.innerHTML=mood
   }
 
 
@@ -91,14 +93,6 @@ init_render_user = (user_data) => {
   user_firstday.appendChild(first_signup)
   render_level(exp)
 }
-
-
-
-change_mood= () => {
-  console.log("change m00d!")
-}
-
-
 
 
 upload_user_img = async() => {
@@ -118,3 +112,59 @@ upload_user_img = async() => {
   }
 }
 
+
+
+    // <div id="user_mood" onclick="change_mood()">
+    //     <p id="mood_text">今天心情如何?</p>
+    //     <input type="text" id="mood_input">
+    // </div>
+
+let mood_text = document.getElementById("mood_text");
+let mood_input = document.getElementById("mood_input");
+let mood_now
+
+change_mood = () => {
+  console.log("change m00d!");
+  mood_text.style.display="none"
+  mood_input.style.display="block"
+  mood_input.value = mood_text.innerHTML
+  mood_now = mood_text.innerHTML;
+};
+
+mood_input.addEventListener("focusout",() => {
+  console.log("focus out!")
+  new_mood = mood_input.value
+  mood_text.style.display = "block";
+  mood_input.style.display = "none";
+  if(mood_now==new_mood){
+    console.log("nothing changed")
+    return
+  }
+  if(new_mood=="" || new_mood==null || !new_mood){
+    console.log("input cannot null")
+    return
+  }
+  console.log("changed start to work")
+  mood_text.innerHTML=new_mood
+  
+  upload_mood(new_mood)
+})
+
+
+upload_mood = async(content) => {
+    const options = {
+    method: "PATCH",
+    headers: { "content-type": "application/json" },
+    body: JSON.stringify({
+      category: "mood",
+      content: content,
+    }),
+  };
+  const response = await fetch("/api/member", options);
+  const result = await response.json();
+  if(result.ok){
+    console.log("update ok")
+    return
+  }
+  console.log("update error")
+}
