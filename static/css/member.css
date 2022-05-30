@@ -611,10 +611,20 @@ cursor: pointer;
 }
 .good{
     cursor: pointer;
+    border-radius: 5px;
+}
+.bad{
+    border-radius: 5px;
+}
+.good:active{
+    background-color: gray;
 }
 .bad_box{
     margin-left: 15px;
     display: flex;
+}
+.bad:active{
+    background-color: gray;
 }
 .share{
     margin-left: 15px;
@@ -704,6 +714,10 @@ cursor: pointer;
 }
 .nice{
     margin-left: 5px;
+    border-radius: 5px;
+}
+.nice:active{
+    background-color: gray;
 }
 .message_time{
     margin-left: 15px;

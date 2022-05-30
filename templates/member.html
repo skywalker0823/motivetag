@@ -35,10 +35,10 @@
                 <p class="pop_title">上次上線 :</p><p id="pop_last"></p>
             </div>
             <div class="pop_items">
-                <p class="pop_title">跟隨者數 :</p><p id="pop_follower"></p>
+                <p class="pop_title">目前等級 :</p><p id="pop_level"></p>
             </div>
             <div class="pop_items">
-                <p class="pop_title">目前等級 :</p><p id="pop_level"></p>
+                <p class="pop_title">今天心情 :</p><p id="pop_mood"></p>
             </div>
         </div>
         <div class="pop_interact">
@@ -137,8 +137,9 @@
                         </div>
                     </div>
                     <div class="user_control">
-                        <div class="skill" onclick="open_skill()">技能</div>
-                        <div class="talent" onclick="open_talent()">天賦</div>
+                        <!-- <div class="skill" onclick="open_skill()">技能</div>
+                        <div class="talent" onclick="open_talent()">天賦</div> -->
+                        <div id="user_mood" onclick="change_mood()"><p id="mood_text">今天心情如何?</p></div>
                     </div>
                     
                 </div>

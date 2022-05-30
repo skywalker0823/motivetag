@@ -73,12 +73,16 @@ init_render_user = (user_data) => {
   let first_signup = document.createTextNode(user_data.data.first_signup.slice(0,17))
   let exp = user_data.data.exp
   let member_img = user_data.data.member_img
+  let mood = user_data.data.mood
   let user_account = document.getElementById("user_account");
   let user_mail = document.getElementById("user_mail");
   let user_firstday = document.getElementById("user_firstday");
   //個人圖片
   if(member_img!=null){
     document.getElementById("user_main_avatar").setAttribute("src", "https://d3nvrufajko3tj.cloudfront.net/avatar_"+my_id);
+  }
+  if(mood==null){
+    mood="今天心情如何?"
   }
 
 
@@ -87,6 +91,15 @@ init_render_user = (user_data) => {
   user_firstday.appendChild(first_signup)
   render_level(exp)
 }
+
+
+
+change_mood= () => {
+  console.log("change m00d!")
+}
+
+
+
 
 upload_user_img = async() => {
 
@@ -97,10 +110,6 @@ upload_user_img = async() => {
   data.append("type","avatar")
   data.append("target_id",null)
   const options = { method: "POST", body: data };
-
-
-
-
   const response = await fetch("/api/images", options);
   const result = await response.json();
   if (result.ok) {
@@ -108,3 +117,4 @@ upload_user_img = async() => {
     document.getElementById("user_main_avatar").setAttribute("src", "https://d3nvrufajko3tj.cloudfront.net/avatar_"+my_id);
   }
 }
+

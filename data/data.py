@@ -85,14 +85,14 @@ class Member:
 
     def getting_data_without_private(member_id):
         with connection.cursor() as cursor:
-            cursor.execute("SELECT account,birthday,first_signup,last_signin,follower,exp FROM member WHERE member_id=%s",(member_id))
+            cursor.execute("SELECT account,birthday,first_signup,last_signin,mood,exp FROM member WHERE member_id=%s",(member_id))
             data = cursor.fetchone()
             return data
 
 
 class Block:
   #預設內容 自己all+朋友all+tag內容
-    def get_block(member_id,page,obseve_key=None):
+    def get_block(member_id,page,obseve_key=None,order_by=None):
         page=int(page)
         with connection.cursor() as cursor:
             #此Query已經可以完整抓出自己與好友的貼文 時間排序 limit10 
@@ -103,7 +103,7 @@ class Block:
             sql_observe_key = """SELECT account,block_id, block.member_id, content_type, content, build_time,good,bad,block_img
                                  FROM block RIGHT JOIN member ON member.member_id=block.member_id
                                  WHERE block_id IN(SELECT block_id FROM block_tag WHERE tag_id=(SELECT tag_id FROM tag WHERE name=%s))ORDER BY build_time DESC LIMIT %s,%s"""
-            sql_friend=None
+            sql_by_score=None
             sql_all = """SELECT account,block_id, block.member_id, content_type, content, build_time,good,bad,block_img
                                  FROM block RIGHT JOIN member ON member.member_id=block.member_id
                                  WHERE block.member_id IN(

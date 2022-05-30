@@ -33,6 +33,7 @@ search_build_blocks = async (mode) => {
   const result = await response.json();
   if (result.ok) {
     block_builder(result);
+    console.log(result)
   } else {
     return result;
   }
@@ -597,7 +598,6 @@ block_click = async (id) => {
       one_mess.appendChild(time_box);
       guest_message.appendChild(one_mess);
     }
-    console.log(counter)
     if(parseInt(counter)>0){
       document.getElementById("block_counter" + block_id).innerHTML = "+"+counter;
       document.getElementById("block_counter" + block_id).style.color="#f70307";
@@ -753,6 +753,7 @@ gooder = async (id) => {
     add_this.innerHTML = parseInt(add_this.innerHTML) + 1;
   } else {
     console.log("good fail",result.error);
+    
 
   }
 };
@@ -972,7 +973,10 @@ display_member_info = async(member_block_id) => {
     //開始渲染畫面
     let user_info = result.data
     let friendship = result.is_friend
-
+    let mood = user_info.mood
+    if(!mood){
+      mood = "沒有任何紀錄:)"
+    }
     document.getElementById("pop_account").innerHTML=user_info.account
     document.getElementById("pop_birthday").innerHTML =
       moment(user_info.birthday).format("YYYY MMM Do") +
@@ -982,7 +986,7 @@ display_member_info = async(member_block_id) => {
       ")";
     document.getElementById("pop_first").innerHTML=moment(user_info.first_signup).format("YYYY MMM Do")
     document.getElementById("pop_last").innerHTML=moment(user_info.last_signin).subtract(8, "hours").fromNow()
-    document.getElementById("pop_follower").innerHTML=user_info.follower
+    document.getElementById("pop_mood").innerHTML=mood
     document.getElementById("pop_level").innerHTML =
       parseInt((((8 * user_info.exp) / 50 + 1) ** 0.5 + 1) / 2) +
       "(總經驗值" +

@@ -6,9 +6,6 @@ from . import api_message
 
 
 #GET取得該文章的留言
-#這裡採用點擊打開才fetch該文章的方式，比較簡單，反正關起來都看不到 一開始也不用render
-#可以看到留言的人 權限管理在block身上，因此很好辦事
-#我真聰明!
 ##以後務必增加隱私與安全
 @api_message.route("/api/message", methods=["GET"])
 def getting_message():

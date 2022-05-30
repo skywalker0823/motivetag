@@ -72,7 +72,6 @@ render_level = (exp) =>{
     let percent;
     level = ((((8*exp/50)+1)**0.5)+1)/2
     percent = (level-parseInt(level))*100+"%"
-    console.log(level)
     document.getElementById("level_display").innerHTML = parseInt(level);
     document.getElementById("progress_display").style.width=percent;
     

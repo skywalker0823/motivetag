@@ -22,6 +22,7 @@ def build_member(conn):
         last_signin DATETIME,
         member_img varchar(100),
         follower INT default 0,
+        mood VARCHAR(100),
         exp INT default 0
     )"""
     cursor.execute(sql)
