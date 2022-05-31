@@ -87,7 +87,6 @@ check_tag = async(tag) =>{
 
 
 adjust_global_tag = async(tag) =>{
-    console.log("進入調整global tag環節",tag);
     const options = {
         method: "PATCH",
         headers: { "content-type": "application/json" },
@@ -103,7 +102,6 @@ adjust_global_tag = async(tag) =>{
 
 
 adjust_my_tag = async(tag) =>{
-    console.log("進入調整個人tag環節",tag);
     const options = {
         method: "PATCH",
         headers: { "content-type": "application/json" },
@@ -124,7 +122,6 @@ get_all_tags_of_member = async() =>{
 
 user_append_tag=(result)=>{
     //如果有空位，將之改成此tag
-    console.log("lookhere",result)
     let tag_box = document.getElementById("tag_box");
     let a_tag = document.createElement("div");
     let word = document.createElement("a")

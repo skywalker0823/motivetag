@@ -41,7 +41,6 @@ exp_mod = async(action,who) =>{
     const result = await response.json();
 
     if(result.ok){
-        console.log("調整成功！ 開始調整progress bar")
 
         return
     }

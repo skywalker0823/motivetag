@@ -10,13 +10,6 @@ let ob_mode = false
 let ob_page = 0
 
 
-// var tag = document.createElement("script");
-// tag.src = "https://www.youtube.com/iframe_api";
-// var firstScriptTag = document.getElementsByTagName("script")[0];
-// firstScriptTag.parentNode.insertBefore(tag, firstScriptTag);
-// window.onYouTubeIframeAPIReady = this.onYTready;
-
-
 search_build_blocks = async (mode) => {
   
   if (mode == "windowed") {
@@ -33,7 +26,6 @@ search_build_blocks = async (mode) => {
   const result = await response.json();
   if (result.ok) {
     block_builder(result);
-    console.log(result)
   } else {
     return result;
   }
@@ -320,9 +312,9 @@ block_builder = async (data) => {
 
 
     //上傳圖片按鈕
-    guest_upload = document.createElement("box-icon");
-    guest_upload.setAttribute("name", "image-alt");
-    guest_upload.setAttribute("color","#09eb5b")
+    // guest_upload = document.createElement("box-icon");
+    // guest_upload.setAttribute("name", "image-alt");
+    // guest_upload.setAttribute("color","#09eb5b")
 
     // <div>
     //     <label for="upload_block_img">
@@ -357,7 +349,7 @@ block_builder = async (data) => {
     guest_input_holder.appendChild(score)
     guest_input_holder.appendChild(up_vote)
     guest_input_holder.appendChild(down_vote)
-    guest_input_holder.appendChild(guest_upload)
+    // guest_input_holder.appendChild(guest_upload)
     guest_input_holder.appendChild(guest_input_btn)
 
     //裝箱
@@ -674,15 +666,12 @@ leave_message = async (message_block_id) => {
 
     block_counter.innerHTML = parseInt(block_counter.innerHTML)+parseInt(score)
     if(parseInt(block_counter.innerHTML)>0){
-      console.log("大於零 染紅",block_counter)
       block_counter.style.color="#f70307"
       block_counter.innerHTML = "+"+(block_counter.innerHTML);
     }else if(parseInt(block_counter.innerHTML)<0){
-      console.log("小於零 染綠", block_counter);
       block_counter.style.color = "#09eb5b"
 
     }else{
-      console.log("等於零 不動", block_counter);
       block_counter.style.color="#1cbfff"
     }
 
@@ -794,7 +783,6 @@ member_blocks.addEventListener("scroll", () => {
   ) {
     if(ob_mode==false){
     page += 5;
-    console.log(page);
     //目前數量一次3篇 好好規劃數量~
     fetching = true;
     //從這裡做分野 抓某特定人的所有tag(包含自己)，但請考量隱私問題 不要牴觸朋友權限
@@ -881,7 +869,6 @@ nice = async (id) => {
 let anonymous = false;
 anonymous_mode = () => {
   document.getElementById("block_guard").innerHTML="";
-  console.log("anonymous mode");
   let blockor = document.getElementById("blockor_inner");
   let inner = document.getElementById("blockor_content");
   if (!anonymous) {
@@ -937,10 +924,9 @@ observe = async() => {
 
 
 display_member_info = async(member_block_id) => {
-
   let member_id
   if(member_block_id.split("friend_avatar")[0]==""){
-    member_id = member_block_id.split("friend_avatar")[1];
+    member_id = member_block_id.split("friend_avatar")[2];
   }else if (member_block_id.split("mess_avatar")[0]=="") {
     member_id = member_block_id.split("mess_avatar")[1];
   } else {
@@ -997,26 +983,22 @@ display_member_info = async(member_block_id) => {
     let pop_follow = document.getElementById("pop_follow")
 
     if(friendship){
-      console.log("兩者有好友紀錄","myid",my_id,"friend",friendship)
       pop_add.style.display = "block";
-      pop_follow.style.display = "block";
+      // pop_follow.style.display = "block";
 
       //開始多項判斷 首先觀察status
       if(friendship.status==0){
-        console.log("兩者已是好友 鎖住按鈕 更改顯示")
         pop_add.innerHTML="已是好友"
         pop_add.style.color = "#1cbfff";
         pop_add.setAttribute("onclick", "return false;");
         return
       }
       if(friendship.request_from==my_id){
-        console.log("好友邀請已經送出，靜待對方回覆")
         pop_add.innerHTML="已送出邀請"
         pop_add.style.color="#1cbfff"
         pop_add.setAttribute("onclick", "return false;");
         return
       }
-      console.log("對方已發給你邀請，請確認")
       pop_add.innerHTML = "接受邀請";
       pop_add.style.color = "#09ed5d";
       pop_add.setAttribute(
@@ -1031,7 +1013,6 @@ display_member_info = async(member_block_id) => {
     }
     pop_add.style.display = "block";
     pop_follow.style.display = "block";
-    console.log("兩者無關連，打開按鈕 供提交申請好友")
     pop_add.style.color = "#1cbfff";
     pop_add.innerHTML = "加好友";
     pop_add.setAttribute(
@@ -1047,7 +1028,7 @@ close_pop = () => {
     document.getElementById("mask").style.display="none";
     document.getElementById("user_info_sq").style.display="none";
     pop_add.style.display = "none";
-    pop_follow.style.display = "none";
+    // pop_follow.style.display = "none";
 
 }
 
@@ -1061,7 +1042,6 @@ up_score = (id) => {
 
 down_score = (id) => {
   let target = document.getElementById("score" + id.split("down_vote")[1]);
-  console.log(id)
     if (target.innerHTML == -5) {
       return;
     }

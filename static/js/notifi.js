@@ -77,7 +77,6 @@ document.getElementById("notifi_bell").addEventListener("click",async () => {
         notifi_list.style.border = "solid 0px #1cbfff";
         notifi_open=false
     }else{
-        console.log("OPEN!");
         notifi_list.style.height = "500px"
         notifi_list.style.border = "solid 1px #1cbfff";
         notifi_open = true
@@ -100,7 +99,7 @@ document.getElementById("notifi_bell").addEventListener("click",async () => {
             let time_box = document.createElement("div")
             time_box.setAttribute("class","notify_time")
             let time = document.createTextNode(
-              moment(a_notifi.read_time).subtract(8, "hours").fromNow()
+              moment(a_notifi.read_time).fromNow()
             );
             time_box.appendChild(time)
             let notifi_box = document.createElement("div")

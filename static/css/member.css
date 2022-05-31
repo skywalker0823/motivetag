@@ -122,6 +122,7 @@ cursor: pointer;
     width: 340px;
     right:5px;
     background-color: #000;
+    overflow: scroll;
 }
 .notifi_box{
     border-bottom: 1px solid gray;
@@ -1105,4 +1106,12 @@ footer{
 
 .mood_input{
     display: none;
+    background: none;
+    border: 0;
+    border-bottom: solid 1px #1cbfff;
+    color: #FFF;
+    width: 100%;
+}
+.mood_input:focus{
+    outline: none;
 }

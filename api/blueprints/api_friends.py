@@ -4,28 +4,12 @@ from data.data import Friend
 from . import api_friends
 
 
-
 @api_friends.route("/<account>")
 def to_member(account):
     if session.get("account") == account:
         return rt("member.html")
     else:
-
-            # #以下是想拜訪好友
-            # someone_else = account
-            # me = session.get("member_id")
-            # check = Friend.confrim_relationship(me,someone_else)
-            # print(check)
-            # if check["msg"]:
-            #     if check["msg"]=="no data":
-            #         return redirect("/")
-            # elif check["redirect_to"][0]["status"]=="0":
-            #     return rt("member.html")
-            # else:
         return redirect("/")
-
-
-
 
 
 #REST "4" friends :)
@@ -65,9 +49,7 @@ def forgeing_relationship():
     data = request.get_json()
     target = data["friend_ship_id"]
     result = Friend.forge_friend_request(target)
-    return {"ok":result["ok"],"data_changed":result["result"],"data":data}
-
-
+    return {"ok":result["ok"],"data_changed":result["result"],"data":data,"datas":result["data"]}
 
 
 @api_friends.route("/api/friend", methods=["DELETE"])

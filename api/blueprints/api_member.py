@@ -78,7 +78,6 @@ def sign_out_member():
     return {"ok":True}
 
 
-
 #GOOGLE OAUTH2.0
 @api_member.route("/api/google_sign_in",methods=["POST"])
 def g_login():

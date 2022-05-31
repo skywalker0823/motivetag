@@ -363,8 +363,10 @@ class Friend:
     def forge_friend_request(target):
         with connection.cursor() as cursor:
             result = cursor.execute("UPDATE friendship SET status=%s WHERE friend_ship_id=%s",("0",target))
+            cursor.execute("SELECT * FROM friendship WHERE friend_ship_id=%s",(target))
+            data = cursor.fetchone()
             connection.commit()
-            return {"ok":"friendship updated","result":result}
+            return {"ok":"friendship updated","result":result,"data":data}
     def delete_relation(target):
         with connection.cursor() as cursor:
             result = cursor.execute("DELETE FROM friendship WHERE friend_ship_id=%s",(target))

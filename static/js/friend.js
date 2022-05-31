@@ -160,9 +160,10 @@ render_ur_friend = (req_f, req_t, status, friend_ship_id,req_f_id,req_t_id) => {
   friend_avatar = document.createElement("box-icon");
   friend_avatar.setAttribute("name", "user");
   friend_avatar.setAttribute("color", "#f71523");
-  friend_avatar.setAttribute("id","friend_avatar"+friend_id)
-  friend_avatar.setAttribute("class", "friend_avatar");
-  friend_avatar.setAttribute("onclick", "display_member_info(this.id)");
+  friend_avatar.setAttribute("id","friend_avatar"+friend)
+  friend_avatar.setAttribute("class", "friend_avatar friend_avatar"+friend_id);
+  
+  friend_avatar.setAttribute("onclick", "display_member_info(this.className)");
 
 
   friend_box.setAttribute("id","friend_box"+friend_ship_id)
@@ -181,6 +182,7 @@ render_ur_friend = (req_f, req_t, status, friend_ship_id,req_f_id,req_t_id) => {
   bye_friend.setAttribute("name","user-x")
   bye_friend.setAttribute("color","#f71523")
   bye_friend.setAttribute("id","del_fr"+friend_ship_id)
+  bye_friend.setAttribute("class","del_fr"+friend)
   bye_friend.setAttribute("onclick","delete_friend(this.id)")
 
   friend_box.appendChild(friend_avatar);
@@ -193,9 +195,11 @@ render_ur_friend = (req_f, req_t, status, friend_ship_id,req_f_id,req_t_id) => {
 //點擊同意時render好友
 befriend = async(id)=>{
   let friend_ship_id = id.split("friend_ok_")[1]
+  let friend_id
   let result = await forge_relation(friend_ship_id)
   if(result.ok){
-    console.log("start be friend render")
+    console.log(result)
+    
     let friend = document.getElementById("req_f"+friend_ship_id).innerHTML;
     let friend_list = document.getElementById("friend_list");
     a_friend = document.createTextNode(friend);
@@ -207,6 +211,19 @@ befriend = async(id)=>{
     friend_avatar.setAttribute("color", "#f71523");
     friend_avatar.setAttribute("id", "friend_avatar" + friend);
     friend_avatar.setAttribute("class", "friend_avatar");
+
+    if(result.datas.datas.request_from==my_id){
+      friend_id = result.datas.datas.request_to;
+    }else{
+      friend_id = result.datas.datas.request_from;
+    }
+
+    friend_avatar.setAttribute("class", "friend_avatar friend_avatar"+friend_id);
+    
+    friend_avatar.setAttribute("onclick", "display_member_info(this.className)");
+
+
+
 
     mess_img = document.createElement("box-icon");
     mess_img.setAttribute("class", "mess_img");
@@ -220,6 +237,7 @@ befriend = async(id)=>{
     bye_friend.setAttribute("name", "user-x");
     bye_friend.setAttribute("color", "#f71523");
     bye_friend.setAttribute("id", "del_fr" + friend_ship_id);
+    bye_friend.setAttribute("class", "del_fr" + friend);
     bye_friend.setAttribute("onclick", "delete_friend(this.id)");
 
 
@@ -279,7 +297,7 @@ forge_relation = async(friend_ship_id) =>{
   const result = await response.json();
   if(result.ok && result.datachanged!=0){
       console.log("new friend accepted!",result)
-      return {"ok":true}
+      return {"ok":true,"datas":result}
   }
   console.log("forge friend error",result)
 }
@@ -302,11 +320,23 @@ delete_friend = async(id) =>{
   let fr_id = id.split("del_fr")[1]
   result = await not_friend(fr_id)
   if(result.ok){
-    document.getElementById("friend_box"+fr_id).remove()
+    classname = document.getElementById("del_fr" + fr_id).className;
+    delete friend_list[classname.split("del_fr")[1]]
+
+
+    let data = {
+      me: my_id,
+      someone_else: classname.split("del_fr")[1],
+      type: "delete_friend",
+      content: me + " 刪除原是好友的你。QQ!",
+      time: moment().format("YYYY-MM-DD HH:mm:ss"),
+    };
+    send_notifi(data);
+
+    document.getElementById("friend_box" + fr_id).remove();
     return
   }
   console.log("del friend fail")
-
 }
 
 

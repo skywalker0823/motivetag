@@ -3,7 +3,6 @@ let my_id
 
 document.addEventListener("DOMContentLoaded", async() => {
   result = await check_user_identity();//1 個人資料
-  console.log(result)
   me = result.data.account
   my_id = result.data.member_id
   init_render_user(result)
@@ -124,27 +123,23 @@ let mood_input = document.getElementById("mood_input");
 let mood_now
 
 change_mood = () => {
-  console.log("change m00d!");
   mood_text.style.display="none"
   mood_input.style.display="block"
+  mood_input.focus()
   mood_input.value = mood_text.innerHTML
   mood_now = mood_text.innerHTML;
 };
 
 mood_input.addEventListener("focusout",() => {
-  console.log("focus out!")
   new_mood = mood_input.value
   mood_text.style.display = "block";
   mood_input.style.display = "none";
   if(mood_now==new_mood){
-    console.log("nothing changed")
     return
   }
   if(new_mood=="" || new_mood==null || !new_mood){
-    console.log("input cannot null")
     return
   }
-  console.log("changed start to work")
   mood_text.innerHTML=new_mood
   
   upload_mood(new_mood)
@@ -163,7 +158,6 @@ upload_mood = async(content) => {
   const response = await fetch("/api/member", options);
   const result = await response.json();
   if(result.ok){
-    console.log("update ok")
     return
   }
   console.log("update error")

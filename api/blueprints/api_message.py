@@ -13,6 +13,7 @@ def getting_message():
     result = Message.get_message_of_a_block(block_id)
     return {"ok": result}
 
+
 #POST新增留言
 #接受message統一規格{block_id,內容,時間,分數(+-5)}
 ##接受圖片上傳

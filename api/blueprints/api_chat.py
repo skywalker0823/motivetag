@@ -35,6 +35,7 @@ def init_chat(data):
     del online[data["account"]]
     return
 
+
 @socketio.on("init_room")
 def init_room(data):
     #此程式碼將會檢查該使用者想聊天對象有無開房間(正在等自己)
@@ -72,11 +73,13 @@ def send_mess(data):
     room = data["room"]
     emit("message",data,room=room)
 
+
 #uid status
 @socketio.on('connect')
 def test_connect():
     # print('Client connected',request.sid)
     emit("connected",{"data":"connected confirm"})
+
 
 #User logout clear all the room created
 @socketio.on('disconnect')
@@ -84,6 +87,7 @@ def test_disconnect():
     if request.sid in rooms:
         del rooms[request.sid]
     # print('Client disconnected',request.sid)
+
 
 @socketio.on('left')
 def left(message):

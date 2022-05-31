@@ -4,10 +4,6 @@ from flask import request, session
 from data.data import Level
 
 
-
-
-
-
 @api_level.route("/api/level",methods=["GET"])
 def getting_current_exp():
     return
@@ -23,10 +19,3 @@ def exp_upping():
     if result==1:
         return {"ok":result}
     return {"error":"exp modify fail"}
-
-#提升~(針對被按讚或是爛做調整)
-
-
-# @api_level.route("/api/level", methods=["DELETE"])
-# def exp_downing():
-#     return

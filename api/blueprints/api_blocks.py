@@ -27,8 +27,6 @@ def check_blocks():
         return {"error":True,"msg":result["msg"]}
 
 
-
-
 @api_blocks.route("/api/blocks", methods=["POST"])
 def build_blocks():
     block = request.get_json()
