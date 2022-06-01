@@ -15,6 +15,7 @@ search_build_blocks = async (mode) => {
   if (mode == "windowed") {
     
     fetching = true;
+    document.getElementById("loading").style.display="block"
     member_blocks.scrollTop = 0;
     page = 0;
     block_box.innerHTML = "";
@@ -27,11 +28,13 @@ search_build_blocks = async (mode) => {
   if (result.ok) {
     block_builder(result);
   } else {
+    document.getElementById("loading").style.display = "none";
     return result;
   }
 };
 
 block_builder = async (data) => {
+  let temp_box = [];
   for (block of data.data) {
     let account = block.account;
     let content_type = block.content_type;
@@ -371,6 +374,7 @@ block_builder = async (data) => {
     a_block.appendChild(block_time);
     a_block.appendChild(block_message_control);
 
+
     if (new_send) {
       block_id = block_id.split("block")[1];
       let guest_message = document.createElement("div");
@@ -382,12 +386,19 @@ block_builder = async (data) => {
       return;
     }
     block_box.appendChild(a_block);
+    document.getElementById("block" + block.block_id).style.display = "none";
     resulter = await block_click(block_id);
+
     if (resulter == "ok") {
+      temp_box.push(block.block_id);
       continue;
     }
   }
   fetching = false;
+  document.getElementById("loading").style.display="block"
+  for(a_box of temp_box){
+    document.getElementById("block"+a_box).style.display="block"
+  }
 };
 
 //發文
@@ -901,6 +912,7 @@ anonymous_mode = () => {
 
 
 observe = async() => {
+  console.log("observe!")
   if(ob_mode==false){
     block_box.innerHTML = "";
     member_blocks.scrollTop = 0;
@@ -916,11 +928,18 @@ observe = async() => {
   const result = await response.json();
   if(result.ok){
     block_builder(result)
+    return
   }
-
+  document.getElementById("loading").style.display="none"
+  ob_page=0
   //取回資料後丟給builder
 }
 
+document.getElementById("observer_btn").addEventListener("click",()=>{
+      block_box.innerHTML = "";
+      member_blocks.scrollTop = 0;
+      ob_page=0
+})
 
 
 display_member_info = async(member_block_id) => {

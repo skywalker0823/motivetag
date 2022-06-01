@@ -331,6 +331,9 @@ cursor: pointer;
     font-size: 15px;
     word-wrap: break-word;
 }
+.a_tag:hover{
+    background-color: rgb(63, 63, 63);
+}
 .a_tag_name{
     text-decoration: none;
     color: #FFF;
@@ -457,6 +460,9 @@ cursor: pointer;
     border-bottom: #666 1px solid;
     
 }
+.a_hot_box:hover{
+    background-color: rgb(50, 50, 50);
+}
 .a_hot_tag{
     cursor: pointer;
 }
@@ -466,13 +472,14 @@ cursor: pointer;
 }
 
 .main_frame .member_blocks{
-    width: 50%;
+    width: 45%;
     border-radius: 20px;
     margin: 4px;
     padding: 4px;
     height: 800px;
     overflow: scroll;
     overflow-x: auto;
+    text-align: center;
 }
 .block_box{
     display: flex;
@@ -481,18 +488,15 @@ cursor: pointer;
 .a_block{
     margin-top: 10px;
     /* background-color: #0b0c1b; */
-    border-left: solid #1cbfff;
-    border-right: solid #1cbfff;
-    border-top: solid #1cbfff;
-    /* border-image: -webkit-linear-gradient(#1cbfff,#9a00ff) 30 30; */
+    /* border-left: solid #1cbfff;
+    border-right: solid #1cbfff; */
+    border-top: solid #0f6689;
     transition: all 1s ease;
     overflow: hidden;
     padding: 25px;
-    border-radius: 15px;
+    /* border-radius: 15px; */
 }
-/* .a_block:hover{
-    border-image: -webkit-linear-gradient(red,yellow) 30 30;
-} */
+
 
 .block_titler{
     display: flex;
@@ -525,6 +529,7 @@ cursor: pointer;
     margin-bottom: 25px;
     color: #FFF;
     font-size: 21px;
+    text-align: left;
 }
 .player{
     width: 100%;
@@ -648,15 +653,20 @@ cursor: pointer;
 }
 .guest_input{
     /* background-color: #0b0c1b; */
+    align-self: flex-start;
     background: none;
     border: 0;
-    border-bottom: solid 1px #1cbfff;
+    border-bottom: solid 1px #595959;
     color: #FFF;
     width: 100%;
     font-size: 18px;
+    transition: all 0.25s;
+    
 }
 .guest_input:focus{
     outline: none;
+    border-bottom: solid 1px #1cbfff;
+    width: 100%;
 }
 .guest_input_btn{
     border: 0;
@@ -763,6 +773,7 @@ cursor: pointer;
     margin-top: 7px;
     justify-content: space-between;
 }
+
 
 .friend_avatar{
     width: 20px;
@@ -906,6 +917,7 @@ footer{
 
 .leveler{
     width: 100%;
+    color: gold;
 }
 .level{
     width: 100%;

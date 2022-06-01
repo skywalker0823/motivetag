@@ -97,7 +97,6 @@ def g_login():
         else:
             return {"error":result}
     else:
-        print("已有帳號 紀錄session後直接登入!")
         session["member_id"] = account_check["member_id"]
         session["account"] = account_check["account"]
     #GOOGLE登入若註冊直接為使用者產生亂數密碼 並當作登入 反正不會用到這組密碼

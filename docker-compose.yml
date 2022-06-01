@@ -4,6 +4,8 @@ services:
   app:
     platform: linux/amd64
 
+    container_name: flask
+
     build: . 
 
     ports:
@@ -18,4 +20,11 @@ services:
   redis:
     platform: linux/amd64
     
+    container_name: redis
+
     image: redis
+
+    restart: always
+
+    ports:
+      - "6379:6379"
