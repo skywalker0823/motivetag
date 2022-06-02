@@ -76,14 +76,14 @@
         <div class="top_left">
             <div class="top_left_inner">
                 
-                <input type="image" src="/img/title_member.png" class="mark">
+                <input onclick="window.location.reload();" type="image" src="/img/title_member.png" class="mark">
             </div>
         </div>
 
         <box-icon class="refresh" name='revision' color='#1cbfff' id="windowed"  onclick="search_build_blocks(this.id)"></box-icon>
 
         <div class="observer_holder">
-            <input type="text" class="tag_observer" placeholder="搜尋" id="tag_observer"><button id="observer_btn" class="observer_btn" onclick="observe()">Search</button>
+            <input type="text" class="tag_observer" placeholder="Tag of Interest" id="tag_observer"><img src="/img/search-regular-24.png" id="observer_btn" class="observer_btn" onclick="observe()"></img>
         </div>
         <div class="top_right">
             <div id="unread_notifis" class="unread_notifis"></div>

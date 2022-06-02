@@ -5,8 +5,10 @@ from config import config_sets
 from flask_socketio import SocketIO
 import redis
 import os
+# from flask_mail import Mail
 from dotenv import load_dotenv
 socketio = SocketIO()
+# mail = Mail()
 load_dotenv()
 
 
@@ -67,6 +69,7 @@ def create_app(config_name):
             return redirect("/")
 
 
-
+    
     socketio.init_app(app, cors_allowed_origins="*")
+    # mail.init_app(app)
     return app

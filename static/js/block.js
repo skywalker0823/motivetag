@@ -395,7 +395,12 @@ block_builder = async (data) => {
     }
   }
   fetching = false;
+  
   document.getElementById("loading").style.display="block"
+  if(data.data.length<5){
+    document.getElementById("loading").style.display = "none";
+  }
+
   for(a_box of temp_box){
     document.getElementById("block"+a_box).style.display="block"
   }
@@ -684,6 +689,7 @@ leave_message = async (message_block_id) => {
 
     }else{
       block_counter.style.color="#1cbfff"
+      block_counter.innerHTML = "+" + block_counter.innerHTML;
     }
 
     //who
@@ -912,6 +918,7 @@ anonymous_mode = () => {
 
 
 observe = async() => {
+  let loading = document.getElementById("loading")
   console.log("observe!")
   if(ob_mode==false){
     block_box.innerHTML = "";
@@ -920,9 +927,12 @@ observe = async() => {
   ob_mode = true;
   let target = document.getElementById("tag_observer").value;
   if(target=="" || target==null){
+    loading.style.display = "none";
+    console.log("@@")
     return
   }
   fetching = true;
+  loading.style.display = "block";
   
   const response = await fetch("/api/blocks?page=" + ob_page+"&key="+target);
   const result = await response.json();
@@ -930,12 +940,13 @@ observe = async() => {
     block_builder(result)
     return
   }
-  document.getElementById("loading").style.display="none"
+  loading.style.display="none"
   ob_page=0
   //取回資料後丟給builder
 }
 
 document.getElementById("observer_btn").addEventListener("click",()=>{
+      
       block_box.innerHTML = "";
       member_blocks.scrollTop = 0;
       ob_page=0
@@ -1031,7 +1042,7 @@ display_member_info = async(member_block_id) => {
       return
     }
     pop_add.style.display = "block";
-    pop_follow.style.display = "block";
+    // pop_follow.style.display = "block";
     pop_add.style.color = "#1cbfff";
     pop_add.innerHTML = "加好友";
     pop_add.setAttribute(
