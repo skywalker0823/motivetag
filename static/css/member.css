@@ -716,6 +716,7 @@ cursor: pointer;
     display: flex;
     margin-top: 10px;
     align-items: center;
+
 }
 .mess_avatar{
     height: 25px;
@@ -728,7 +729,8 @@ cursor: pointer;
 .message_say{
     margin-left: 15px;
     color: #FFF;
-    max-width: 50%;
+    max-width: 50%;overflow-wrap: break-word;
+    text-align: left;
 }
 .nice{
     margin-left: 5px;

@@ -1,4 +1,3 @@
-from unicodedata import category
 from data.data import Member,Member_tags,Friend
 from flask import request, session
 import random
@@ -117,3 +116,5 @@ def get_user_sp():
     #其實可以抓出資料回去給JS判斷就好 flask很忙
     #拿來確認關係用的本人id
     return {"ok":True,"data":user_basic_data,"is_friend":checker}
+
+#flask mail 預定 使用者忘記密碼

@@ -2,6 +2,7 @@ from data.data import Member_tags,Tag
 from flask import request, session
 from . import api_tags
 
+
 @api_tags.route("/api/member_tags", methods=["GET"])
 def get_tags():
     member_id = session.get("member_id")

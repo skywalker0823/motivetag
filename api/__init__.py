@@ -3,19 +3,16 @@
 from flask import Flask, redirect, session, render_template as rt
 from config import config_sets
 from flask_socketio import SocketIO
-import redis
+
 import os
-# from flask_mail import Mail
 from dotenv import load_dotenv
 socketio = SocketIO()
-# mail = Mail()
 load_dotenv()
 
 
 
 def create_app(config_name):
     app = Flask(__name__, static_folder="../static",static_url_path="/", template_folder="../templates")
-    cache = redis.Redis(host='redis', port=6379)
     app.config.from_object(config_sets[config_name])
     from api.blueprints.api_member import api_member
     from api.blueprints.api_blocks import api_blocks
@@ -29,6 +26,7 @@ def create_app(config_name):
     from api.blueprints.api_vote import api_vote
     from api.blueprints.api_level import api_level
     from api.blueprints.api_bricks import api_bricks
+    from api.blueprints.api_guild import api_guild
 
     app.register_blueprint(api_member)
     app.register_blueprint(api_blocks)
@@ -42,6 +40,7 @@ def create_app(config_name):
     app.register_blueprint(api_vote)
     app.register_blueprint(api_level)
     app.register_blueprint(api_bricks)
+    app.register_blueprint(api_guild)
 
 
     GOOGLE_OAUTH2_CLIENT_ID = os.getenv("GOOGLE_CLIENT_ID")
@@ -68,8 +67,6 @@ def create_app(config_name):
         else:
             return redirect("/")
 
-
-    
     socketio.init_app(app, cors_allowed_origins="*")
     # mail.init_app(app)
     return app

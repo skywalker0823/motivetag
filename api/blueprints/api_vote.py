@@ -1,5 +1,4 @@
 
-from cgitb import reset
 from crypt import methods
 from flask import request, session
 from . import api_vote
