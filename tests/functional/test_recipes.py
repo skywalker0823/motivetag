@@ -1,4 +1,4 @@
-from motivetag.api import create_app
+from api import create_app
 
 
 def test_home_page():
