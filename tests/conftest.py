@@ -1,5 +1,5 @@
 import pytest
-from api import create_app
+from motivetag.api import create_app
 
 
 @pytest.fixture()
