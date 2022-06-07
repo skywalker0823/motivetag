@@ -5,7 +5,7 @@ from flask import request, session
 from . import api_guild
 
 # import redis
-# rds =  redis.Redis(host='localhost',port=6379)
+# rds =  redis.Redis(host='0.0.0.0',port=6379)
 
 
 # rds.set("count",0)
