@@ -7,7 +7,9 @@ let changing = false
 let fetching = false
 document.addEventListener("DOMContentLoaded", () => {
   check_user_identity(); 
-  render_dates()
+  render_dates();
+  document.getElementById("account").value="guest"
+  document.getElementById("password").value="guest"
 });
 
 document.getElementById("login_submit").addEventListener("click", () => {
@@ -230,3 +232,24 @@ google_login = async(user_data)=>{
     }
     console.log(result.error)
 }
+
+
+var app = document.getElementById("demo");
+
+var typewriter = new Typewriter(app, {
+  loop: true,
+});
+typewriter
+  .typeString("Find #Anything")
+  .pauseFor(2500)
+  .deleteChars(9)
+  .typeString("#Tags")
+  .pauseFor(2500)
+  .deleteChars(5)
+  // .deleteAll()
+  .typeString("Friends!")
+  .pauseFor(2500)
+  .deleteAll()
+  .typeString("At MotiveTag.")
+  .pauseFor(5000)
+  .start();

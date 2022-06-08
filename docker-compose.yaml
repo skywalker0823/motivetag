@@ -4,7 +4,9 @@ services:
   app:
     platform: linux/amd64
 
-    container_name: flask
+    image: pikxl/motivetag
+
+    container_name: app
 
     build: . 
 

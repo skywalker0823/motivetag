@@ -4,8 +4,8 @@ from flask import request, session
 
 from . import api_guild
 
-import redis
-# rds =  redis.Redis(host='0.0.0.0',port=6379)
+# import redis
+# rds =  redis.Redis(host='redis',port=6379)
 
 
 # rds.set("count",0)
@@ -15,4 +15,5 @@ import redis
 #     if request.args.get("count"):
 #         rds.incr("count")
 #         return rds.get("count")
+
 

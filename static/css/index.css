@@ -4,13 +4,88 @@ body, div, dl, dt, dd, ul, ol, li, h1, h2, h3, h4, h5, h6, pre, code, form, fiel
 }
 body{
     width: 100%;
-    height: 100%;
     background: #0b0c1b;
     color: #1cbfff;
   background-repeat: no-repeat;
   background-size: 150% 150%;
   background-position: center;
+    font-family: Arial, Helvetica, sans-serif ;
+
 }
+.holder{
+    display: flex;
+    height: 100vh;
+}
+.right{
+    width: 50%;
+}
+.left{
+    width: 50%;
+    background: #1cbfff;
+    color: #0b0c1b;
+    display: flex;
+    align-items: center;
+}
+.left_title{
+    font-size: 75px;
+    width: 100%;
+    text-align: center;
+}
+.guide{
+    height: 100vh;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: space-between;
+}
+.to_bot{
+    position: absolute;
+    color: white;
+    bottom: 50px;
+    left: 49%;
+}
+.to_img{
+}
+.g_1{
+    display: flex;
+    align-items: center;
+    height: 25%;
+    width: 100%;
+    justify-content: space-around;
+
+}
+.g_content{
+ font-size: 25px;
+}
+.g_img{
+    height: 100%;
+    border-radius: 25px;
+    box-shadow: 0 5px 15px rgba(182, 174, 188, 0.4);
+
+}
+.g_2{
+    display: flex;
+    align-items: center;
+    height: 25%; 
+    width: 100%;
+    justify-content: space-around;
+}
+
+.g_3{
+    display: flex;
+    align-items: center;
+    height: 25%;
+    width: 100%;
+    justify-content: space-around;
+}
+.g_4{
+    display: flex;
+    align-items: center;
+    height: 25%;
+    width: 100%;
+    justify-content: space-around;
+}
+
 *:focus {
     outline: none;
 }
@@ -76,7 +151,7 @@ width: 100%;
     padding: 20px;
     color: #1cbfff;
 
-    max-width: 540px;
+    max-width: 350px;
     margin: 0 auto;
     text-align: left;
     margin-top: 40px;
@@ -102,6 +177,8 @@ input{
     color: #FFF;
     display: flex;
     align-items: center;
+    font-family: Arial, Helvetica, sans-serif;
+
 }
 .loading{
     display: none;
