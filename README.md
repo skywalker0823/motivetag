@@ -1,29 +1,42 @@
 # MotiveTag
 
-### About
+https://motivetag.xyz/
+
+## About
 Motivetag is a website covers main functionality of social networks. With a "Tag cored" design.
 
-#### Tag? What's that?
-A Tag is any keyword you can think of. Use Tag in your posts, then others can search for it, thus anyone with same interests can easily reach the post, and so can you. You can also subscribe a Tag, cause you might not want miss anything you liked to follow.
+
+### What is a Tag?
+
+Inspired by hashtag, a Tag is any keyword you can think of. Use Tag in your posts, then others can search for it, thus anyone with same interests can easily reach the post, and so can you. You can also subscribe a Tag, cause you might not want miss anything you liked to follow.
+
 ---
 
-### PREVIEW
+## PREVIEW
+### Testing account
+| Account     | Password|
+| ------------- |:-------------:|
+| guest     | guest | 
+
+###
 
 
-### Functions
+---
+
+## Functions
 May not perfect, but handmade with love.
-#### Member
+### Member
 * User Avatar.
 * Levels with activities.
 * Personal if custom message.
 * Click on user avatar or friend status to show his/her personal information.
-#### Tag
+### Tag
 * Trend - Order by the number of subscribers.
 * Tag subscribe.
 * PrimeTag - Experimental tag that has specific ability.
     1. Beginner's guide Tag.(新手引導) Initial attached to new users.
     2. Anonymous Tag.
-#### Post & Comment
+### Post & Comment
 * Displays following content/posts. 
     1. Contains tag you subscribed. 
     2. Friend post. 
@@ -39,19 +52,20 @@ May not perfect, but handmade with love.
 * Tag of interest - Search for specific tagged content.
 * Refresh posts with the button located in middle of nav bar.
 * Up & Down scoring - Leave your comment with scroe!
-#### Chat
+### Chat
 * OK with multi-window chat.
 * Ringing - When someone wants to start a chat with you, will recieve a shaking effect on the chat image.
 * Online status - Online = blue, Offline = red
-#### Notification
+### Notification
 * Informs you with friendship status update and offline calling.
-#### Tag forum (In progress)
+### Tag forum (In progress)
 This idea comes when the website is almost done. The final goal is to create a 「Any Tag is a individual discussion area」environment. And will use the PrimeTag to enforce the forum feature. Stay tuned!
 
 
 ---
-### Tech & tool used 
-#### Frontend
+
+## Tech & tool used 
+### Frontend
 * HTML
 * CSS
 * Javascript
@@ -68,7 +82,7 @@ This idea comes when the website is almost done. The final goal is to create a �
             We really don't like frequently refresh the page, right?
 
 
-#### Backend
+### Backend
 * Python
     * Flask
         * RESTful API
@@ -77,20 +91,20 @@ This idea comes when the website is almost done. The final goal is to create a �
         * Factory design pattern
     * Virtualenv
 
-#### Database
+### Database
 * MySQL
     * Pymysql
     * Connection Pool
 
-#### Version control
+### Version control
 * Git
 * Github
 
-#### Deploy
+### Deploy
 * Docker
 * Docker hub
 
-#### AWS
+### AWS
 * EC2
     * NGINX
         Reverse proxy, and cache static files.
@@ -110,15 +124,14 @@ This idea comes when the website is almost done. The final goal is to create a �
 
 
 
-### Structure
-#### Database
+## Structure
+
+### Database
 
 
-#### AWS
+### AWS
 
 ---
-
-
 
 
 
