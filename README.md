@@ -53,7 +53,7 @@ May not perfect, but handmade with love.
 ### Member
 * User avatar.
 * Levels with activities.
-* Personal if custom message.
+* Personal custom message.
 * Click on user avatar or friend status to show his/her personal information.
 ### Tag
 * Trend - Order by the number of subscribers.
