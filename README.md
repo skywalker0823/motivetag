@@ -10,15 +10,35 @@ Motivetag is a website covers main functionality of social networks. With a "Tag
 
 Inspired by hashtag, a Tag is any keyword you can think of. Use Tag in your posts, then others can search for it, thus anyone with same interests can easily reach the post, and so can you. You can also subscribe a Tag, cause you might not want miss anything you liked to follow.
 
+
+<img width="501" alt="截圖 2022-06-09 下午9 02 51" src="https://user-images.githubusercontent.com/56625237/172853490-67223880-8baf-406e-80ee-ef92f8594123.png">
+
+
 ---
 
 ## PREVIEW
+
 ### Testing account
 | Account     | Password|
 | ------------- |:-------------:|
 | guest     | guest | 
 
-###
+
+### Front page
+<img width="1327" alt="截圖 2022-06-09 下午8 53 59" src="https://user-images.githubusercontent.com/56625237/172851655-beb06ce6-0d45-4943-b34b-886799ac5339.png" style="width:49%;">
+
+### User page(Main page)
+<img width="1327" alt="截圖 2022-06-09 下午8 59 41" src="https://user-images.githubusercontent.com/56625237/172852759-20085ebb-5ced-4c35-bb49-803f0899957f.png" style="width:49%;">
+
+### Tag subscribe
+<img width="284" alt="截圖 2022-06-09 下午9 00 57" src="https://user-images.githubusercontent.com/56625237/172853054-36d8e15f-aff2-42c9-a5ad-bc2cb748d2e1.png">
+
+
+
+![Untitled](https://user-images.githubusercontent.com/56625237/172856140-9cfd9128-35ef-4f14-8c3b-74ed96fca716.gif)
+
+
+
 
 
 ---
