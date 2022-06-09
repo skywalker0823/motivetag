@@ -1,5 +1,4 @@
 
-from crypt import methods
 from data.data import Block,Block_tags,Vote_table
 from module import tag_filter
 from flask import request, session

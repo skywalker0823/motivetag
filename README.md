@@ -96,30 +96,32 @@ This idea comes when the website is almost done. The final goal is to create a ã
 * Javascript
     * Tools
         * Moment.js
-            For time display, also helped managing time difference between server and local.
         * Chart.js
-            Vote result graph dosplay.
         * Socket.io
-            For chat and notification function.
-        * box icons
     * Tech
         * AJAX
-            We really don't like frequently refresh the page, right?
 
 
 ### Backend
 * Python
     * Flask
-        * RESTful API
-        * Flask-socketio
-        * MVC
-        * Factory design pattern
-    * Virtualenv
+        * Tools
+            * Flask-socketio
+            * Virtualenv
+            * boto3
+            * Pymysql
+                * Connection Pool
+        * Tech
+            * RESTful API
+            * MVC
+            * Factory design pattern
 
 ### Database
 * MySQL
-    * Pymysql
-    * Connection Pool
+    * Tools
+        * MySQL workbnch
+    * Tech 
+        * Database normalization(3NF)
 
 ### Version control
 * Git
@@ -143,7 +145,7 @@ This idea comes when the website is almost done. The final goal is to create a ã
 * S3
     Storing images.
 * CloudFront
-    Reduce latency delivering images to users.
+    Reduce latency of delivering images to users.
 
 ---
 
