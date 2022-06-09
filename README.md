@@ -10,6 +10,10 @@ Motivetag is a website covers main functionality of social networks. With a "Tag
 
 Inspired by hashtag, a Tag is any keyword you can think of. Use Tag in your posts, then others can search for it, thus anyone with same interests can easily reach the post, and so can you. You can also subscribe a Tag, cause you might not want miss anything you liked to follow.
 
+Using "#" following by keyword, will tag this post with that keyword on sent. Ofcourse you can use multiple tags or none(but this let the post only will be seen by your friends).
+
+<img width="509" alt="截圖 2022-06-09 下午9 27 39" src="https://user-images.githubusercontent.com/56625237/172858559-ead4c27c-fe52-42cd-a186-84adecdfcba8.png">
+
 
 <img width="501" alt="截圖 2022-06-09 下午9 02 51" src="https://user-images.githubusercontent.com/56625237/172853490-67223880-8baf-406e-80ee-ef92f8594123.png">
 
@@ -36,6 +40,9 @@ Inspired by hashtag, a Tag is any keyword you can think of. Use Tag in your post
 <!-- ### Example
 ![Untitled](https://user-images.githubusercontent.com/56625237/172856140-9cfd9128-35ef-4f14-8c3b-74ed96fca716.gif) -->
 
+### Friend & online status
+<img width="277" alt="截圖 2022-06-09 下午9 29 08" src="https://user-images.githubusercontent.com/56625237/172858835-c76548e2-6ce0-45e1-8c6f-7e29a3305c32.png">
+
 
 
 
@@ -44,7 +51,7 @@ Inspired by hashtag, a Tag is any keyword you can think of. Use Tag in your post
 ## Functions
 May not perfect, but handmade with love.
 ### Member
-* User Avatar.
+* User avatar.
 * Levels with activities.
 * Personal if custom message.
 * Click on user avatar or friend status to show his/her personal information.
