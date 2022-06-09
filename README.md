@@ -33,9 +33,8 @@ Inspired by hashtag, a Tag is any keyword you can think of. Use Tag in your post
 ### Tag subscribe
 <img width="284" alt="截圖 2022-06-09 下午9 00 57" src="https://user-images.githubusercontent.com/56625237/172853054-36d8e15f-aff2-42c9-a5ad-bc2cb748d2e1.png">
 
-### Example
-![Untitled](https://user-images.githubusercontent.com/56625237/172856140-9cfd9128-35ef-4f14-8c3b-74ed96fca716.gif)
-
+<!-- ### Example
+![Untitled](https://user-images.githubusercontent.com/56625237/172856140-9cfd9128-35ef-4f14-8c3b-74ed96fca716.gif) -->
 
 
 
