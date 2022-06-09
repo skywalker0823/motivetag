@@ -79,7 +79,7 @@ init_render_user = (user_data) => {
   //個人圖片
 
     // https://motivetag.s3.us-west-2.amazonaws.com/avatar_5003
-    document.getElementById("user_main_avatar").setAttribute("src", "https://d3nvrufajko3tj.cloudfront.net/avatar_"+my_id);
+    document.getElementById("user_main_avatar").setAttribute("src", "https://motivetag.s3.us-west-2.amazonaws.com/avatar_"+my_id);
     document.getElementById("user_main_avatar").setAttribute("onerror","this.onerror=null;this.src='/img/user-regular-24.png';")
   
   if(mood==null){
