@@ -173,21 +173,21 @@ start_chat = (account) =>{
       send_chat("send_btn" + account);
     }
   })
-
   init_chat_with(account);
 }
 
-
+let now_init
 init_chat_with = (account) =>{
-    socket.emit("init_room",{account:account,me:me})
+  now_init = account
+    socket.emit("init_room",{account:now_init,me:me})
     socket.on("init_result",(result)=>{
         if(result.ok){
-            chatting_list[account]=result.room
+            chatting_list[now_init]=result.room
             return
         }
         let notifi={}
         notifi["me"]=my_id;
-        notifi["someone_else"] = account
+        notifi["someone_else"] = now_init
         notifi["type"]="chat request"
         notifi["content"] = me + "想找你聊天但你不在!";
         notifi["time"] = moment().format("YYYY-MM-DD HH:mm:ss");
@@ -230,7 +230,6 @@ send_chat = (btn_id) =>{
         return
     }
     if (document.getElementById("chat_input" + account).value == "") {
-      console.log("null input")
       return;
     }
     room = chatting_list[account]
