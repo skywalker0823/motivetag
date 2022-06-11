@@ -103,18 +103,17 @@ This idea comes when the website is almost done. The final goal is to create a ã
 
 
 ### Backend
-* Python
-    * Flask
-        * Tools
-            * Flask-socketio
-            * Virtualenv
-            * boto3
-            * Pymysql
-                * Connection Pool
-        * Tech
-            * RESTful API
-            * MVC
-            * Factory design pattern
+* Flask
+    * Tools
+        * Flask-socketio
+        * Virtualenv
+        * boto3
+        * Pymysql
+            * Connection Pool
+    * Tech
+        * RESTful API
+        * MVC
+        * Factory design pattern
 
 ### Database
 * MySQL
@@ -145,7 +144,7 @@ This idea comes when the website is almost done. The final goal is to create a ã
 * S3
     Storing images.
 * CloudFront
-    Reduce latency of delivering images to users.
+    Reduce latency when delivering images to users.
 
 ---
 
