@@ -153,9 +153,11 @@ This idea comes when the website is almost done. The final goal is to create a �
 ## Structure
 
 ### Database
+<img width="683" alt="截圖 2022-06-11 下午5 45 15" src="https://user-images.githubusercontent.com/56625237/173182791-a17bc194-b150-4350-99f1-9ccea75d641f.png">
 
 
 ### AWS
+<img width="1041" alt="截圖 2022-06-11 下午5 44 43" src="https://user-images.githubusercontent.com/56625237/173182798-5353896b-af1a-4de6-8a14-50f0f9a69ebe.png">
 
 ---
 
