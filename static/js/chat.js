@@ -1,20 +1,17 @@
 
 const socket = io();
-let is_on = []//現在啟用中的聊天 關閉才移除 縮小不會
-let friend_list = {}//好友清單與上現狀態
-let chatting_list={}//對方帳號與其房名對{account:room}
+let is_on = []
+let friend_list = {}
+let chatting_list={}
 
-//放心安不知道有沒有用的東西 = ~ =
 window.onbeforeunload = () => {
   socket.emit("logout", {
     account: me,
   });
 };
 
-//上線宣告請順便攜帶自己的好友名單
-//定時打socketio刷新cache的timeout表明自己online，並且拿到最新好有上線狀態
+
 const im_still_here = setInterval(async() => {
-    //抓取已是好友的account清單
     let friends = document.getElementsByClassName("friend_avatar")
     for(friend of friends){
         friend_account = friend.id.split("friend_avatar")[1]
@@ -29,8 +26,6 @@ const im_still_here = setInterval(async() => {
 }, 5000);
 
 socket.on("awake_result", (data) => {
-  //會傳資料會用來顯現好友清單的上線狀態
-  //上線的人伺服器也會有sid就可以直接加房間!
   for (friend in data) {
     if (data[friend] == "on") {
       friend_list[friend] = "on";
@@ -68,22 +63,13 @@ socket.on("connected",(data)=>{
 })
 
 start_chat = (account) =>{
-  //只有還沒開始的聊天室的朋友才能執行
-  //這裡務必檢查已經開啟的聊天室，若是已開啟將不理會
   chat_holder = document.getElementById("chat_holder");
   account = account.split("mess_to")[1];
-  //前端上線檢查器
-  // if (friend_list[account] == "off" || !friend_list[account]) {
-  //   console.log("No user online!");
-  //   return;
-  // }
-  //避免重複開聊天box
   if (is_on.includes(account)) {
     console.log("this room is already on");
     return;
   }
 
-  //同意開始/開新，隱藏其他房間，並且創造
   is_on.push(account);
 
   //聊天房間open
@@ -128,11 +114,6 @@ start_chat = (account) =>{
   //完成上方
   a_room.appendChild(chat_tag);
 
-  // //system message
-  // sys_mess = document.createElement("div")
-  // sys_mess.setAttribute("class","sys_mess")
-  // sys_mess.appendChild(document.createTextNode("可以開始聊天囉"));
-
   //聊天bar_box
   bar_box = document.createElement("div");
   bar_box.setAttribute("class", "bar_box");
@@ -160,14 +141,8 @@ start_chat = (account) =>{
 
   bar_box.appendChild(chat_input);
   bar_box.appendChild(chat_send);
-
-  // a_room.appendChild(sys_mess);
-
   a_room.appendChild(bar_box);
-
   chat_holder.appendChild(a_room);
-
-  //加上enter  eventlistener
   document.getElementById("chat_input" + account).addEventListener("keypress",()=>{
     if (event.key === "Enter"){
       send_chat("send_btn" + account);
@@ -196,9 +171,6 @@ init_chat_with = (account) =>{
 }
 
 
-
-//監聽:對方訊息
-//藉由內容來知道貼到哪個視窗
 socket.on("message",(data)=>{
     let say_box = document.createElement("p");
     let say = document.createTextNode(data.content);
@@ -212,7 +184,6 @@ socket.on("message",(data)=>{
         say_box.setAttribute("class","my_mess")
     }
     let talks = document.getElementById("world_of_words" + who);
-    //自己靠左
     say_box.appendChild(say)
     if(!talks){
         return
@@ -224,7 +195,6 @@ socket.on("message",(data)=>{
 
 //送出:訊息
 send_chat = (btn_id) =>{
-    //藉由id來知道是給誰的訊息
       account = btn_id.split("send_btn")[1];
     if(!chatting_list[account]){
         return
@@ -238,20 +208,14 @@ send_chat = (btn_id) =>{
     document.getElementById("chat_input" + account).value = "";
 }
 
-
-
-
-
 end_chat = (account) =>{
     let who = account.split("close_tag")[1]
     room = chatting_list[who]
     socket.emit("left",{"room":room,"me":me,"account":who})
 
-    //關閉視窗
     op_ele = document.getElementById("a_room"+who)
     op_ele.remove();
 
-    // is_on.pop(who)
     index = is_on.indexOf(who)
     if (index >= 0) {
       is_on.splice(index, 1);
@@ -266,16 +230,13 @@ socket.on("status",(result)=>{
 min_this = (id) =>{
     let witch = id.split("min_tag")[1]
     let room = document.getElementById("a_room"+witch)
-
     room.style.maxHeight = "150px"
-
     return
 }
 
 plus_this = (id) => {
   let witch = id.split("plus_tag")[1];
   let room = document.getElementById("a_room" + witch);
-
   room.style.maxHeight = "450px";
   return;
 };

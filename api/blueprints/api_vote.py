@@ -12,8 +12,6 @@ def checking_vote_result():
     return {"ok":True,"data":result}
 
 
-
-
 @api_vote.route("/api/vote",methods=["POST"])
 def doing_vote():
     data = request.get_json()

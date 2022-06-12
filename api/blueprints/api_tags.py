@@ -10,6 +10,7 @@ def get_tags():
     result = Member_tags.getting_member_tags(member_id)
     return {"ok":True,"tag":result["all_tags"]}
 
+
 @api_tags.route("/api/find_member_tags", methods=["GET"])
 def check_tags():
     member_id = session.get("member_id")
@@ -19,7 +20,7 @@ def check_tags():
         return {"error":"already have this tag"}
     return {"ok": True}
 
-#append new tag
+
 @api_tags.route("/api/member_tags", methods=["PATCH"])
 def append_tags():
     data = request.get_json()
@@ -29,6 +30,7 @@ def append_tags():
     if result["result"] == 0:
         return {"error": "already have this tag"}
     return {"ok": True,"member_tag_id":result["data"]["member_tag_id"],"tag":tag}
+
 
 @api_tags.route("/api/member_tags", methods=["DELETE"])
 def del_tags():
@@ -40,17 +42,15 @@ def del_tags():
         return {"ok": True}
     return {"error":"Deletion on tag fail or no data"}
 
-################---GLOBAL AREA---###################
-################---GLOBAL AREA---###################
-################---GLOBAL AREA---###################
 
-#Global hot tags OK
+
+
 @api_tags.route("/api/tag", methods=["GET"])
 def get_tags_global():
     result = Tag.getting_tags_global()
     return {"ok": True, "hot_tags": result}
 
-#增加此tag pop
+
 @api_tags.route("/api/tag", methods=["PATCH"])
 def upgrade_global_tag():
     data = request.get_json()
@@ -59,7 +59,7 @@ def upgrade_global_tag():
     tag_global_update = Tag.upping_global_tag(tag, member_id)
     return {"msg": tag_global_update}
 
-#減低此tag pop
+
 @api_tags.route("/api/tag", methods=["DELETE"])
 def down_tag():
     data = request.get_json()

@@ -3,7 +3,6 @@
 from flask import Flask, redirect, session, render_template as rt
 from config import config_sets
 from flask_socketio import SocketIO
-
 import os
 from dotenv import load_dotenv
 socketio = SocketIO()
@@ -42,7 +41,6 @@ def create_app(config_name):
     app.register_blueprint(api_bricks)
     app.register_blueprint(api_guild)
 
-
     GOOGLE_OAUTH2_CLIENT_ID = os.getenv("GOOGLE_CLIENT_ID")
     
     @app.route("/")
@@ -51,7 +49,6 @@ def create_app(config_name):
             return redirect("/"+session["account"])
         else:
             return rt("index.html", google_oauth2_client_id=GOOGLE_OAUTH2_CLIENT_ID)
-
 
     @app.route("/tag/<tag_name>")
     def tag(tag_name):
@@ -68,5 +65,4 @@ def create_app(config_name):
             return redirect("/")
 
     socketio.init_app(app, cors_allowed_origins="*")
-    # mail.init_app(app)
     return app

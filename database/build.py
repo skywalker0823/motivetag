@@ -2,14 +2,14 @@ import pymysql
 import os
 from dotenv import load_dotenv
 
-#創建database
+#Build database
 def build_database(conn):
     cursor.execute("DROP DATABASE IF EXISTS motivetag")
     cursor.execute("CREATE DATABASE motivetag")
     cursor.execute("USE motivetag")
     conn.commit()
 
-#創建 會員 Table id1000起跳
+#Build member Table
 def build_member(conn):
     cursor.execute("DROP TABLE IF EXISTS member")
     sql = """CREATE TABLE member(
@@ -28,7 +28,7 @@ def build_member(conn):
     cursor.execute(sql)
     conn.commit()
 
-#創建 tag FK: create_by(member_id)OK
+#Build tag table
 def build_global_tag(conn):
     cursor.execute("DROP TABLE IF EXISTS tag")
     sql = """CREATE TABLE tag(
@@ -42,8 +42,7 @@ def build_global_tag(conn):
     cursor.execute(sql)
     conn.commit()
 
-
-#會員訂閱tag FK:member_id tag_id OK
+#Build member_tags table
 def build_member_tags(conn):
     cursor.execute("DROP TABLE IF EXISTS member_tags")
     sql = """CREATE TABLE member_tags(
@@ -54,7 +53,7 @@ def build_member_tags(conn):
     cursor.execute(sql)
     conn.commit()
 
-#創建 好友 Table FK:req_from req_to OK
+#Build friendship table
 def build_friendship(conn):
     cursor.execute("DROP TABLE IF EXISTS friendship")
     sql = """CREATE TABLE friendship(
@@ -66,8 +65,7 @@ def build_friendship(conn):
     cursor.execute(sql)
     conn.commit()
 
-
-#創建 block (單篇文章) FK:member_id OK
+#Build block table
 def build_table_block(conn):
     cursor.execute("DROP TABLE IF EXISTS block")
     sql = """CREATE TABLE block(
@@ -84,7 +82,7 @@ def build_table_block(conn):
     cursor.execute(sql)
     conn.commit()
 
-#block本身所攜帶的tag FK:block_id tag_id
+#Build block_tag table
 def build_table_block_tag(conn):
     cursor.execute("DROP TABLE IF EXISTS block_tag")
     sql = """CREATE TABLE block_tag(
@@ -95,7 +93,7 @@ def build_table_block_tag(conn):
     cursor.execute(sql)
     conn.commit()
 
-#創建 block的 comment(文章下的留言) FK:block_id ,member_id
+#Build block_comment table
 def build_table_block_comment(conn):
     cursor.execute("DROP TABLE IF EXISTS block_comment")
     sql = """CREATE TABLE block_comment(
@@ -110,7 +108,7 @@ def build_table_block_comment(conn):
     cursor.execute(sql)
     conn.commit()
 
-#通知
+#Build notification table
 def build_table_nofiti(conn):
     cursor.execute("DROP TABLE IF EXISTS notifi")
     sql = """CREATE TABLE notifi(
@@ -123,7 +121,7 @@ def build_table_nofiti(conn):
     cursor.execute(sql)
     conn.commit()
 
-#投票
+#Build vote_options table
 def vote_options(conn):
     cursor.execute("DROP TABLE IF EXISTS vote_options")
     sql = """CREATE TABLE vote_options(
@@ -135,7 +133,7 @@ def vote_options(conn):
     cursor.execute(sql)
     conn.commit()
 
-
+#Build votes table
 def votes(conn):
     cursor.execute("DROP TABLE IF EXISTS votes")
     sql = """CREATE TABLE votes(
@@ -146,6 +144,7 @@ def votes(conn):
     cursor.execute(sql)
     conn.commit()
 
+#Build good table
 def goods(conn):
     cursor.execute("DROP TABLE IF EXISTS goods")
     sql = """CREATE TABLE goods(
@@ -156,6 +155,7 @@ def goods(conn):
     cursor.execute(sql)
     conn.commit()
 
+#Build comment_good table
 def c_goods(conn):
     cursor.execute("DROP TABLE IF EXISTS c_goods")
     sql = """CREATE TABLE c_goods(
@@ -166,7 +166,7 @@ def c_goods(conn):
     cursor.execute(sql)
     conn.commit()
 
-
+#Build bad table
 def bads(conn):
     cursor.execute("DROP TABLE IF EXISTS bads")
     sql = """CREATE TABLE bads(
@@ -177,7 +177,7 @@ def bads(conn):
     cursor.execute(sql)
     conn.commit()
 
-
+#Build bricks table
 def bricks(conn):
     cursor.execute("DROP TABLE IF EXISTS bricks")
     sql = """CREATE TABLE bricks(
@@ -195,6 +195,7 @@ def bricks(conn):
     cursor.execute(sql)
     conn.commit()
 
+#Build brick_discuss table
 def brick_discuss(conn):
     cursor.execute("DROP TABLE IF EXISTS brick_discuss")
     sql = """CREATE TABLE brick_discuss(
@@ -208,6 +209,7 @@ def brick_discuss(conn):
     cursor.execute(sql)
     conn.commit()
 
+#Build follower table
 def follower(conn):
     cursor.execute("DROP TABLE IF EXISTS follower")
     sql = """CREATE TABLE follower(
@@ -218,7 +220,7 @@ def follower(conn):
     cursor.execute(sql)
     conn.commit()
 
-#references
+#References
 def build_foreign_key_ref(conn):
     sql1 = """ALTER TABLE tag
     ADD FOREIGN KEY (create_by) REFERENCES member(member_id)
@@ -246,16 +248,13 @@ def build_foreign_key_ref(conn):
     ADD FOREIGN KEY (sender_id) REFERENCES member(member_id) ON DELETE CASCADE,
     ADD FOREIGN KEY (reciever_id) REFERENCES member(member_id) ON DELETE CASCADE
     """
-
     sql8 = """ALTER TABLE vote_options
     ADD FOREIGN KEY (block_id) REFERENCES block(block_id) ON DELETE CASCADE
     """
-
     sql9 = """ALTER TABLE votes
     ADD FOREIGN KEY (member_id) REFERENCES member(member_id) ON DELETE CASCADE,
     ADD FOREIGN KEY (vote_option_id) REFERENCES vote_options(vote_option_id) ON DELETE CASCADE
     """
-
     sql10 = """ALTER TABLE goods
     ADD FOREIGN KEY (member_id) REFERENCES member(member_id) ON DELETE CASCADE,
     ADD FOREIGN KEY (block_id) REFERENCES block(block_id) ON DELETE CASCADE
@@ -281,7 +280,6 @@ def build_foreign_key_ref(conn):
     ADD FOREIGN KEY (follow_who) REFERENCES member(member_id) ON DELETE CASCADE
     """
 
-
     cursor.execute(sql1)
     cursor.execute(sql2)
     cursor.execute(sql3)
@@ -299,6 +297,7 @@ def build_foreign_key_ref(conn):
     cursor.execute(sql15)
     conn.commit()
 
+#Auto_increment start
 def auto_increment_set(conn):
     sql1= "ALTER TABLE block AUTO_INCREMENT=1000"
     sql2 = "ALTER TABLE member AUTO_INCREMENT=5000"
@@ -308,6 +307,7 @@ def auto_increment_set(conn):
     cursor.execute(sql3)
     conn.commit()
 
+#Tag given
 def pre_insert_tags(conn):
     cursor.execute("INSERT INTO tag(name,popularity,prime_level)VALUES(%s,%s,%s)",("新手引導",0,5))
     cursor.execute("INSERT INTO tag(name,popularity,prime_level)VALUES(%s,%s,%s)",("BroadCast",0,3))
@@ -338,7 +338,7 @@ if __name__ == "__main__":
     bricks(conn)
     brick_discuss(conn)
     follower(conn)
-    #關聯開始
+    
     build_foreign_key_ref(conn)
     auto_increment_set(conn)
     pre_insert_tags(conn)

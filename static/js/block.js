@@ -9,7 +9,6 @@ let url_now
 let ob_mode = false
 let ob_page = 0
 
-
 search_build_blocks = async (mode) => {
   
   if (mode == "windowed") {
@@ -80,7 +79,6 @@ block_builder = async (data) => {
       );
     }
 
-
     //account
     author = document.createElement("div");
     if(content_type=="Anonymous"){
@@ -91,13 +89,10 @@ block_builder = async (data) => {
     author.appendChild(who);
     block_typer.appendChild(author);
 
-    //個人大頭整合
-    //分數
     let block_counter = document.createElement("div")
     block_counter.setAttribute("class","block_counter")
     block_counter.setAttribute("id","block_counter"+block_id.split("block")[1])
     block_counter.innerHTML="+0"
-
 
     block_header = document.createElement("div");
     block_header.setAttribute("class", "block_header");
@@ -142,18 +137,6 @@ block_builder = async (data) => {
     tagger.appendChild(tag);
     block_content.appendChild(tagger);
 
-    //YT API
-    // let ytplayer = document.createElement("div")
-    // ytplayer.setAttribute("id","player_here")
-    // let regExp =
-    //   /^.*((youtu.be\/)|(v\/)|(\/u\/\w\/)|(embed\/)|(watch\?))\??v?=?([^#&?]*).*/;
-    // let match = content.match(regExp);
-    // if(match){
-    //   console.log(match[7])
-    //   url_now = match[7]
-      
-    // }
-
     //上傳圖片預定放置處
     block_image = document.createElement("img");
     block_image.setAttribute("class", "block_image");
@@ -189,7 +172,6 @@ block_builder = async (data) => {
       
       a_vote_box.appendChild(vote_name)
       a_vote_box.appendChild(vote_btn)
-      // a_vote_box.appendChild(vote_result)
 
       vote_display.appendChild(a_vote_box)
     }
@@ -210,7 +192,6 @@ block_builder = async (data) => {
     
   }
     
-
     //讚box
     good_box = document.createElement("div");
     good_box.setAttribute("class", "good_box");
@@ -248,17 +229,6 @@ block_builder = async (data) => {
     bad_box.appendChild(bad_count);
     good_box.appendChild(bad_box);
 
-    //分享(預定)
-    // if(content_type!="SECRET"){
-    //   share_btn = document.createElement("box-icon");
-    //   share_btn.setAttribute("name", "share");
-    //   share_btn.setAttribute("color", "#1cbfff");
-    //   share_btn.setAttribute("id", "share" + block.block_id);
-    //   share_btn.setAttribute("onclick", "share(this.id)");
-    //   share_btn.setAttribute("class", "share");
-    //   good_box.appendChild(share_btn);
-    // }
-
     //時間
     block_time = document.createElement("div");
     block_time.setAttribute("class", "block_time");
@@ -270,10 +240,6 @@ block_builder = async (data) => {
     //開始建構留言區域
     block_message_control = document.createElement("div");
     block_message_control.setAttribute("class", "block_message_control");
-    
-
-    
-    
     
     //block下留言
     guest_input = document.createElement("input");
@@ -303,44 +269,6 @@ block_builder = async (data) => {
     down_vote.setAttribute("color", "#09eb5b");
     down_vote.setAttribute("id","down_vote"+block.block_id)
     down_vote.setAttribute("onclick","down_score(this.id)")
-
-
-
-
-
-
-
-
-
-
-
-    //上傳圖片按鈕
-    // guest_upload = document.createElement("box-icon");
-    // guest_upload.setAttribute("name", "image-alt");
-    // guest_upload.setAttribute("color","#09eb5b")
-
-    // <div>
-    //     <label for="upload_block_img">
-    //         <box-icon name='image-alt' color="#09ed5b" for="upload_user_avatar"></box-icon>
-    //     </label>
-    //     <input id="upload_block_img" onchange="upload_block_img_preview()" type="file" style="display: none;"/>
-    // </div>
-
-
-
-
-
-
-
-    
-
-
-
-
-
-
-
-
 
     guest_input_btn = document.createElement("button");
     btn_text = document.createTextNode("Stack");
@@ -497,14 +425,6 @@ textarea_holder = () => {
   };
 };
 
-//或許有其他用途的打字偵測
-// let hash_mode = false
-// let key = [];
-// const blockor_content = document.getElementById("blockor_content");
-// blockor_content.addEventListener("input",(word)=>{
-//   console.log(blockor_content.value);
-// })
-
 tag_appender = () => {
   return;
 };
@@ -533,7 +453,6 @@ del_block = async (block) => {
 //留言 召喚!
 //限制數量
 block_click = async (id) => {
-  
   let block_id = id.split("block")[1];
   const response = await fetch("/api/message?block_id=" + block_id);
   const result = await response.json();
@@ -545,8 +464,6 @@ block_click = async (id) => {
     for (a_message of result.ok) {
       let one_mess = document.createElement("div");
       one_mess.setAttribute("class", "one_mess");
-
-
       let score = document.createElement("div");
       if(parseInt(a_message.given_score)>0){
         score.appendChild(document.createTextNode("+"+a_message.given_score));
@@ -588,9 +505,7 @@ block_click = async (id) => {
       //留言的讚
       let nice_count = document.createElement("div");
       nice_count.setAttribute("id", "how_nice" + a_message.comment_id);
-
       nice_count.appendChild(document.createTextNode(a_message.nice_comment));
-
       let time = moment(a_message.build_time).subtract(8, "hours").fromNow();
       let time_box = document.createElement("div");
       time_box.setAttribute("class", "message_time");
@@ -602,7 +517,6 @@ block_click = async (id) => {
       one_mess.appendChild(say);
       one_mess.appendChild(nice_commenter);
       one_mess.appendChild(nice_count);
-
       one_mess.appendChild(time_box);
       guest_message.appendChild(one_mess);
     }
@@ -821,12 +735,7 @@ upload_block_img_preview = () => {
   let reader = new FileReader();
   reader.readAsDataURL(document.getElementById("upload_block_img").files[0]);
   reader.onload = function (oFREvent) {
-    // cancel = document.createElement("p")
-    // cancel.appendChild(document.createTextNode("取消"))
-    // cancel.setAttribute("onclick","cancel_upload()")
-    // document.getElementById("img_pre_box").appendChild(cancel)
     document.getElementById("upload_preview").src = oFREvent.target.result;
-    
   };
 };
 
@@ -869,7 +778,6 @@ nice = async (id) => {
   const response = await fetch("/api/message", options);
   const result = await response.json();
 
-  //
   if (result.ok) {
     exp_mod("good_message");
     let add_this = document.getElementById("how_nice" + target);
@@ -942,7 +850,6 @@ observe = async() => {
   }
   loading.style.display="none"
   ob_page=0
-  //取回資料後丟給builder
 }
 
 document.getElementById("observer_btn").addEventListener("click",()=>{
@@ -974,12 +881,6 @@ display_member_info = async(member_block_id) => {
   user_sq.style.display="block";
   avatar.src = "https://d3nvrufajko3tj.cloudfront.net/avatar_"+member_id;
 
-
-
-  
-
-  //預計取回account,birthday,firstsignup,lastsignup,follower,exp
-  //附帶確認是好友了沒(只需比對使用者與他得關係即可,)
   const response = await fetch(
     "/api/get_user_sp?member_id=" + member_id
   );
@@ -1042,7 +943,6 @@ display_member_info = async(member_block_id) => {
       return
     }
     pop_add.style.display = "block";
-    // pop_follow.style.display = "block";
     pop_add.style.color = "#1cbfff";
     pop_add.innerHTML = "加好友";
     pop_add.setAttribute(
@@ -1077,19 +977,3 @@ down_score = (id) => {
     }
     target.innerHTML = parseInt(target.innerHTML) - 1;
 }
-
-
-
-//留言上傳圖片預覽
-// comment_img_preview = () => {
-//   document.getElementById("img_pre_box").style.display = "flex";
-//   let reader = new FileReader();
-//   reader.readAsDataURL(document.getElementById("upload_block_img").files[0]);
-//   reader.onload = function (oFREvent) {
-//     // cancel = document.createElement("p")
-//     // cancel.appendChild(document.createTextNode("取消"))
-//     // cancel.setAttribute("onclick","cancel_upload()")
-//     // document.getElementById("img_pre_box").appendChild(cancel)
-//     document.getElementById("upload_preview").src = oFREvent.target.result;
-//   };
-// };

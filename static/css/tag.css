@@ -12,7 +12,6 @@ body{
 .tag_nav{
     display: flex;
     justify-content: space-between;
-
     height: 42px;
     top: 0;
     left: 0;
@@ -20,15 +19,10 @@ body{
     color: #FFF;
     box-sizing: border-box;
     padding: 4px 1.2%;
-    display: flex;
-    justify-content: space-between;
     white-space: nowrap;
-
     opacity: 0.9;
     text-align: center;
     align-items: center;
-
-
 }
 .back{
     cursor: pointer;
@@ -80,12 +74,10 @@ body{
     box-shadow: none;
     border-radius: 3px;
     display: inline-block;
-    /* background: #0b0c1b; */
     background: none;
     color: #1cbfff;
     font-size: 12px;
     border: solid 1px #1cbfff;
-
 }
 .tag_page_holder{
     display: flex;
@@ -93,12 +85,10 @@ body{
     width: 90%;
     margin: 0 auto;
 }
-
 .key_box{
     font-size: 50px;
     padding: 25px;
 }
-
 
 .Acheron{
    width: 100%;
@@ -145,7 +135,6 @@ body{
     box-shadow: none;
     border-radius: 3px;
     display: inline-block;
-    /* background: #0b0c1b; */
     background: none;
     color: #1cbfff;
     font-size: 13px;
@@ -198,9 +187,6 @@ body{
 .nav_time{
     width: 25%;
 }
-
-
-
 
 .a_tag_discussion{
     display: flex;

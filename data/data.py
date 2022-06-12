@@ -4,16 +4,14 @@ import os, traceback
 from dbutils.pooled_db import PooledDB
 from dotenv import load_dotenv
 
-
-
-
 load_dotenv()
+
 POOL = PooledDB(
-    creator=pymysql,  # Which DB module to use
-    maxconnections=7,# Allowed max connection, 0 and None means no limitations.
-    mincached=3,  # Least connection when created, 0 means don't.
-    blocking=True,    # Queue when there is no connection avaliable. True = wait；False = No waits, and report error.
-    ping=0,  # Check if Mysql service is avaliable # if：0 = None = never, 1 = default = whenever it is requested, 2 = when a cursor is created, 4 = when a query is executed, 7 = always
+    creator=pymysql,
+    maxconnections=7,
+    mincached=3,
+    blocking=True,
+    ping=0,
     host=os.getenv("AWS_motivetag_DB"),
     port=3306,
     user='root',
@@ -22,11 +20,10 @@ POOL = PooledDB(
     charset='utf8',
     cursorclass=pymysql.cursors.DictCursor
 )
+
 connection = POOL.connection()
 
 
-
-#新註冊者幫他開一個friend_<account>的table
 class Member:
     def get_member(account):
         with connection.cursor() as cursor:
@@ -35,8 +32,8 @@ class Member:
             result = cursor.fetchone()
             connection.commit()
             return result
+
     def sign_up(account,password,email,birthday,first_signup):
-        #註冊
         try:
             with connection.cursor() as cursor:
                 account_check = cursor.execute("""SELECT * FROM member WHERE account=%s""", (account,))
@@ -63,9 +60,8 @@ class Member:
             print("type error: " + str(e))
             print(traceback.format_exc())
             return "sign up database error"
-        #登入
+
     def sign_in(account,password,time):
-        # try:
         with connection.cursor() as cursor:
             cursor.execute("UPDATE member SET last_signin=%s WHERE account=%s",(time,account))
             got=cursor.execute("SELECT * FROM member WHERE account=%s", (account,))
@@ -73,11 +69,9 @@ class Member:
             connection.commit()
             if got==0:
                 return {"msg":"account not find"}
-            else:
-                if password == result["password"]:
-                    return {"msg":"ok","data":result}
-                else:
-                    return {"msg":"wrong password"}
+            if password == result["password"]:
+                return {"msg":"ok","data":result}
+            return {"msg":"wrong password"}
 
     def patch_user_data(member_id,category,content):
         if category=="mood":
@@ -87,7 +81,6 @@ class Member:
             return result
 
     def delete(account):
-        #刪除
         return None
 
     def getting_data_without_private(member_id):
@@ -98,19 +91,14 @@ class Member:
 
 
 class Block:
-  #預設內容 自己all+朋友all+tag內容
     def get_block(member_id,page,obseve_key=None,order_by=None):
         page=int(page)
         with connection.cursor() as cursor:
-            #此Query已經可以完整抓出自己與好友的貼文 時間排序 limit10 
-            #大哥拜託齁 找時間把這個query拆開來看一下
-            #最後的query專注在取出此使用者關注tag的所有文章
-            #分拆Query 依照每次要求來組合Query UNION為分界點
             sql_me=None
+            sql_by_score = None
             sql_observe_key = """SELECT account,block_id, block.member_id, content_type, content, build_time,good,bad,block_img
                                  FROM block RIGHT JOIN member ON member.member_id=block.member_id
                                  WHERE block_id IN(SELECT block_id FROM block_tag WHERE tag_id=(SELECT tag_id FROM tag WHERE name=%s))ORDER BY build_time DESC LIMIT %s,%s"""
-            sql_by_score=None
             sql_all = """SELECT account,block_id, block.member_id, content_type, content, build_time,good,bad,block_img
                                  FROM block RIGHT JOIN member ON member.member_id=block.member_id
                                  WHERE block.member_id IN(
@@ -132,12 +120,10 @@ class Block:
             connection.commit()
             if got == 0:
                 return {"msg":"No blocks found"}
-            else:
-                return {"msg":"ok","datas":result}
-    #發文
+            return {"msg":"ok","datas":result}
+
     def create_my_block(member_id,block):
         try:
-            # block = {title: title, content: content, time: time}
             type=block["type"]
             content=block["content"]
             time=block["time"]
@@ -158,17 +144,18 @@ class Block:
                                WHERE build_time=%s AND block.member_id=%s""", (time, member_id))
                 result = cursor.fetchone()
                 connection.commit()
-            # 取得最新block並回傳
             return {"msg":"ok","content":result}
         except Exception as e:
             print("type error: " + str(e))
             print(traceback.format_exc())
             return {"msg":"block create database error"}
+
     def good_block(block_id):
         with connection.cursor() as cursor:
             result=cursor.execute("UPDATE block SET good=good+1 WHERE block_id=%s",(block_id))
             connection.commit()
             return {"ok":result}
+
     def good_block_checker(member_id,block_id):
         with connection.cursor() as cursor:
             result = cursor.execute(
@@ -176,26 +163,26 @@ class Block:
             connection.commit()
             return result
 
-    
-
     def bad_block(block_id):
         with connection.cursor() as cursor:
             result = cursor.execute(
                 "UPDATE block SET bad=bad+1 WHERE block_id=%s", (block_id))
             connection.commit()
             return {"ok": result}
+
     def bad_block_checker(member_id,block_id):
         with connection.cursor() as cursor:
             result = cursor.execute(
                 "INSERT INTO bads(member_id,block_id) SELECT * FROM (SELECT %s,%s) AS tmp WHERE NOT exists (SELECT member_id,block_id FROM bads WHERE member_id=%s AND block_id=%s) LIMIT 1;", (member_id, block_id, member_id, block_id))
             connection.commit()
             return result
+
     def modify_block(key,value):
         with connection.cursor() as cursor:
             result = cursor.execute("UPDATE block SET block_img=%s WHERE block_id=%s",(value,key))
             connection.commit()
             return {"ok":result}
-    #刪文
+
     def delete_block(block_id):
         with connection.cursor() as cursor:
             cursor.execute("DELETE FROM block WHERE block_id=%s",(block_id))
@@ -203,21 +190,12 @@ class Block:
         return {"msg":block_id+" delete complete"}
 
 
-
 class Block_tags:
     def get_all_tag_of_a_block():
-        #GET all tag of a block
         return None
     
-
     def tag_into_block(tags,block_id,member_id):
-
         try:
-            #POST tags into a block
-            #先識別tag有無存在tag 才能取得tag_id 有加一 無新增
-            #block_id會傳進來不用擔心
-            # INSERT INTO tag(name, popularity, create_by)VALUES( %s, % s, % s) ON DUPLICATE KEY UPDATE popularity = popularity+1
-            #直接新增+有加一 無新增 順帶將字轉查成tag_id
             sql1 = "INSERT INTO tag(name,popularity,create_by)VALUES(%s,%s,%s)ON DUPLICATE KEY UPDATE popularity = popularity+1"
             sql2 = "INSERT INTO block_tag(block_id,tag_id)VALUES(%s,(SELECT tag_id FROM tag WHERE name=%s))"
             with connection.cursor() as cursor:
@@ -231,8 +209,8 @@ class Block_tags:
             print(traceback.format_exc())
             return {"msg": "tag into block database error"}
 
+
 class Member_tags:
-    #此項目可刪除!
     def getting_member_tags(member_id):
         with connection.cursor() as cursor:
             cursor.execute("SELECT * from member_tags RIGHT JOIN tag ON member_tags.tag_id=tag.tag_id WHERE member_id=%s",(member_id,))
@@ -244,8 +222,8 @@ class Member_tags:
         with connection.cursor() as cursor:
             count = cursor.execute("SELECT * FROM member_tags WHERE member_id=%s AND tag_id=(SELECT tag_id FROM tag WHERE name=%s)",(member_id,tag))
             return count
+
     def add_member_tag(member_id,tag):
-        #使用者新增tag
             with connection.cursor() as cursor:
 
                 cursor.execute("INSERT INTO member_tags(member_id,tag_id)VALUES(%s,(SELECT tag_id FROM tag WHERE name=%s))",(member_id,tag))
@@ -266,6 +244,7 @@ class Member_tags:
             connection.commit()
             return None
 
+
 class Tag:
     def getting_tags_global():
         with connection.cursor() as cursor:
@@ -276,7 +255,6 @@ class Tag:
             return result
 
     def upping_global_tag(tag,member_id):
-        #自適應傳入tag若有重複將會增加pop 若無將會創新
         try:
             with connection.cursor() as cursor:
                 result = cursor.execute("INSERT INTO tag(name,popularity,create_by)VALUES(%s,%s,%s) ON DUPLICATE KEY UPDATE popularity=popularity+1", (tag, 1, member_id))
@@ -295,51 +273,37 @@ class Tag:
 
 
 class Friend:
-    #已是朋友/已邀過就無法邀(但會送出通知)，邀請是[獨一無二]，整個friendship代表朋友網絡
-    #若同時雙方皆有邀請，自動成為好友
-    #A->B A<-B A<->B 三種狀態皆能認同是好友(只要有人送 另一人同意)
-    #狀態0等於已經同意 1代表pending
-    #1.檢查是否已是好友(A->B=0 or A<-B=0 滿足一者就是好友) 2.檢查對方是否有邀約 3.發邀請and檢查是否已發過
-    #Status, 0=Is friend ,1 is pending
     def confrim_relationship(me,someone_else):
         if someone_else==None or someone_else=="" or someone_else==False or someone_else=="undefined":
-            #GET ALL FRIEND
             with connection.cursor() as cursor:
                 result = cursor.execute(
                     "SELECT friend_ship_id,request_from AS req_from_id,request_to AS req_to_id,(SELECT account FROM member WHERE request_from=member_id)AS req_from,(SELECT account FROM member WHERE request_to=member_id)AS req_to,status FROM friendship WHERE (request_from=%s OR request_to=%s)AND(status=%s OR status=%s)", (me, me, "0", "1"))
                 data = cursor.fetchall()
                 connection.commit()
             return {"data":data,"count":result,"msg":"friend status fetch"}
-        else:
-            #單一對象查詢 這裡採多段式判斷 足夠資料都可中途離開
-            #時查詢是否有發過邀請+是否有重複送出?
-            #關卡1查是否有此人？
-            with connection.cursor() as cursor:
-                result = cursor.execute("SELECT * FROM member WHERE account=%s",(someone_else))
-                data = cursor.fetchall()
-                connection.commit()
-                if result==0:
-                    return {"data":None,"count":0,"msg":"No such user"}
-            with connection.cursor() as cursor:
-                result = cursor.execute(
-                    "SELECT * FROM friendship WHERE ((request_from=%s AND request_to=(SELECT member_id FROM member WHERE account=%s)) OR (request_from=(SELECT member_id FROM member WHERE account=%s) AND request_to=%s)) AND (status=%s OR status=%s)", (me, someone_else, someone_else, me, "0", "1"))
-                data = cursor.fetchall()
-                connection.commit()
-                if result!=0:
-                    return {"count": result, "data": data,"msg":"might be friends"}
-                else:  
-                    return {"msg":"no data","count":result}
+        with connection.cursor() as cursor:
+            result = cursor.execute("SELECT * FROM member WHERE account=%s",(someone_else))
+            data = cursor.fetchall()
+            connection.commit()
+            if result==0:
+                return {"data":None,"count":0,"msg":"No such user"}
+        with connection.cursor() as cursor:
+            result = cursor.execute(
+                "SELECT * FROM friendship WHERE ((request_from=%s AND request_to=(SELECT member_id FROM member WHERE account=%s)) OR (request_from=(SELECT member_id FROM member WHERE account=%s) AND request_to=%s)) AND (status=%s OR status=%s)", (me, someone_else, someone_else, me, "0", "1"))
+            data = cursor.fetchall()
+            connection.commit()
+            if result!=0:
+                return {"count": result, "data": data,"msg":"might be friends"}
+            return {"msg":"no data","count":result}
 
     def send_friend_request(me, someone_else):
         try:
-            #還要查詢是否已是好友
             with connection.cursor() as cursor:
                 result = cursor.execute(
                     "SELECT * FROM friendship WHERE((request_from=%s and request_to=(SELECT member_id FROM member WHERE account=%s)) OR(request_from=(SELECT member_id FROM member WHERE account=%s) and request_to=%s))AND status=%s", (me, someone_else, someone_else, me, "0"))
                 connection.commit()
                 if result!=0:
                     return {"error":"Already friend"}
-            #新增 若對方有寄送 則自動成為好友
             with connection.cursor() as cursor:
                 result = cursor.execute("SELECT * FROM friendship WHERE request_from=(SELECT member_id FROM member WHERE account=%s) AND request_to=%s",(someone_else,me))
                 data = cursor.fetchall()
@@ -367,6 +331,7 @@ class Friend:
             data = cursor.fetchone()
             connection.commit()
             return {"ok":"friendship updated","result":result,"data":data}
+            
     def delete_relation(target):
         with connection.cursor() as cursor:
             result = cursor.execute("DELETE FROM friendship WHERE friend_ship_id=%s",(target))
@@ -375,17 +340,11 @@ class Friend:
                 return {"error":"Delete friend fail"}
             return {"ok":"Delete Frind success","result":result}
 
-
-    #吞兩者id 吐出True/False 是不是朋友 一翻兩瞪眼
     def friend_ship_checker(member_id,target_id):
         with connection.cursor() as cursor:
             cursor.execute("SELECT * FROM friendship WHERE (request_from=%s AND request_to=%s)OR(request_from=%s AND request_to=%s)",(member_id,target_id,target_id,member_id))
             result = cursor.fetchone()
         return result
-
-
-
-
 
 
 class Message:
@@ -397,7 +356,7 @@ class Message:
             data = cursor.fetchall()
             connection.commit()
             return data
-        #請回傳 account,message,time
+
     def post_message(member_id,message):
         with connection.cursor() as cursor:
             result = cursor.execute("""
@@ -422,23 +381,16 @@ class Message:
                 "UPDATE block_comment SET nice_comment=nice_comment+1 WHERE comment_id=%s", (comment_id))
             connection.commit()
             return {"ok": result}
+
     def nice_message_checker(member_id,message_id):
         with connection.cursor() as cursor:
             result = cursor.execute(
                 "INSERT INTO c_goods(member_id,comment_id) SELECT * FROM (SELECT %s,%s) AS tmp WHERE NOT exists (SELECT member_id,comment_id FROM c_goods WHERE member_id=%s AND comment_id=%s) LIMIT 1;", (member_id, message_id, member_id, message_id))
             connection.commit()
             return result
-    
-# with connection.cursor() as cursor:
-#     result = cursor.execute(
-#         "INSERT INTO goods(member_id,block_id) SELECT * FROM (SELECT %s,%s) AS tmp WHERE NOT exists (SELECT member_id,block_id FROM goods WHERE member_id=%s AND block_id=%s) LIMIT 1;", (member_id, block_id, member_id, block_id))
-#     connection.commit()
-#     return result
-
 
 
 class Images:
-    #未來會套用可在block上傳圖片
     def get_image():
         return None
 
@@ -451,6 +403,7 @@ class Images:
         except Exception as e:
             print(e)
             return "upload error"
+
 
 class Notification:
     def get_notifi(member_id):
@@ -482,7 +435,6 @@ class Notification:
             print(e)
             return {"error":"post notifi error"}
 
-
     def patch_notifi(member_id):
         return None
 
@@ -501,6 +453,7 @@ class Vote_table:
             data = cursor.fetchall()
             connection.commit()
         return data
+
     def create_vote(block_id,votes):
         try:
             with connection.cursor() as cursor:
@@ -520,7 +473,6 @@ class Vote_table:
             return {"msg":"vote create error"}
 
 class Vote:
-    #檢查使用者有無投過 會回傳此block投過的資料
     def check_vote(member_id,block_id):
         with connection.cursor() as cursor:
             result = cursor.execute(
@@ -538,7 +490,6 @@ class Vote:
             connection.commit()
         return  {"ok":True}
 
-    #回傳此block的計票狀況(不記名)
     def get_vote(block_id):
         with connection.cursor() as cursor:
             cursor.execute("""
@@ -548,16 +499,14 @@ class Vote:
             connection.commit()
         return data
 
-
-
     def change_vote():
         return
+
     def del_vote():
         return
 
 class Tag_info:
     def get_tag_info(tag_name):
-        #取得該Tag文章資料(除內文外)
         with connection.cursor() as cursor:
             cursor.execute("""
             SELECT brick_id,(SELECT account FROM member WHERE member.member_id=bricks.member_id)AS account,tag_id,title,classifi,popularity,feedbacks,time FROM bricks WHERE tag_id=(SELECT tag_id FROM tag WHERE name=%s) ORDER BY time DESC
@@ -565,6 +514,7 @@ class Tag_info:
             data = cursor.fetchall()
             connection.commit()
         return data
+
     def post_tag_info(data):
         with connection.cursor() as cursor:
             result = cursor.execute("""INSERT INTO bricks(
@@ -589,25 +539,24 @@ class Tag_info:
 class Level:
     def get_current_exp(member_id):
         return
+
     def exp_up(member_id,exp):
         with connection.cursor() as cursor:
             result = cursor.execute("UPDATE member SET exp=exp+%s WHERE member_id=%s",(exp,member_id))
             connection.commit()
         return result
+
     def exp_down(member_id,exp):
         return
 
 
-
 class Bricks:
-    #取得該Tag某文章
     def getting_brick(brick_id):
         with connection.cursor() as cursor:
             cursor.execute("SELECT brick_id,(SELECT account FROM member WHERE bricks.member_id=member.member_id)AS account,tag_id,title,content,classifi,feedbacks,popularity,time FROM bricks WHERE brick_id=%s",(brick_id))
             result = cursor.fetchall()
             connection.commit()
         return result
-
 
     def getting_brick_discuss(brick_id):
         with connection.cursor() as cursor:
@@ -616,8 +565,7 @@ class Bricks:
             connection.commit()
             return datas
 
-
-    def posting_brick_discuss(datas):#內含member_id,content,time,brick_id
+    def posting_brick_discuss(datas):
         with connection.cursor() as cursor:
             result = cursor.execute("INSERT INTO brick_discuss(member_id,brick_id,content,time)VALUES(%s,%s,%s,%s)",(datas["member_id"],datas["brick_id"],datas["content"],datas["time"]))
             connection.commit()

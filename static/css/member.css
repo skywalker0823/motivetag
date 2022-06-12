@@ -17,14 +17,12 @@ box-icon{
   width: 5px;
 }
 
-
-/* Handle */
 ::-webkit-scrollbar-thumb {
   background: #1cbfff; 
   border-radius: 15px;
 }
 
-/* Handle on hover */
+
 ::-webkit-scrollbar-thumb:hover {
   background: #555; 
 }
@@ -52,9 +50,7 @@ box-icon{
 .top_left{
     display: flex;
 }
-.refresh{
 
-}
 .observer_holder{
     display: flex;
 }
@@ -65,7 +61,6 @@ box-icon{
     border-bottom: solid 1px #1cbfff;
     color: #FFF;
     font-size: 15px;
-
 }
 .tag_observer:focus{
     outline: none;
@@ -84,17 +79,14 @@ box-icon{
     border: solid 1px #1cbfff;
 }
 
-
-
-
 .top_left_inner{
     display: flex;
 }
 .mark{
-width: 100%;
-height:50px;
-margin-top: 15px;
-cursor: pointer;
+    width: 100%;
+    height:50px;
+    margin-top: 15px;
+    cursor: pointer;
 }
 
 .top_mid{
@@ -137,9 +129,7 @@ cursor: pointer;
     font-size: 12px;
 
 }
-.notify_time{
-    
-}
+
 .signout_btn{
     height: 25px;
     font-weight: bold;
@@ -155,7 +145,6 @@ cursor: pointer;
     line-height: 1;
     border: solid 1px #1cbfff;
     margin-right: 10px;
-    
 }
 
 .block_creator{
@@ -163,7 +152,6 @@ cursor: pointer;
     justify-content: space-between;
 }
 .block_creator .block_user{
-
     border-radius: 15px;
     padding: 15px;
     margin: 3px;
@@ -180,21 +168,17 @@ cursor: pointer;
     border-radius: 15px;
     padding: 15px;
     margin: 0 auto;
-
 }
 
 .blockor_inner{
     display: flex;
     border-radius: 8px;
     background: none;
-    /* background: #0b0c1b; */
     overflow: hidden;
     border: solid 1px #1cbfff;
 }
 
-
 .blockor_content{
-    /* background: #0b0c1b; */
     background: none;
     border: 0;
     box-shadow: none;
@@ -237,15 +221,11 @@ cursor: pointer;
     justify-content: space-around;
     width: 100%;
     margin: 0 auto;
-    /* background-image: url("/img/my_back.png"); */
     background-size: cover;
-
-
 }
 .main_frame .member_functions{
     width: 20%;
     border-radius: 15px;
-    /* background-color: #0b0c1b; */
     margin: 4px;
     padding: 4px;
     display: flex;
@@ -254,18 +234,13 @@ cursor: pointer;
     justify-content: space-between;
 
 }
-/* .m_f_user{
-    margin: 2px;
-    border-radius: 10px;
-    background-color: #FFF;
-} */
+
 .m_f_mytags{
     margin: 2px;
     border-radius: 10px;
     padding-top: 15px;
     padding-left: 15px;
     padding-right: 15px;
-    /* background-color: #0b0c1b; */
     max-height: 50%;
 }
 .my_tags_search{
@@ -274,14 +249,12 @@ cursor: pointer;
 
 .tag_searcher{
     width: 95%;
-    /* background: #0b0c1b; */
     background: none;
     font-size: 18px;
     padding: 5px 7px;
     border: 0;
     text-align: left;
     color: #1cbfff;
-
 }
 .tag_searcher:focus{
     outline: none;
@@ -298,7 +271,6 @@ cursor: pointer;
     box-shadow: none;
     border-radius: 999px;
     display: inline-block;
-    /* background: #0b0c1b; */
     background: none;
     color: #1cbfff;
     padding: 9px 13px;
@@ -321,7 +293,6 @@ cursor: pointer;
     display: flex;
     flex-wrap: wrap;
     margin-top: 10px;
-
 }
 .a_tag{
     padding: 4px 6px;
@@ -356,34 +327,25 @@ cursor: pointer;
 .m_f_hottags{
     border-radius: 10px;
     padding: 15px;
-    /* background-color: #0b0c1b; */
     border-top: solid 1px #1cbfff;
     border-bottom: solid 1px #1cbfff;
-
 }
 .m_f_me{
-
-
     padding: 20px 0 20px;
 }
 .bottom_inner{
     color: #666;
     overflow: visible;
     line-height: 15px;
-
 }
 .img_pre_box{
     display: none;
     justify-content: center;
     padding: 25px;
-
-    
 }
 .upload_img_preview{
     width: 100px;
     border-radius: 5px;
-
-    
 }
 
 .block_tools{
@@ -398,7 +360,6 @@ cursor: pointer;
     justify-content: space-around;
     width: 90%;
     user-select: none;
-
 }
 
 .user_icon{
@@ -420,7 +381,6 @@ cursor: pointer;
    margin-top: 3px;
 }
 .image-upload{
-
     opacity: 1;
 }
 .user_control{
@@ -444,7 +404,6 @@ cursor: pointer;
     width: 50%;
     text-align: center;
 }
-
 .hot_holder{
     display: flex;
     justify-content: center;
@@ -475,7 +434,6 @@ cursor: pointer;
     cursor: pointer;
     color: rgb(226, 12, 252);
 }
-
 .main_frame .member_blocks{
     width: 55%;
     border-radius: 20px;
@@ -492,14 +450,10 @@ cursor: pointer;
 }
 .a_block{
     margin-top: 10px;
-    /* background-color: #0b0c1b; */
-    /* border-left: solid #1cbfff;
-    border-right: solid #1cbfff; */
     border-top: solid #0f6689;
     transition: all 1s ease;
     overflow: hidden;
     padding: 25px;
-    /* border-radius: 15px; */
 }
 
 
@@ -580,13 +534,11 @@ cursor: pointer;
 }
 .vote_btn{
     font-weight: bold;
-    border: 0;
     cursor: pointer;
     outline: none;
     box-shadow: none;
     border-radius: 999px;
     display: inline-block;
-    /* background: #0b0c1b; */
     background: none;
     color: #1cbfff;
     font-size: 13px;
@@ -603,12 +555,10 @@ cursor: pointer;
 }
 .see_result{
     font-weight: bold;
-    border: 0;
     cursor: pointer;
     outline: none;
     box-shadow: none;
     border-radius: 999px;
-    /* background: #0b0c1b; */
     background: none;
     color: #1cbfff;
     font-size: 15px;
@@ -658,7 +608,6 @@ cursor: pointer;
     user-select: none;
 }
 .guest_input{
-    /* background-color: #0b0c1b; */
     align-self: flex-start;
     background: none;
     border: 0;
@@ -691,9 +640,6 @@ cursor: pointer;
     margin-right: 6px;
     
 }
-
-
-
 
 .guest_input_btn:hover{
     border-color: #5fd0fd;
@@ -748,7 +694,6 @@ cursor: pointer;
 
 .main_frame .member_chats{
     width: 20%;
-    /* background-color: #0b0c1b; */
     overflow: scroll;
     border-radius: 20px;
     margin: 4px;
@@ -782,7 +727,6 @@ cursor: pointer;
     margin-top: 7px;
     justify-content: space-between;
 }
-
 
 .friend_avatar{
     width: 20px;
@@ -874,11 +818,6 @@ footer{
     margin-left: 25px;
     border-radius: 5px;
 }
-
-
-
-
-
 .chat_input{
     background: none;
     border: 0;
@@ -941,18 +880,6 @@ footer{
     width: 0%;
 }
 
-/* 
-.chat_holder{
-    position: absolute;
-    bottom: 25px;
-    max-width: 100%;
-    display: flex;
-    align-items: flex-end;
-} */
-
-/* 預留色 */
-/* border-image: -webkit-linear-gradient(red,yellow) 30 30; */
-
 .voter{
     width: 75%;
     background: none;
@@ -972,9 +899,7 @@ footer{
     display: flex;
     justify-content: space-between;
 }
-.vote_holder{
 
-}
 .a_option{
     display: flex;
     margin-top: 2px;
@@ -1019,7 +944,6 @@ footer{
     transform: translate(-50%,-50%);
     width: 33%;
     display: none;
-    
     z-index: 500;
     border-radius: 6px;
     color: #FFF;
@@ -1066,7 +990,6 @@ footer{
     display: none;
     font-weight: bold;
     font-size: 12px;
-    border: 0;
     cursor: pointer;
     outline: none;
     background: none;
@@ -1080,7 +1003,6 @@ footer{
     display: none;
     font-weight: bold;
     font-size: 12px;
-    border: 0;
     cursor: pointer;
     outline: none;
     background: none;
@@ -1097,7 +1019,6 @@ footer{
     transform: translate(-50%,-50%);
     width: 90%;
     display: none;
-    
     z-index: 500;
     border-radius: 6px;
     color: #FFF;

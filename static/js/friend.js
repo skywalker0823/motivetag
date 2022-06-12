@@ -1,5 +1,3 @@
-
-
 document.addEventListener("DOMContentLoaded", async () => {
   let result;
   setTimeout(async () => {
@@ -14,14 +12,10 @@ document.getElementById("friend_search_btn").addEventListener("click", async () 
       console.log("you insert nothing");
       return;
     }
-
-    //步驟先確認彼此是否已是朋友
     result = await friend_invite(invite);
 
-    //認證完畢 開始建立好友關係
     if(result.ok=="FAST"){
         console.log("quick build relation",result)
-        //這裡
         let friend_ship_id =result.data[0]["friend_ship_id"]
         forge_relation(friend_ship_id)
         result["type"]="friend"
@@ -51,14 +45,11 @@ document.getElementById("friend_search_btn").addEventListener("click", async () 
 });
 
 
-
-
 friend_invite = async (invite) => {
   let check = await check_relation(invite);
   if (check.error) {
     return check.error
   }
-
   const options = {
     method: "POST",
     headers: { "content-type": "application/json" },
@@ -71,18 +62,14 @@ friend_invite = async (invite) => {
 };
 
 
-
 check_relation = async (invite) => {
   const response = await fetch("/api/friend?who=" + invite);
   const result = await response.json();
   return result;
 };
 
-
-
 render_friend_status=(data)=>{
     for(one_data of data.ok){
-      // console.log(one_data)
         let req_f = one_data.req_from
         let req_t = one_data.req_to
 
@@ -128,7 +115,6 @@ render_wait_ur_accept = (req_f,friend_ship_id) =>{
     check_no.setAttribute("id", "friend_no_" + friend_ship_id);
     check_no.setAttribute("onclick", "byefriend(this.id)");
 
-    // <box-icon name='x' color='#ff0402' ></box-icon>
     a_content.appendChild(req_f);
     a_content.appendChild(check_ok)
     a_content.appendChild(check_no)
@@ -156,15 +142,12 @@ render_ur_friend = (req_f, req_t, status, friend_ship_id,req_f_id,req_t_id) => {
   a_friend = document.createTextNode(friend);
   friend_box = document.createElement("div");
 
-  // <box-icon name="user" type="solid" color="#1cbfff"></box-icon>;
   friend_avatar = document.createElement("box-icon");
   friend_avatar.setAttribute("name", "user");
   friend_avatar.setAttribute("color", "#f71523");
   friend_avatar.setAttribute("id","friend_avatar"+friend)
   friend_avatar.setAttribute("class", "friend_avatar friend_avatar"+friend_id);
-  
   friend_avatar.setAttribute("onclick", "display_member_info(this.className)");
-
 
   friend_box.setAttribute("id","friend_box"+friend_ship_id)
   friend_box.setAttribute("class", "friend_box");
@@ -176,7 +159,6 @@ render_ur_friend = (req_f, req_t, status, friend_ship_id,req_f_id,req_t_id) => {
   mess_img.setAttribute("id","mess_to"+friend)
   mess_img.setAttribute("onclick","start_chat(this.id)")
 
-  // <box-icon name='user-x' color='#1cbfff' ></box-icon>
   bye_friend = document.createElement("box-icon")
   bye_friend.setAttribute("class", "bye_f");
   bye_friend.setAttribute("name","user-x")
@@ -205,7 +187,6 @@ befriend = async(id)=>{
     a_friend = document.createTextNode(friend);
     friend_box = document.createElement("div");
 
-
     friend_avatar = document.createElement("box-icon");
     friend_avatar.setAttribute("name", "user");
     friend_avatar.setAttribute("color", "#f71523");
@@ -222,9 +203,6 @@ befriend = async(id)=>{
     
     friend_avatar.setAttribute("onclick", "display_member_info(this.className)");
 
-
-
-
     mess_img = document.createElement("box-icon");
     mess_img.setAttribute("class", "mess_img");
     mess_img.setAttribute("color", "#1cbfff");
@@ -239,7 +217,6 @@ befriend = async(id)=>{
     bye_friend.setAttribute("id", "del_fr" + friend_ship_id);
     bye_friend.setAttribute("class", "del_fr" + friend);
     bye_friend.setAttribute("onclick", "delete_friend(this.id)");
-
 
     friend_box.setAttribute("id", "friend_box" + friend_ship_id);
     friend_box.setAttribute("class","friend_box")
@@ -282,10 +259,6 @@ byefriend = async(id) =>{
 
   } 
 }
-
-
-
-
 
 forge_relation = async(friend_ship_id) =>{
   const options = {
@@ -338,8 +311,6 @@ delete_friend = async(id) =>{
   }
   console.log("del friend fail")
 }
-
-
 
 pop_add_friend = (id) =>{
   document.getElementById("friend_searcher").value = id;

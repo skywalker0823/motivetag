@@ -23,9 +23,9 @@ def post_brick_discuss():
     data["member_id"] = session.get("member_id")
     data["account"] = session.get("account")
     result = Bricks.posting_brick_discuss(data)
-    if result==1:
-        patch = Bricks.patching_brick_discuss(data["brick_id"])
-        if patch==1:
-            return {"ok":True,"datas":data}
-        return {"error":"patch brick fail"}
-    return {"error":"post brick fail"}
+    if result != 1:
+        return {"error": "post brick fail"}
+    patch = Bricks.patching_brick_discuss(data["brick_id"])
+    if patch != 1:
+        return {"error": "patch brick fail"}
+    return {"ok": True, "datas": data}

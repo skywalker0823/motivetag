@@ -3,7 +3,7 @@ from flask import request,session
 from . import api_tag_page
 from data.data import Tag_info
 
-#應映論壇作更改
+
 @api_tag_page.route("/api/tag_page",methods=["GET"])
 def get_tag_datas():
     key = request.args.get("keyword")
@@ -22,7 +22,7 @@ def post_discuss():
     return {"ok":"tag post success"}
 
 
-@api_tag_page.route("/api/tag_page", methods=["PATCH"])
+@api_tag_page.route("/api/tag_page",methods=["PATCH"])
 def modify_discuss():
     data = request.get_json()
     member_id = session.get("member_id")

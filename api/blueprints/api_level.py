@@ -1,4 +1,3 @@
-from crypt import methods
 from . import api_level
 from flask import request, session
 from data.data import Level
@@ -9,7 +8,6 @@ def getting_current_exp():
     return
 
 
-#提升~(皆為針對自己)
 @api_level.route("/api/level",methods=["POST"])
 def exp_upping():
     data = request.get_json()

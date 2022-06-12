@@ -29,9 +29,6 @@ document.getElementById("password").addEventListener("input", () => {
   pass_x.style.display = "none";
 });
 
-
-
-
 sign_account.addEventListener("input", () => {
   // if(changing){return}
   if(fetching){return}
@@ -53,7 +50,6 @@ check_user_identity = async() =>{
   if(result.ok){
       console.log("already login!")
       window.location.href=result.account
-      //轉至個人頁
   }else{console.log(result.error)}
 }
 
@@ -119,7 +115,6 @@ signup = async () => {
   if (result.ok) {
     console.log("註冊成功!")
     document.getElementById("signup_check").style.opacity="1"
-    //增加畫面提示
   } else {
     console.log(result.error);
   }
@@ -132,7 +127,6 @@ account_checker = () => {
       check_ok.style.display = "none";
       x.style.display = "block";
     return}
-  //輸入停止一段時間後 執行一次帳號檢查
   const interval = setInterval(async()=>{
     if(!changing){return}
     const response = await fetch("/api/member?account_check="+sign_account.value);
@@ -155,8 +149,6 @@ account_checker = () => {
       preview_span.innerHTML = sign_account.value;
     }
   },5000);
-
-  
 }
 
 
@@ -164,7 +156,6 @@ render_dates = () => {
   let year_list = document.getElementById("b_year")
   let month_list = document.getElementById("b_month")
   let day_list = document.getElementById("b_day")
-  //year
   let start_year = 1943
   let end_year = new Date().getFullYear();
   for(let year = start_year;year<=end_year;year++){
@@ -191,9 +182,6 @@ render_dates = () => {
 };
 
 
-
-// GOOGLE AUTH
-
 handleCredentialResponse = (response) => {
   const responsePayload = decodeJwtResponse(response.credential);
   google_login(responsePayload)
@@ -210,7 +198,6 @@ function decodeJwtResponse(token) {
       })
       .join("")
   );
-
   return JSON.parse(jsonPayload);
 };
 
@@ -234,8 +221,8 @@ google_login = async(user_data)=>{
 }
 
 
-var app = document.getElementById("demo");
 
+var app = document.getElementById("demo");
 var typewriter = new Typewriter(app, {
   loop: true,
 });

@@ -1,5 +1,3 @@
-//進畫面後，會主動去取得該使用者擁有的tag
-
 document.addEventListener("DOMContentLoaded", async() => {
     let result
     setTimeout(async() => {
@@ -7,10 +5,6 @@ document.addEventListener("DOMContentLoaded", async() => {
         render_hot_tags(await result);      
     }, 2000);
 });
-
-
-
-
 
 del_tag = async(tag) =>{
     tag = tag.split("tag_img")[1]
@@ -23,7 +17,6 @@ del_tag = async(tag) =>{
     const result = await response.json();
     if(result.ok){
         target = document.getElementById("tag"+tag)
-        //進行調整全球tag排行
         let tag_name = document.getElementById("a_tag_name"+tag).innerHTML
         const options2 = {
           method: "DELETE",
@@ -37,7 +30,6 @@ del_tag = async(tag) =>{
             return
         }
         console.log(result.error)
-
     }
 }
 
@@ -52,22 +44,19 @@ document.getElementById("tag_search_btn").addEventListener("click",async()=>{
         console.log(result.error)
         return
     }
-    global_tag_adjust = await adjust_global_tag(tag)//調整global tag
+    global_tag_adjust = await adjust_global_tag(tag)
     if(!global_tag_adjust.msg=="1"){
         console.log("gloal adjust fail")
         return
     }
     result = await adjust_my_tag(tag);//調整會員tag
-    //這裡只應該追回最新的tag name and tag id
     if(!result.ok){
         console.log("add member tag error",result.error)
         return
     }
     user_append_tag(result)
     return
-
 })
-
 
 
 check_tag = async(tag) =>{
@@ -75,16 +64,6 @@ check_tag = async(tag) =>{
     const result = await response.json()
     return result
 }
-
-
-
-
-
-
-
-
-
-
 
 adjust_global_tag = async(tag) =>{
     const options = {
@@ -96,10 +75,6 @@ adjust_global_tag = async(tag) =>{
     const result = await response.json();
     return result
 }
-
-
-
-
 
 adjust_my_tag = async(tag) =>{
     const options = {
@@ -121,7 +96,6 @@ get_all_tags_of_member = async() =>{
 }
 
 user_append_tag=(result)=>{
-    //如果有空位，將之改成此tag
     let tag_box = document.getElementById("tag_box");
     let a_tag = document.createElement("div");
     let word = document.createElement("a")
@@ -149,7 +123,6 @@ user_append_tag=(result)=>{
 }
 
 
-//global top10 tag.get OK
 get_hot_tags=async()=>{
   const options = { method: "GET" };
   const response = await fetch("/api/tag", options);
@@ -179,11 +152,9 @@ render_hot_tags = (hot_tags) =>{
         tag_pop.appendChild(pop)
         a_tag.appendChild(ranking)
         a_tag.appendChild(tag_name)
-        // a_tag.appendChild(tag_pop)
         hot_box.appendChild(a_tag)
         rank+=1
     }
-
 }
 
 append_from_hot = async(tag) =>{
@@ -192,14 +163,13 @@ append_from_hot = async(tag) =>{
         console.log(result.error)
         return
     }
-    global_tag_adjust = await adjust_global_tag(tag)//調整global tag
+    global_tag_adjust = await adjust_global_tag(tag)
     if(!global_tag_adjust.msg=="1"){
         console.log("gloal adjust fail")
         return
     }
     console.log("global tag調整完畢")
-    result = await adjust_my_tag(tag);//調整會員tag
-    //這裡只應該追回最新的tag name and tag id
+    result = await adjust_my_tag(tag);
     if(!result.ok){
         console.log("add member tag error",result.error)
         return

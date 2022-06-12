@@ -6,7 +6,6 @@ from flask import request, session
 import boto3
 from data.data import Images
 import os
-
 from . import api_images
 
 ALLOWED_EXTENSIONS = {'png', 'jpg', 'jpeg', 'gif'}
@@ -27,7 +26,6 @@ def get_imgs():
 @api_images.route("/api/images",methods=["POST"])
 def post_imgs():
     try:
-        #預設檔案名稱會是使用者的account+_head_img ex.skywalker_head_img
         img = request.files["image"]
         member_id = session.get("member_id")
         type = request.form["type"]
@@ -37,8 +35,7 @@ def post_imgs():
         else:
             id = target_id
         key = type+"_"+str(id)
-        #檔案儲存方式 頭像:avatar_5000 文章照片:block_文章id(目前容許一張)
-        filename = secure_filename(img.filename)#注意此行會對上傳檔案名稱做必要更改
+        filename = secure_filename(img.filename)
         img.save(filename)
         s3.upload_file(
             Bucket = BUCKET_NAME,

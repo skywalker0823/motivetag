@@ -15,4 +15,3 @@ api_bricks = Blueprint('bricks', __name__, template_folder="templates")
 api_guild = Blueprint('guild', __name__, template_folder="templates")
 
 
-

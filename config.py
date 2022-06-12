@@ -1,4 +1,3 @@
-#此為上傳AWS之設定檔
 import os
 from dotenv import load_dotenv
 
@@ -18,10 +17,8 @@ class Config_prodution(Config_dev):
     DEBUG = False
     DB = os.getenv("AWS_motivetag_DB")
 
-
 class Config_AWS(Config_dev):
     DEBUG = False
-
 
 config_sets = {
     'dev': Config_dev,

@@ -6,11 +6,10 @@ body{
     width: 100%;
     background: #0b0c1b;
     color: #1cbfff;
-  background-repeat: no-repeat;
-  background-size: 150% 150%;
-  background-position: center;
+    background-repeat: no-repeat;
+    background-size: 150% 150%;
+    background-position: center;
     font-family: Arial, Helvetica, sans-serif ;
-
 }
 .holder{
     display: flex;
@@ -44,8 +43,6 @@ body{
     bottom: 50px;
     left: 49%;
 }
-.to_img{
-}
 .g_1{
     display: flex;
     align-items: center;
@@ -55,7 +52,7 @@ body{
 
 }
 .g_content{
- font-size: 25px;
+    font-size: 25px;
 }
 .g_img{
     height: 100%;
@@ -63,33 +60,10 @@ body{
     box-shadow: 0 5px 15px rgba(182, 174, 188, 0.4);
 
 }
-.g_2{
-    display: flex;
-    align-items: center;
-    height: 25%; 
-    width: 100%;
-    justify-content: space-around;
-}
-
-.g_3{
-    display: flex;
-    align-items: center;
-    height: 25%;
-    width: 100%;
-    justify-content: space-around;
-}
-.g_4{
-    display: flex;
-    align-items: center;
-    height: 25%;
-    width: 100%;
-    justify-content: space-around;
-}
 
 *:focus {
     outline: none;
 }
-
 
 .top_bar{
     position: absolute;
@@ -108,8 +82,6 @@ body{
     opacity: 0.9;
     text-align: center;
     vertical-align: middle;
-
-
 }
 
 .login{
@@ -140,7 +112,7 @@ body{
     display: none;
 }
 .title{
-width: 100%;
+    width: 100%;
 }
 .signup{
     margin-top: 50px;
@@ -285,7 +257,6 @@ input{
 }
 .signup_check{
     opacity: 0;
-    
 }
 .label{
     display: inline-block;

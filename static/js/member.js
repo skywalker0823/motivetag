@@ -2,13 +2,13 @@ let me
 let my_id
 
 document.addEventListener("DOMContentLoaded", async() => {
-  result = await check_user_identity();//1 個人資料
+  result = await check_user_identity();
   me = result.data.account
   my_id = result.data.member_id
   init_render_user(result)
-  all_user_tags = await get_all_tags_of_member();//2 自身tag
+  all_user_tags = await get_all_tags_of_member();
   init_render_tags(await all_user_tags.tag)
-  search_build_blocks();//3
+  search_build_blocks();
   textarea_holder();
 });
 
@@ -36,7 +36,6 @@ check_user_identity = async() =>{
 
   }else{console.log(result.error)}
 }
-
 
 init_render_tags = (tags) => {
   for (tag in tags) {
@@ -66,7 +65,6 @@ init_render_tags = (tags) => {
 };
 
 init_render_user = (user_data) => {
-  //個資畫面呈現
   let account = document.createTextNode(user_data.data.account);
   let email = document.createTextNode(user_data.data.email)
   let first_signup = document.createTextNode(user_data.data.first_signup.slice(0,17))
@@ -76,19 +74,13 @@ init_render_user = (user_data) => {
   let user_account = document.getElementById("user_account");
   let user_mail = document.getElementById("user_mail");
   let user_firstday = document.getElementById("user_firstday");
-  //個人圖片
-
-    // https://motivetag.s3.us-west-2.amazonaws.com/avatar_5003
     document.getElementById("user_main_avatar").setAttribute("src", "https://motivetag.s3.us-west-2.amazonaws.com/avatar_"+my_id);
-    document.getElementById("user_main_avatar").setAttribute("onerror","this.onerror=null;this.src='/img/user-regular-24.png';")
-  
+    document.getElementById("user_main_avatar").setAttribute("onerror","this.onerror=null;this.src='/img/user-regular-24.png';");
   if(mood==null){
     mood_text.innerHTML = "今天心情如何?";
   }else{
     mood_text.innerHTML=mood
   }
-
-
   user_account.appendChild(account)
   user_mail.appendChild(email)
   user_firstday.appendChild(first_signup)
@@ -97,7 +89,6 @@ init_render_user = (user_data) => {
 
 
 upload_user_img = async() => {
-
   let file = document.getElementById("upload_user_avatar").files;
   let data = new FormData();
   console.log("start upload")
@@ -112,13 +103,6 @@ upload_user_img = async() => {
     document.getElementById("user_main_avatar").setAttribute("src", "https://d3nvrufajko3tj.cloudfront.net/avatar_"+my_id);
   }
 }
-
-
-
-    // <div id="user_mood" onclick="change_mood()">
-    //     <p id="mood_text">今天心情如何?</p>
-    //     <input type="text" id="mood_input">
-    // </div>
 
 let mood_text = document.getElementById("mood_text");
 let mood_input = document.getElementById("mood_input");

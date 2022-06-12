@@ -1,4 +1,3 @@
-
 from data.data import Block,Block_tags,Vote_table
 from module import tag_filter
 from flask import request, session
@@ -22,8 +21,7 @@ def check_blocks():
             a_block["tags"].append("Anonymous")
     if result["msg"] == "ok":
         return {"ok":True,"data":result["datas"]}
-    else:
-        return {"error":True,"msg":result["msg"]}
+    return {"error":True,"msg":result["msg"]}
 
 
 @api_blocks.route("/api/blocks", methods=["POST"])
@@ -42,8 +40,6 @@ def build_blocks():
         vote_table_create = Vote_table.create_vote(result["content"]["block_id"],block["vote_box"])
         result["content"]["votes"]=vote_table_create["msg"]
     return {"ok":True,"data":[result["content"]]}
-    # else:
-    #     return {"error":True,"msg":result["msg"],"msg2":result_block_tags["msg"]}
 
 
 @api_blocks.route("/api/blocks", methods=["PATCH"])

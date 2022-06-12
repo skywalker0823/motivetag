@@ -8,9 +8,6 @@ def app():
     app.config.update({
         "TESTING": True,
     })
-
-    # other setup can go here
-
     yield app
 
 

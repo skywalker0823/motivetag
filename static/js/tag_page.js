@@ -1,24 +1,16 @@
-
 let key_word
-
 document.addEventListener("DOMContentLoaded",async() => {
     key_word = window.location.pathname.split("/tag/")[1]
     key_word = decodeURI(key_word)
     let tag_title = document.getElementById("the_word")
     let key_box = document.createElement("div")
     key_box.setAttribute("class","key_box")
-
     key_box.appendChild(document.createTextNode("#"+key_word))
     tag_title.appendChild(key_box)
-    
     bricks = await init_tag_page(key_word)
     //我吃文章資料 等上面餵我謝謝
-    building_posts(await bricks)
-
-    
+    building_posts(await bricks) 
 });
-
-
 
 init_tag_page = async(key_word) =>{
   const response = await fetch("/api/tag_page?keyword=" + key_word);
@@ -84,7 +76,6 @@ send_po = async() => {
   
 }
 
-
 //總蓋房器
 building_posts = async(bricks) => {
   console.log(bricks)
@@ -97,9 +88,7 @@ building_posts = async(bricks) => {
     let author = brick.account
     let popu = brick.popularity
     let feedbacks = brick.feedbacks
-
     time = moment(time).subtract(8, "hours").format("MMMM Do YYYY, h:mm:ss a");
-
     let a_tag_discussion = document.createElement("div")
     a_tag_discussion.setAttribute("class", "a_tag_discussion");
     a_tag_discussion.setAttribute("id", "tag_discuss_id"+brick_id);
@@ -126,7 +115,6 @@ building_posts = async(bricks) => {
     populer.appendChild(document.createTextNode(popu+"/"+feedbacks))
     populer.setAttribute("class","nav_popu")
     
-    
     //日期
     let timer = document.createElement("p")
     timer.appendChild(document.createTextNode(time))
@@ -140,12 +128,9 @@ building_posts = async(bricks) => {
 
     Acheron.appendChild(a_tag_discussion)
   }
-
 }
 
-
 into_the_woods = async(brick_nav_title_id) => {
-  console.log(brick_nav_title_id);
   brick_id = brick_nav_title_id.split("nav_title")[1];
     const options = {
       method: "PATCH",

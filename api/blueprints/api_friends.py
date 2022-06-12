@@ -8,12 +8,10 @@ from . import api_friends
 def to_member(account):
     if session.get("account") == account:
         return rt("member.html")
-    else:
-        return redirect("/")
+    return redirect("/")
 
 
-#REST "4" friends :)
-#有帶入變數->發好友邀請前確認關係 無變數->取全部朋友
+
 @api_friends.route("/api/friend", methods=["GET"])
 def checking_relationship():
     someone = request.args.get("who")
@@ -34,7 +32,6 @@ def checking_relationship():
 
 @api_friends.route("/api/friend", methods=["POST"])
 def waiting_relationship():
-    #來這裡的資料只需要確認有無重複發送給對方，有則打通知，無新增
     data = request.get_json()
     someone_else = data["who"]
     me = session.get("member_id")

@@ -9,12 +9,9 @@ body{
     background: #0b0c1b;
     cursor:default;
 }
-
-
 .tag_nav{
     display: flex;
     justify-content: space-between;
-
     height: 42px;
     top: 0;
     left: 0;
@@ -22,15 +19,10 @@ body{
     color: #FFF;
     box-sizing: border-box;
     padding: 4px 1.2%;
-    display: flex;
-    justify-content: space-between;
     white-space: nowrap;
-
     opacity: 0.9;
     text-align: center;
     align-items: center;
-
-
 }
 .back{
     cursor: pointer;
@@ -43,7 +35,6 @@ body{
     font-size: 50px;
     padding: 25px;
 }
-
 .content_holder{
     width: 85%;
     margin: 0 auto;

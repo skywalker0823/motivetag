@@ -6,24 +6,20 @@ from .. import socketio
 from . import api_chat
 import time
 
-online = {}  # {account:socketid}這裡是目前在線上的人
+online = {}  # {account:socketid}
 
-rooms = {}  # {socket_id : {who?:room,who2:room2...}} #兩個人都要有一樣的紀錄
+rooms = {}  # {socket_id : {who?:room,who2:room2...}}
 
 
-#此功能可以保留
-#朋友誰在線上檢查器
 @socketio.on('awake')
 def init_chat(data):
-    online[data["account"]]=request.sid#1.簽到
-    # print("ONLINE狀態:",online)
-    # print("ROOMS狀態:", rooms)
-    friend_list = data["check_who_is_awake_too"]#{111:"off",222:"off"}
+    online[data["account"]]=request.sid
+    friend_list = data["check_who_is_awake_too"]
     online_box = {}
-    for a_friend in friend_list:#2.查寢
+    for a_friend in friend_list:
         if a_friend in online:
             online_box[a_friend] = "on"
-            if online[a_friend] in rooms and data["account"] in rooms[online[a_friend]]:#3.在且正在扣
+            if online[a_friend] in rooms and data["account"] in rooms[online[a_friend]]:
                 online_box[a_friend] = "on_calling"
         else:
             online_box[a_friend] = "off"
@@ -38,27 +34,20 @@ def init_chat(data):
 
 @socketio.on("init_room")
 def init_room(data):
-    #此程式碼將會檢查該使用者想聊天對象有無開房間(正在等自己)
-    #若有加入，若無會新開一個房間 並且等對方加入
     who_to_chat = data["account"]
     me = data["me"]
     if who_to_chat not in online:
         emit("init_result",{"error":who_to_chat+" is not online"})
         return
     who_sid = online[who_to_chat]
-    #優先確定對方有無房間在給自己 {socket_id : {who?:room,who2:room2...}}
-    #加入
-    if who_sid in rooms and me in rooms[who_sid]:  # 對方在等自己！
-        # ROOMS[request.sid][who_to_chat]=ROOMS[who_sid][me]
+    if who_sid in rooms and me in rooms[who_sid]:
         if request.sid not in rooms or len(rooms[request.sid]) == 0:
             rooms[request.sid] = {who_to_chat: rooms[who_sid][me]}
-        #將自己進入對方房間
         join_room(rooms[who_sid][me])
         emit("init_result", {"ok": "JOINED", "room": rooms[who_sid][me]})
         emit("message", {"type": "message", "to": who_to_chat, "from": me,
              "content": me+" JOINED!", "room":rooms[who_sid][me]}, room=rooms[who_sid][me])
         return
-    #自開
     new_room = "room"+str(randint(10000, 99999))+str(time.time())
     if request.sid not in rooms or len(rooms[request.sid]) == 0:
         rooms[request.sid] = {who_to_chat:new_room}
@@ -74,19 +63,15 @@ def send_mess(data):
     emit("message",data,room=room)
 
 
-#uid status
 @socketio.on('connect')
 def test_connect():
-    # print('Client connected',request.sid)
     emit("connected",{"data":"connected confirm"})
 
 
-#User logout clear all the room created
 @socketio.on('disconnect')
 def test_disconnect():
     if request.sid in rooms:
         del rooms[request.sid]
-    # print('Client disconnected',request.sid)
 
 
 @socketio.on('left')
@@ -100,8 +85,3 @@ def left(message):
     emit('status', {'msg': session.get("account") +
          ' has left the room.'}, room=room)
     leave_room(room)
-
-
-{'j7LrbJu582tI7r1PAAAB': {'111': 'room136911654929130.933413', '222': 'room440221654929298.3482912'},
-    'J_1G1yyx-e9xAseRAAAD': {'123': 'room136911654929130.933413'}, 
-    'YAqhLH6EO9MRYDMLAAAH': {'123': 'room440221654929298.3482912'}}

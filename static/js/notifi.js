@@ -1,16 +1,9 @@
-//負責處理通知 ㄘ我通知拉
 notifi_open = false
 let notifies
-
-//以自己為觀點出發 就是以大家的觀點出發
-//1.好友
-//當對一個人發送邀請 也發送通知
-//對好友邀請(打勾/拒絕）的動作發送通知
-//通知器標準格式{me:member_id,someone_else:account,type:類型,content:"內容"}
 send_notifi = async(data) => {
     console.log(data)
-    let me = data["me"]//its member_id
-    let whom = data["someone_else"]//its account
+    let me = data["me"]
+    let whom = data["someone_else"]
     let type = data["type"]
     let content = data["content"]
     let time = data["time"]
@@ -26,15 +19,7 @@ send_notifi = async(data) => {
         return
     }
     console.log(result.error)
-
 }
-//2.文章部分
-//新文章將對自身好友發通知
-
-//3.留言
-//在他人文章下留言 對發文章發送通知
-
-//4.聊天
 
 get_my_notification_every_15s = async() =>{
     const response = await fetch("/api/notifi");
@@ -42,7 +27,6 @@ get_my_notification_every_15s = async() =>{
     if(result.ok){
         console.log(result);
     }
-
 }
 
 //通知定時抓取器
@@ -52,7 +36,6 @@ const interval = setInterval(async function () {
     const response = await fetch("/api/notifi");
     const result = await response.json();
     if(result.ok){
-        // console.log(result,"你老兄有",result.count,"未讀訊息");
         unread_notifis.innerHTML=""
         if(result.count==0){
             unread_notifis.innerHTML = "";
@@ -67,9 +50,7 @@ const interval = setInterval(async function () {
 }, 12000);
 
 
-//通知被打開並打PATCH清除過去通知(其實好像可以刪除舊通知)
 document.getElementById("notifi_bell").addEventListener("click",async () => {
-    //這裡將會打開清單 
     let notifi_list = document.getElementById("notifi_list");
     if(notifi_open){
         notifi_list.innerHTML=""
@@ -80,7 +61,6 @@ document.getElementById("notifi_bell").addEventListener("click",async () => {
         notifi_list.style.height = "500px"
         notifi_list.style.border = "solid 1px #1cbfff";
         notifi_open = true
-        //將訊息放置在清單上 並發出DELETE
         if(!notifies){
             console.log("查無通知")
             let one_notify = document.createElement("div");
@@ -122,6 +102,5 @@ document.getElementById("notifi_bell").addEventListener("click",async () => {
         if(result.ok){
             console.log("notifi read and deleted")
         }
-        
     }
 });

@@ -73,13 +73,9 @@ see_vote_result = async (id) => {
   const result = await response.json();
   if(result.ok){
       console.log(result.data)
-    //   for (a_vote of result.data){
-    //       document.getElementById("vote_result" + a_vote.vote_option_id).innerHTML=0;
-    //   }
       total={}
     for (a_vote of result.data) {
         now = document.getElementById("vote_result" + a_vote.vote_option_id);
-        // now.innerHTML = parseInt(now.innerHTML) + 1;
         choice = document.getElementById("vote_option_id" + a_vote.vote_option_id).innerHTML;
         console.log(choice)
         if(!total[choice]){
@@ -87,7 +83,6 @@ see_vote_result = async (id) => {
         }else{
             total[choice] += 1;
         }
-
     }
     let xValues=[]
     let yValues=[]
@@ -97,12 +92,6 @@ see_vote_result = async (id) => {
         xValues.push(key)
         yValues.push(total[key])
     }
-    // var xValues = ["Italy", "France", "Spain"];
-    // var yValues = [55, 49, 0];
-    // const tmpChart = Chart.getChart("canvas" + the_block);
-    // if (tmpChart) {
-    //   tmpChart.destroy();
-    // }
     new Chart("canvas" + the_block, {
       type: "horizontalBar",
       data: {

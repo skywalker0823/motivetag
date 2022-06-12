@@ -3,25 +3,18 @@ let brick_id
 document.addEventListener("DOMContentLoaded", async () => {
     key_word = window.location.pathname.split("/tag/")[1];
     key_word = decodeURI(key_word);
-    // return
-    // //先從id取得該字 以及他的所有討論資料
     brick_id = key_word.split("/")[1];
     data = await init_brick(brick_id);
     
-
     let tag_title = document.getElementById("the_word");
     let key_box = document.createElement("div");
     key_box.setAttribute("class", "key_box");
-
-    //呈現方式 #QQ/文章title
     key_box.appendChild(
       document.createTextNode(
         "#" + key_word.split("/")[0] +"/"+ data[0].title
       )
     );
     tag_title.appendChild(key_box);
-
-    //discuss抓取
     brick_discuss_fetcher()
 });
 
@@ -30,7 +23,6 @@ init_brick = async(brick_id) =>{
   const result = await response.json();
   if (result.ok) {
     main_brick_builder(result.data);
-    //開始建立brick下的留言
     return result.data;
   }
 }
@@ -80,9 +72,6 @@ discuss_sender = async() => {
   const response = await fetch("/api/bricks", options);
   const result = await response.json();
   if(result.ok){
-    //將資料遞給discuss fetcher
-    //記得要將此文章的回覆+1
-    console.log(result)
     window.location.reload();
     return
   }
@@ -101,13 +90,10 @@ brick_discuss_builder = (datas) => {
     let content = a_discuss.content
     let time = a_discuss.time
 
-
-
     //account
     let account_box = document.createElement("div")
     account_box.setAttribute("class","account_box")
     account_box.appendChild(document.createTextNode(account))
-
 
     //content
     let content_box = document.createElement("div")
@@ -119,13 +105,10 @@ brick_discuss_builder = (datas) => {
     time_box.setAttribute("class","time_box")
     time_box.appendChild(document.createTextNode(time))
 
-
     a_discuss_box.appendChild(account_box)
     a_discuss_box.appendChild(content_box)
     a_discuss_box.appendChild(time_box)
 
-
     brick_discuss.appendChild(a_discuss_box)
-
   }
 }
