@@ -49,7 +49,7 @@ Using "#" following by keyword, will tag this post with that keyword on sent. Of
 ---
 
 ## Functions
-May not perfect, but handmade with love.
+
 ### Member
 * User avatar.
 * Levels with activities.
@@ -103,6 +103,7 @@ This idea comes when the website is almost done. The final goal is to create a ã
 
 
 ### Backend
+* Use Python
 * Flask
     * Tools
         * Flask-socketio
