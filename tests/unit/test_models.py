@@ -1,6 +1,6 @@
 #資料庫test
 
-from data.data import Member
+# from data.data import Member
 
 
 
