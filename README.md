@@ -119,7 +119,7 @@ This idea comes when the website is almost done. The final goal is to create a ã
 ### Database
 * MySQL
     * Tools
-        * MySQL workbnch
+        * MySQL workbench
     * Tech 
         * Database normalization(3NF)
 
@@ -133,19 +133,13 @@ This idea comes when the website is almost done. The final goal is to create a ã
 
 ### AWS
 * EC2
-    * NGINX
-        Reverse proxy, and cache static files.
+    * NGINX : Reverse proxy, and cache static files.
     * Linux-Ubuntu
-* Elastic LoadBalancer
-    For auto-scaling group.
-* Route53
-    Imply with HTTPS.
-* RDS
-    AWS relational database with very easy set up and easy to use.
-* S3
-    Storing images.
-* CloudFront
-    Reduce latency when delivering images to users.
+* Elastic : LoadBalancer for auto-scaling group.
+* Route53 : Imply with HTTPS.
+* RDS : AWS relational database with very easy set up and easy to use.
+* S3 : Storing images.
+* CloudFront : Reduces latency when delivering images to users.
 
 ---
 
