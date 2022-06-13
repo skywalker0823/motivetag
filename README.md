@@ -155,7 +155,8 @@ This idea comes when the website is almost done. The final goal is to create a �
 
 
 ### AWS
-<img width="1041" alt="截圖 2022-06-11 下午5 44 43" src="https://user-images.githubusercontent.com/56625237/173182798-5353896b-af1a-4de6-8a14-50f0f9a69ebe.png">
+<img width="1023" alt="截圖 2022-06-14 上午2 32 08" src="https://user-images.githubusercontent.com/56625237/173420968-f6c5a324-6646-49e9-ae22-2512e79285f2.png">
+
 
 ---
 
