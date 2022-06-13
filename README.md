@@ -138,7 +138,7 @@ This idea comes when the website is almost done. The final goal is to create a ã
 * EC2
     * NGINX : Reverse proxy, and cache static files.
     * Linux-Ubuntu
-* Elastic : LoadBalancer for auto-scaling group.
+* Elastic LoadBalancer.
 * Route53 : Imply with HTTPS.
 * RDS : AWS relational database with very easy set up and easy to use.
 * S3 : Storing images.
