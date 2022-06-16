@@ -98,9 +98,9 @@ This idea comes when the website is almost done. The final goal is to create a ã
 * CSS
 * Javascript
     * Tools
-        * Moment.js
-        * Chart.js
-        * Socket.io
+        * Moment.js - Time management.
+        * Chart.js - Chart display.
+        * Socket.io - For websocket protocol, a real-time communication library.
     * Tech
         * AJAX
 
@@ -109,11 +109,11 @@ This idea comes when the website is almost done. The final goal is to create a ã
 * Use Python
 * Flask
     * Tools
-        * Flask-socketio
+        * Flask-socketio - Server side websocket connetion tool.
         * Virtualenv
-        * boto3
+        * boto3 - Upload things from back-end to AWS.
         * Pymysql
-            * Connection Pool
+            * Connection Pool - Maintain connections between RDS and Flask.
     * Tech
         * RESTful API
         * MVC
@@ -138,9 +138,9 @@ This idea comes when the website is almost done. The final goal is to create a ã
 * EC2
     * NGINX : Reverse proxy, and cache static files.
     * Linux-Ubuntu
-* Elastic LoadBalancer.
-* Route53 : Imply with HTTPS.
-* RDS : AWS relational database with very easy set up and easy to use.
+* Route53 : Domain name mabage.
+* Elastic LoadBalancer : Imply with HTTPS protocol.
+* RDS : A relational database with simple set up and easy to use, include backup.
 * S3 : Storing images.
 * CloudFront : Reduces latency when delivering images to users.
 
