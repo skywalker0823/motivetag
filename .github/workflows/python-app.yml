@@ -41,4 +41,3 @@ jobs:
         cache_from: ${{ secrets.CACHE }}
         repo: pikxl
         region: us-east-2
-        auto_tag: true
