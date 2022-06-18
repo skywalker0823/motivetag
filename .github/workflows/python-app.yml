@@ -51,3 +51,4 @@ jobs:
         cache_from: ${{ secrets.CACHE }}
         repo: pikxl
         region: us-west-2
+        dockerfile: dockerfile
