@@ -66,3 +66,5 @@ def create_app(config_name):
 
     socketio.init_app(app, cors_allowed_origins="*")
     return app
+
+#test
