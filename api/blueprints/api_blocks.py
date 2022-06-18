@@ -76,7 +76,6 @@ def bading_blocks():
         return {"error": True, "msg": "block bad error"}
 
 
-#刪除貼文DELETE
 @api_blocks.route("/api/blocks", methods=["DELETE"])
 def delete_blocks():
     try:
