@@ -39,5 +39,5 @@ jobs:
         secret_key: ${{ secrets.aws_secret_access_key }}
         registry: ${{ secrets.registry }}
         cache_from: ${{ secrets.cache }}
-        repo: ${{ secrets.repo }}
+        repo: pikxl
         region: us-east-2
