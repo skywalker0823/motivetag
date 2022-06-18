@@ -35,9 +35,10 @@ jobs:
     - name: upload image to ECR
       uses: appleboy/docker-ecr-action@master
       with:
-        access_key: ${{ secrets.aws_access_key_id }}
-        secret_key: ${{ secrets.aws_secret_access_key }}
-        registry: ${{ secrets.registry }}
-        cache_from: ${{ secrets.cache }}
+        access_key: ${{ secrets.AWS_ACCESS_KEY_ID }}
+        secret_key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
+        registry: ${{ secrets.REGISTRY }}
+        cache_from: ${{ secrets.CACHE }}
         repo: pikxl
         region: us-east-2
+        auto_tag: true
