@@ -5,9 +5,9 @@ let page = 0;
 let open;
 let deleting = false;
 let fetching = false;
-let url_now
-let ob_mode = false
-let ob_page = 0
+let url_now;
+let ob_mode = false;
+let ob_page = 0;
 
 search_build_blocks = async (mode) => {
   
@@ -716,7 +716,6 @@ member_blocks.addEventListener("scroll", () => {
     page += 5;
     //目前數量一次3篇 好好規劃數量~
     fetching = true;
-    //從這裡做分野 抓某特定人的所有tag(包含自己)，但請考量隱私問題 不要牴觸朋友權限
     result = search_build_blocks();
     if (result.error) {
       console.log(result.error)

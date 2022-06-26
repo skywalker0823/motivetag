@@ -1,96 +1,26 @@
-version: 0.2
-
-run-as: ubuntu
-
-env:
-  shell: shell-tag
-  variables:
-    key: "value"
-    key: "value"
-  parameter-store:
-    key: "value"
-    key: "value"
-  exported-variables:
-    - variable
-    - variable
-  secrets-manager:
-    key: secret-id:json-key:version-stage:version-id
-  git-credential-helper: no | yes
-
-        
-phases:
-  install:
-    run-as: Linux-user-name
-    on-failure: ABORT | CONTINUE
-    runtime-versions:
-      runtime: version
-      runtime: version
-    commands:
-      - command
-      - command
-    finally:
-      - command
-      - command
-  pre_build:
-    run-as: Linux-user-name
-    on-failure: ABORT | CONTINUE
-    commands:
-      - command
-      - command
-    finally:
-      - command
-      - command
-  build:
-    run-as: Linux-user-name
-    on-failure: ABORT | CONTINUE
-    commands:
-      - command
-      - command
-    finally:
-      - command
-      - command
-  post_build:
-    run-as: Linux-user-name
-    on-failure: ABORT | CONTINUE
-    commands:
-      - command
-      - command
-    finally:
-      - command
-      - command
-reports:
-  report-group-name-or-arn:
-    files:
-      - location
-      - location
-    base-directory: location
-    discard-paths: no | yes
-    file-format: report-format
-artifacts:
-  files:
-    - location
-    - location
-  name: artifact-name
-  discard-paths: no | yes
-  base-directory: location
-  exclude-paths: excluded paths
-  enable-symlinks: no | yes
-  s3-prefix: prefix
-  secondary-artifacts:
-    artifactIdentifier:
-      files:
-        - location
-        - location
-      name: secondary-artifact-name
-      discard-paths: no | yes
-      base-directory: location
-    artifactIdentifier:
-      files:
-        - location
-        - location
-      discard-paths: no | yes
-      base-directory: location
-cache:
-  paths:
-    - path
-    - path
+version: 0.0
+os: linux
+files:
+  - source: /aws
+    destination: /usr/local/codedeployresources
+hooks:
+  ApplicationStop:
+    - location: aws/scripts/app-stop.sh
+      timeout: 300
+      runas: root
+  BeforeInstall:
+    - location: aws/scripts/before-install.sh
+      timeout: 300
+      runas: root
+  AfterInstall:
+    - location: aws/scripts/after-install.sh
+      timeout: 300
+      runas: root
+  ApplicationStart:
+    - location: aws/scripts/app-start.sh
+      timeout: 300
+      runas: root
+  ValidateService:
+    - location: aws/scripts/validate-service.sh
+      timeout: 300
+      runas: root
