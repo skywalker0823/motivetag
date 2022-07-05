@@ -40,8 +40,6 @@ Using "#" following by keyword, will tag this post with that keyword on sent. Of
 ### Tag subscribe
 <img width="284" alt="截圖 2022-06-09 下午9 00 57" src="https://user-images.githubusercontent.com/56625237/172853054-36d8e15f-aff2-42c9-a5ad-bc2cb748d2e1.png">
 
-<!-- ### Example
-![Untitled](https://user-images.githubusercontent.com/56625237/172856140-9cfd9128-35ef-4f14-8c3b-74ed96fca716.gif) -->
 
 ### Friend & online status
 <img width="277" alt="截圖 2022-06-09 下午9 29 08" src="https://user-images.githubusercontent.com/56625237/172858835-c76548e2-6ce0-45e1-8c6f-7e29a3305c32.png">
@@ -104,14 +102,13 @@ This idea comes when the website is almost done. The final goal is to create a �
     * Tech
         * AJAX
 
-
 ### Backend
 * Use Python
 * Flask
     * Tools
         * Flask-socketio - Server side websocket connetion tool.
         * Virtualenv
-        * boto3 - Upload things from back-end to AWS.
+        * boto3 - Upload images to AWS.
         * Pymysql
             * Connection Pool - Maintain connections between RDS and Flask.
     * Tech
@@ -123,7 +120,7 @@ This idea comes when the website is almost done. The final goal is to create a �
     * Tools
         * MySQL workbench
     * Tech 
-        * Database normalization(3NF)
+        * Database normalization
 
 ### Version control
 * Git
@@ -144,8 +141,6 @@ This idea comes when the website is almost done. The final goal is to create a �
 * CloudFront : Reduces latency when delivering images to users.
 
 ---
-
-
 
 ## Structure
 
