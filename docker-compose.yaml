@@ -1,7 +1,9 @@
 version: '3'
 
 services:
+
   app:
+
     platform: linux/amd64
 
     image: pikxl/motivetag
@@ -20,6 +22,7 @@ services:
       - redis
 
   redis:
+  
     platform: linux/amd64
     
     container_name: redis
