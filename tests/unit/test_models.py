@@ -2,9 +2,6 @@
 
 from data.data import Member
 
-
-
-
 def test_get_user():
     """
     GIVEN a User account
@@ -14,7 +11,6 @@ def test_get_user():
     user = Member.get_member("123")
     assert user["account"] == "123"
 
-
 def test_new_user():
     """
     GIVEN a User model
@@ -23,3 +19,4 @@ def test_new_user():
     """
     user = Member.sign_up("123", "321","123@123.com","1988-09-12","2022-01-01")
     assert user == "Already registed"
+

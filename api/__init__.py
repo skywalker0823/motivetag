@@ -26,6 +26,7 @@ def create_app(config_name):
     from api.blueprints.api_level import api_level
     from api.blueprints.api_bricks import api_bricks
     from api.blueprints.api_guild import api_guild
+    from module.counter import get_hit_count
 
     app.register_blueprint(api_member)
     app.register_blueprint(api_blocks)
@@ -43,6 +44,11 @@ def create_app(config_name):
 
     GOOGLE_OAUTH2_CLIENT_ID = os.getenv("GOOGLE_CLIENT_ID")
     
+    @app.route("/test")
+    def test():
+        count = get_hit_count()
+        return 'Hello! I have been seen {} times.\n'.format(count)
+
     @app.route("/")
     def index():
         if session.get("account"):

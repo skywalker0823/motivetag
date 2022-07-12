@@ -1,37 +1,18 @@
 version: '3'
-
 services:
-
   app:
-
     platform: linux/amd64
-
-    image: pikxl/motivetag
-
-    container_name: app
-
+    container_name: main
     build: . 
-
     ports:
       - "3001:3000"
-
     volumes:
       - .:/app
-
     links:
       - redis
-
   redis:
-  
     platform: linux/amd64
-    
     container_name: redis
-
     image: redis
-
     restart: always
-
-    ports:
-      - "6379:6379"
-
 

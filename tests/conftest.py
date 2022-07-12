@@ -8,7 +8,10 @@ def app():
     app.config.update({
         "TESTING": True,
     })
+    #這裡加入資料庫程式碼
+    
     yield app
+    #這裡清理與重置
 
 
 @pytest.fixture()
