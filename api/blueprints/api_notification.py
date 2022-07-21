@@ -4,12 +4,12 @@ from data.data import Notification
 from . import api_notification
 
 
-@api_notification.route("/api/notifi",methods=["GET"])
+@api_notification.route("/api/notifi", methods=["GET"])
 def getting_notifi():
     member_id = session.get("member_id")
     account = session.get("account")
-    if member_id==None:
-        return {"error":"Please reload to get notifi"}
+    if member_id is None:
+        return {"error": "Please reload to get notifi"}
     result = Notification.get_notifi(member_id)
     return result
 
@@ -22,7 +22,7 @@ def posting_notifi():
     type = data["type"]
     time = data["time"]
     content = data["content"]
-    result = Notification.post_notifi(me,who,content,time)
+    result = Notification.post_notifi(me, who, content, time)
     return result
 
 

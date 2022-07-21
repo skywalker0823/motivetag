@@ -3,18 +3,18 @@ from . import api_bricks
 from data.data import Bricks
 
 
-@api_bricks.route("/api/bricks",methods=["GET"])
+@api_bricks.route("/api/bricks", methods=["GET"])
 def get_brick():
     brick_id = request.args.get("brick_id")
     data = Bricks.getting_brick(brick_id)
-    return {"ok":True,"data":data}
+    return {"ok": True, "data": data}
 
 
-@api_bricks.route("/api/get_brick_discuss",methods=["GET"])
+@api_bricks.route("/api/get_brick_discuss", methods=["GET"])
 def get_discuss():
     brick_id = request.args.get("brick_id")
     datas = Bricks.getting_brick_discuss(brick_id)
-    return {"ok":True,"data":datas}
+    return {"ok": True, "data": datas}
 
 
 @api_bricks.route("/api/bricks", methods=["POST"])

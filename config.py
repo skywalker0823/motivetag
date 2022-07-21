@@ -3,6 +3,7 @@ from dotenv import load_dotenv
 
 load_dotenv()
 
+
 class Config_dev(object):
     DEBUG = True
     JSON_AS_ASCII = False
@@ -13,12 +14,15 @@ class Config_dev(object):
     ACCESS_SECRET_ID = os.getenv("ACCESS_SECRET_ID")
     DB = os.getenv("LOCAL_DB")
 
+
 class Config_prodution(Config_dev):
     DEBUG = False
     DB = os.getenv("AWS_motivetag_DB")
 
+
 class Config_AWS(Config_dev):
     DEBUG = False
+
 
 config_sets = {
     'dev': Config_dev,

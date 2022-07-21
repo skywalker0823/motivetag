@@ -15,5 +15,3 @@ from . import api_guild
 #     if request.args.get("count"):
 #         rds.incr("count")
 #         return rds.get("count")
-
-

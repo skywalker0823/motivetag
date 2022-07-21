@@ -15,7 +15,7 @@ def getting_message():
 def posting_message():
     message = request.get_json()
     member_id = session.get("member_id")
-    result = Message.post_message(member_id,message)
+    result = Message.post_message(member_id, message)
     result["account"] = session.get("account")
     result["member_id"] = member_id
     return result
@@ -26,7 +26,7 @@ def nice_message():
     data = request.get_json()
     message_id = data["message_id"]
     member_id = session.get("member_id")
-    checker = Message.nice_message_checker(member_id,message_id)
+    checker = Message.nice_message_checker(member_id, message_id)
     if checker == 0:
         return {"error": "you pressed this good message before"}
     result = Message.nice_message(message_id)
