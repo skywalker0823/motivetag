@@ -10,17 +10,17 @@ https://motivetag.xyz/
 
 ## About
 
-Motivetag is a website covers main functionality of social networks. With a "Tag cored" design.
-這是一個社群網站，本身以 Tag 為核心運作。
+* Motivetag is a website covers main functionality of social networks. With a "Tag cored" design.
+* 這是一個社群網站，本身以 Tag 為核心運作。
 
 ### What is a Tag?
 
-Inspired by hashtag, a Tag is any keyword you can think of. Use Tag in your posts, then others can search for it, thus anyone with same interests can easily reach the post, and so can you. You can also subscribe a Tag, cause you might not want miss anything you liked to follow.
-啟發自 Hashtag ，Tag是一個任何你能想到的關鍵字。在你的貼文當中加入 Tag ，其他人能依此去尋找到這些貼文，如此與你有相同興趣的人就可以跟你討論這個主題。
+* Inspired by hashtag, a Tag is any keyword you can think of. Use Tag in your posts, then others can search for it, thus anyone with same interests can easily reach the post, and so can you. You can also subscribe a Tag, cause you might not want miss anything you liked to follow.
+* 啟發自 Hashtag ，Tag是一個任何你能想到的關鍵字。在你的貼文當中加入 Tag ，其他人能依此去尋找到這些貼文，如此與你有相同興趣的人就可以跟你討論這個主題。
 你也可以訂閱 Tag ，這樣就不會錯過任何有關此 Tag 的內容了。
 
-Using "#" following by keyword, will tag this post with that keyword on sent. Ofcourse you can use multiple tags or none(but this let the post only will be seen by your friends).
-在任何字串前加上"#" 後面以空白分開(#像這樣 )，就可以自動標記該文章。當然你也可以加上一堆標記又或者什麼都不加(什麼都不加就只有你的好友能看到這篇文章了!)
+* Using "#" following by keyword, will tag this post with that keyword on sent. Ofcourse you can use multiple tags or none(but this let the post only will be seen by your friends).
+* 在任何字串前加上"#" 後面以空白分開(#像這樣 )，就可以自動標記該文章。當然你也可以加上一堆標記又或者什麼都不加(什麼都不加就只有你的好友能看到這篇文章了!)
 
 <img width="509" alt="截圖 2022-06-09 下午9 27 39" src="https://user-images.githubusercontent.com/56625237/172858559-ead4c27c-fe52-42cd-a186-84adecdfcba8.png">
 
