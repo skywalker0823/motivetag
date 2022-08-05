@@ -7,7 +7,7 @@ https://motivetag.xyz/
 
 ## About
 Motivetag is a website covers main functionality of social networks. With a "Tag cored" design.
-
+貼文、標記、送出，跟朋友一起討論，加入/訂閱你有興趣的內容(Tag)，認識有相同興趣的人們。
 
 ### What is a Tag?
 
@@ -70,8 +70,8 @@ Using "#" following by keyword, will tag this post with that keyword on sent. Of
 * Tag - Automatically insert any tag with #keyword in your posts.
 * Thumbs up or down.
 * Vote - Praise democracy.
-* Anonymous - Special tag, can imply post with anonymous. 
-* Upload Image - Share images.
+* Anonymous - Special tag, can imply post with anonymous, only those who subscribes Anonymous tag will see them, but they won't know the poster. 
+* Upload Image - Share images with others.
 * Secret - A ONLY YOU CAN SEE post.
 <dt>Tags, Vote, Anonymous, image upload can use separately or together!</dt>
 
