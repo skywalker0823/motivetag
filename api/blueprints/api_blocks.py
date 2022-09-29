@@ -52,7 +52,7 @@ def gooding_blocks():
         member_id = session.get("member_id")
         checker = Block.good_block_checker(member_id, block_id)
         if checker == 0:
-            return {"error": "you pressed this good  before"}
+            return {"error": "you pressed this good before"}
         result = Block.good_block(block_id)
         return result
     except Exception as e:
