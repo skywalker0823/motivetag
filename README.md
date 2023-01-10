@@ -5,6 +5,8 @@
 
 https://motivetag.xyz/
 
+Will be closed about feb 2023, due to aws free tier expired.
+
 貼文、標記、送出，跟其他人一起討論並認識新朋友，加入/訂閱你有興趣的內容(Tag)，持續關注你想關注的話題，沒有廢話!沒有廣告!
 
 
