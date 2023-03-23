@@ -27,6 +27,6 @@ s3transfer==0.5.2
 six==1.16.0
 urllib3==1.26.9
 uWSGI==2.0.20
-Werkzeug==2.1.2
+Werkzeug==2.2.3
 zope.event==4.5.0
 zope.interface==5.4.0
