@@ -1,18 +1,17 @@
 version: '3'
 services:
-  app:
-    platform: linux/amd64
-    container_name: main
-    image: 
+  mysql:
+    env_file:
+      - .env
+    build:
+      context: models
+      dockerfile: dockerfile
+    environment:
+      MYSQL_ROOT_PASSWORD: ${DB_PASSWORD}
+      MYSQL_DATABASE: ${DB_DATABASE}
     ports:
-      - "3001:3000"
-    volumes:
-      - .:/app
-    links:
-      - redis
-  redis:
-    platform: linux/amd64
-    container_name: redis
-    image: redis
-    restart: always
-
+      - "3306:3306"
+    command: --init-file /docker-entrypoint-initdb.d/basic_data.sql
+    container_name: a_mysql
+    restart: on-failure:5
+    image: us-west1-docker.pkg.dev/project-0-369106/ngas-artifact-registry/mysql:8
