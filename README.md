@@ -23,6 +23,14 @@ closed due to aws free tier expired.
 * Motivetag is a website covers main functionality of social networks. With a "Tag cored" design.
 * 這是一個社群網站，本身以 Tag 為核心運作。
 
+### 目前已部署功能
+* 貼文(包含匿名、投票、圖片上傳), 加tag, 按讚與留言
+* 訂閱你有興趣的內容(Tag)並追蹤
+* 聊天功能 包含上線狀態與來訊提示
+* 好友系統
+* 通知功能
+* 無限多的討論區
+
 ### What is a Tag?
 
 * Inspired by hashtag, a Tag is any keyword you can think of. Use Tag in your posts, then others can search for it, thus anyone with same interests can easily reach the post, and so can you. You can also subscribe a Tag, cause you might not want miss anything you liked to follow.
