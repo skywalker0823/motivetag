@@ -2,6 +2,15 @@
 
 
 # MotiveTag
+預計回歸
+
+待辦清單
+1. AWS ECS
+2. Full CICD
+3. Redis/Kafka setting
+4. MySQL improve
+5. Security
+6. UI/UX and RWD redesign
 
 ~~https://motivetag.xyz/~~
 closed due to aws free tier expired.
