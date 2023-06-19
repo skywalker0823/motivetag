@@ -7,4 +7,9 @@ if __name__ == "__main__":
 
 
 # local test docker for mysql
-# docker run -dp 3306:3306 --name data_mysql -e MYSQL_ROOT_PASSWORD=123123 mysql:8
+# docker run -dp 3306:3306 --name motivetag_db -e MYSQL_ROOT_PASSWORD=123123 mysql:8
+
+# Start server
+# docker build -t motivetag .  
+# docker run -dp 3000:3000 --name motivetag motivetag  
+

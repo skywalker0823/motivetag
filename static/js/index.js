@@ -126,9 +126,12 @@ account_checker = () => {
       loading.style.display = "none";
       check_ok.style.display = "none";
       x.style.display = "block";
-    return}
+    return
+  }
   const interval = setInterval(async()=>{
-    if(!changing){return}
+    if(!changing){
+      return
+    }
     const response = await fetch("/api/member?account_check="+sign_account.value);
     const result = await response.json();
     if(result.ok==null && !result.error){

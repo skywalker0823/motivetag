@@ -12,7 +12,7 @@ class Config_dev(object):
     SECRET_KEY = os.urandom(8)
     ACCESS_KEY_ID = os.getenv("ACCESS_KEY_ID")
     ACCESS_SECRET_ID = os.getenv("ACCESS_SECRET_ID")
-    DB = os.getenv("LOCAL_DB")
+    DB = os.getenv("AWS_motivetag_DB")
 
 
 class Config_prodution(Config_dev):

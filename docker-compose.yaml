@@ -4,14 +4,31 @@ services:
     env_file:
       - .env
     build:
-      context: models
-      dockerfile: dockerfile
+      context: database
+      dockerfile: Dockerfile
     environment:
       MYSQL_ROOT_PASSWORD: ${DB_PASSWORD}
       MYSQL_DATABASE: ${DB_DATABASE}
-    ports:
-      - "3306:3306"
     command: --init-file /docker-entrypoint-initdb.d/basic_data.sql
     container_name: a_mysql
     restart: on-failure:5
-    image: us-west1-docker.pkg.dev/project-0-369106/ngas-artifact-registry/mysql:8
+    healthcheck:
+      test: ["CMD", "mysqladmin" ,"ping", "-h", "localhost","-u${DB_USER}", "-p${DB_PASSWORD}"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+      start_period: 50s
+
+
+  flask:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    ports:
+      - "3000:3000"
+    depends_on:
+      mysql:
+        condition: service_healthy
+    container_name: a_flask
+    restart: on-failure:5
+    
