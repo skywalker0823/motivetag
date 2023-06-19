@@ -13,3 +13,5 @@ if __name__ == "__main__":
 # docker build -t motivetag .  
 # docker run -dp 3000:3000 --name motivetag motivetag  
 
+# Start server with docker-compose
+# docker-compose up --build -d    
