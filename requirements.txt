@@ -9,7 +9,9 @@ cryptography==41.0.1
 DBUtils==3.0.3
 Flask==2.3.2
 Flask-SocketIO==5.3.4
+gevent==22.10.2
 gevent-websocket==0.10.1
+greenlet==2.0.2
 gunicorn==20.1.0
 itsdangerous==2.1.2
 Jinja2==3.1.2
@@ -26,3 +28,5 @@ s3transfer==0.6.1
 six==1.16.0
 urllib3==1.26.16
 Werkzeug==2.3.6
+zope.event==4.6
+zope.interface==6.0
