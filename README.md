@@ -8,9 +8,10 @@ Designed with photoshop.
 1. AWS ECS
 2. Full CICD
 3. Redis/Kafka setting
-4. MySQL improve
+4. MySQL improve, ORM
 5. Security
 6. UI/UX and RWD redesign
+7. Basic code improve
 
 ~~https://motivetag.xyz/~~
 closed due to aws free tier expired.
