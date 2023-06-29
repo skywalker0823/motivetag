@@ -6,7 +6,7 @@ Designed with photoshop.
 
 待辦清單
 0. Nginx
-1. AWS ECS(or cloud run)
+1. EKS
 2. Full CICD
 3. Redis/Kafka setting(chat status)
 4. MySQL improve, ORM
@@ -15,6 +15,12 @@ Designed with photoshop.
 7. Basic code improve
 8. Kompose
 9. PlanetScale
+
+## Note
+* Redis for managing online/chat status.
+* Kafka for chat message.
+* MySQL for data storage.
+* All resources should in AWS.
 
 ~~https://motivetag.xyz/~~
 closed due to aws free tier expired.
