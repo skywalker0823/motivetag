@@ -5,6 +5,7 @@ Designed with photoshop.
 預計回歸
 
 待辦清單
+0. Nginx
 1. AWS ECS
 2. Full CICD
 3. Redis/Kafka setting
