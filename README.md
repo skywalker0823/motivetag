@@ -12,6 +12,7 @@ Designed with photoshop.
 5. Security
 6. UI/UX and RWD redesign
 7. Basic code improve
+7. Kompose
 
 ~~https://motivetag.xyz/~~
 closed due to aws free tier expired.

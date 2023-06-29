@@ -74,7 +74,7 @@ init_render_user = (user_data) => {
   let user_account = document.getElementById("user_account");
   let user_mail = document.getElementById("user_mail");
   let user_firstday = document.getElementById("user_firstday");
-    document.getElementById("user_main_avatar").setAttribute("src", "https://motivetag.s3.us-west-2.amazonaws.com/avatar_"+my_id);
+    document.getElementById("user_main_avatar").setAttribute("src", "https://images.vivien.fun/avatar_"+my_id);
     document.getElementById("user_main_avatar").setAttribute("onerror","this.onerror=null;this.src='/img/user-regular-24.png';");
   if(mood==null){
     mood_text.innerHTML = "今天心情如何?";
@@ -100,7 +100,7 @@ upload_user_img = async() => {
   const result = await response.json();
   if (result.ok) {
     console.log("Upload OK!");
-    document.getElementById("user_main_avatar").setAttribute("src", "https://d3nvrufajko3tj.cloudfront.net/avatar_"+my_id);
+    document.getElementById("user_main_avatar").setAttribute("src", "https://images.vivien.fun/avatar_"+my_id);
   }
 }
 
