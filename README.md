@@ -4,7 +4,9 @@ Designed with photoshop.
 # MotiveTag
 預計回歸
 
-待辦清單
+待辦清單Note
+* Images in ECR should be seperated or not?
+
 0. ~~Nginx~~
 1. EKS
 2. Full CICD
