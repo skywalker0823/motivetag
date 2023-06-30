@@ -321,6 +321,7 @@ if __name__ == "__main__":
     conn = pymysql.connect(charset='utf8', host=os.getenv("AWS_motivetag_DB"),
                            password=os.getenv("DB_PASS"), port=3306, user='root')
     cursor = conn.cursor()
+    print("databases connected, start building tables...")
     build_database(conn)
     build_member(conn)
     build_global_tag(conn)
@@ -339,8 +340,10 @@ if __name__ == "__main__":
     brick_discuss(conn)
     follower(conn)
     
+    print("tables built, start building foreign key references...")
     build_foreign_key_ref(conn)
     auto_increment_set(conn)
     pre_insert_tags(conn)
+    print("OK")
     cursor.close()
     conn.close()

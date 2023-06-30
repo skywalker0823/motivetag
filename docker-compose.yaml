@@ -18,7 +18,6 @@ services:
       timeout: 5s
       retries: 5
       start_period: 50s
-
   flask:
     build:
       context: .
@@ -30,13 +29,13 @@ services:
         condition: service_healthy
     container_name: a_flask
     restart: always
-  # nginx:
-  #   build:
-  #     context: nginx
-  #     dockerfile: Dockerfile
-  #   ports:
-  #     - "80:80"
-  #   depends_on:
-  #     - flask
-  #   container_name: a_nginx
-  #   restart: always
+  nginx:
+    build:
+      context: nginx
+      dockerfile: Dockerfile
+    ports:
+      - "80:80"
+    depends_on:
+      - flask
+    container_name: a_nginx
+    restart: always
