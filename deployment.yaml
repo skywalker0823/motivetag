@@ -1,0 +1,19 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: motivetag-deployment
+spec:
+  selector:
+    matchLabels:
+      app: flask-app
+  replicas: 2 # tells deployment to run 2 pods matching the template
+  template:
+    metadata:
+      labels:
+        app: flask-app
+    spec:
+      containers:
+      - name: flask-app
+        image: motivetag:latest
+        ports:
+        - containerPort: 3000

@@ -5,7 +5,7 @@ Designed with photoshop.
 預計回歸
 
 待辦清單
-0. Nginx
+0. ~~Nginx~~
 1. EKS
 2. Full CICD
 3. Redis/Kafka setting(chat status)
@@ -13,8 +13,8 @@ Designed with photoshop.
 5. Security
 6. UI/UX and RWD redesign
 7. Basic code improve
-8. Kompose
-9. PlanetScale
+8. PlanetScale
+9. Axiom
 
 ## Note
 * Redis for managing online/chat status.
