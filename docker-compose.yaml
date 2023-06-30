@@ -16,7 +16,7 @@ services:
       timeout: 5s
       retries: 5
       start_period: 50s
-    image: ${ECR_ACCOUNT}/motivetag/mysql:latest
+    image: ${ECR_ACCOUNT}/motivetag:mysql
   flask:
     build:
       context: .
@@ -28,7 +28,7 @@ services:
         condition: service_healthy
     container_name: a_flask
     restart: always
-    image: ${ECR_ACCOUNT}/motivetag/flask:latest
+    image: ${ECR_ACCOUNT}/motivetag:flask
   nginx:
     build:
       context: nginx
@@ -39,4 +39,4 @@ services:
       - flask
     container_name: a_nginx
     restart: always
-    image: ${ECR_ACCOUNT}/motivetag/nginx:latest
+    image: ${ECR_ACCOUNT}/motivetag:nginx
