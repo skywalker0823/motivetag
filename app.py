@@ -12,13 +12,14 @@ if __name__ == "__main__":
 # python3 database/build.py
 
 # local development
-# python3 app.py
+# gunicorn -k geventwebsocket.gunicorn.workers.GeventWebSocketWorker -b 0.0.0.0:3000 -w 1 app:app
 
 # Start server
 # docker build -t motivetag .  
 # docker run -dp 3000:3000 --name motivetag motivetag  
 
 # Start server with docker-compose
-# docker-compose up --build -d
+# docker-compose up --build -d(Production)
+# docker-compose -f docker-compose.dev.yaml up -d --build(Development)
 # Open 127.0.0.1
 # docker-compose down

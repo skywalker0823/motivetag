@@ -1,0 +1,52 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: motivetag-flask-app-deployment
+  namespace: default
+spec:
+  replicas: 2
+  selector:
+    matchLabels:
+      app: web
+  template:
+    metadata:
+      labels:
+        app: web
+    spec:
+      containers:
+        - name: flask-api
+          image: <AWS_ID>.dkr.ecr.us-east-1.amazonaws.com/motivetag:flask
+          ports:
+            - containerPort: 3000
+
+        - name: nginx-reverse-proxy
+          image: <AWS_ID>.dkr.ecr.us-east-1.amazonaws.com/motivetag:nginx
+          ports:
+            - containerPort: 80
+          volumeMounts:
+            - name: nginx-config
+              mountPath: /etc/nginx/nginx.conf
+              subPath: nginx.conf
+            - name: nginx-ssl
+              mountPath: /etc/nginx/ssl
+              subPath: ssl
+            - name: nginx-logs
+              mountPath: /var/log/nginx
+              subPath: logs
+        - name: mysql-database
+          image: <AWS_ID>.dkr.ecr.us-east-1.amazonaws.com/motivetag:mysql
+          ports:
+            - containerPort: 3306
+          env:
+            - name: MYSQL_ROOT_PASSWORD
+              value: <PASSWORD>
+            - name: MYSQL_DATABASE
+              value: <DATABASE>
+            - name: MYSQL_USER
+              value: <USER>
+            - name: MYSQL_PASSWORD
+              value: <PASSWORD>
+          volumeMounts:
+            - name: mysql-data
+              mountPath: /var/lib/mysql
+              subPath: mysql

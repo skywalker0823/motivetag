@@ -1,0 +1,29 @@
+apiVersion: eksctl.io/v1alpha5
+kind: ClusterConfig
+metadata:
+  name: Flask-App-EKS-Cluster-VPC
+  # region: us-east-1
+
+vpc:
+  id: vpc-092f1fb4ce6faac21
+  cidr: "192.168.0.0/16"
+  subnets:
+    # public:
+    #   us-east-1a:
+    #     id: subnet-08000f55dee5a2553
+    #   us-east-1b:
+    #     id: subnet-0b6f920e11568568b
+    # private:
+    #   us-east-1a:
+    #     id: subnet-03947c1d2b3aa96ce
+    #   us-east-1b:
+    #     id: subnet-09d1cc1d57361ae6f
+
+nodeGroups:
+  - name: EKS-public-workers
+    instanceType: t2.medium
+    desiredCapacity: 2
+  - name: EKS-private-workers
+    instanceType: t2.medium
+    desiredCapacity: 1
+    privateNetworking: true
