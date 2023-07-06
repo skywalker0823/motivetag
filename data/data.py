@@ -6,6 +6,8 @@ from dotenv import load_dotenv
 
 load_dotenv()
 
+#應該增加自動連線器, if connection is not open, then connect to other
+
 POOL = PooledDB(
     creator=pymysql,
     maxconnections=7,
