@@ -6,25 +6,38 @@ from dotenv import load_dotenv
 
 load_dotenv()
 
-#應該增加自動連線器, if connection is not open, then connect to other
+hosts = [
+    os.getenv("AWS_motivetag_DB"),
+    os.getenv("DB_BK1"),
+    os.getenv("DB_BK2")
+]
 
-POOL = PooledDB(
-    creator=pymysql,
-    maxconnections=7,
-    mincached=3,
-    blocking=True,
-    ping=0,
-    host=os.getenv("AWS_motivetag_DB"),
-    port=3306,
-    user='root',
-    password=os.getenv("DB_PASS"),
-    database='motivetag',
-    charset='utf8',
-    cursorclass=pymysql.cursors.DictCursor
-)
+def get_connection():
+    for host in hosts:
+        print(f"try to connect to host:{host}")
+        try:
+            POOL = PooledDB(
+                    creator=pymysql,
+                    maxconnections=7,
+                    mincached=3,
+                    blocking=True,
+                    ping=0,
+                    host=host,
+                    port=3306,
+                    user='root',
+                    password=os.getenv("DB_PASSWORD"),
+                    database='motivetag',
+                    charset='utf8',
+                    cursorclass=pymysql.cursors.DictCursor
+                )
+            connection = POOL.connection()
+            print(f"Connect to host:{host} success")
+            return connection
+        except pymysql.Error as e:
+            print(f"Connect to host:{host} failed: {e}")
+    raise Exception("All DB's host are down")
 
-connection = POOL.connection()
-
+connection = get_connection()
 
 class Member:
     def get_member(account):

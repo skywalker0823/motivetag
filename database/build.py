@@ -318,8 +318,8 @@ def pre_insert_tags(conn):
 
 if __name__ == "__main__":
     load_dotenv()
-    conn = pymysql.connect(charset='utf8', host=os.getenv("AWS_motivetag_DB"),
-                           password=os.getenv("DB_PASS"), port=3306, user='root')
+    conn = pymysql.connect(charset='utf8', host=os.getenv("DB_BK2"),
+                           password=os.getenv("DB_PASSWORD"), port=3306, user='root')
     cursor = conn.cursor()
     print("databases connected, start building tables...")
     build_database(conn)

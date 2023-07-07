@@ -8,8 +8,8 @@ Designed with photoshop.
 * Images in ECR should be seperated or not?
 
 0. ~~Nginx~~
-0. ECS nearly完成
-0. DB自動切換可用連線 
+0. ECS nearly完成, 環境變數done, 連線設定done, 似乎只剩下SSL, or use ALB?
+0. ~~DB自動切換可用連線~~ 
 1. EKS
 2. Full CICD
 3. Redis/Kafka setting(chat status)
