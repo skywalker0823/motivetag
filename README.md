@@ -2,16 +2,17 @@
 Designed with photoshop.
 
 # MotiveTag
-預計回歸
+https://motivetag.com
 
 待辦清單Note
 * Images in ECR should be seperated or not?
 
 0. ~~Nginx~~
-0. ECS nearly完成, 環境變數done, 連線設定done, 似乎只剩下SSL, or use ALB?
+0. ~~ECS nearly完成, 環境變數done, 連線設定done~~
 0. ~~DB自動切換可用連線~~ 
-1. EKS
-2. Full CICD
+1. Nginx SSL
+1. Full CICD
+2. EKS
 3. Redis/Kafka setting(chat status)
 4. MySQL improve, ORM
 5. Security
@@ -25,9 +26,6 @@ Designed with photoshop.
 * Kafka for chat message.
 * MySQL for data storage.
 * All resources should in AWS.
-
-~~https://motivetag.xyz/~~
-closed due to aws free tier expired.
 
 貼文、標記、送出，跟其他人一起討論並認識新朋友，加入/訂閱你有興趣的內容(Tag)，持續關注你想關注的話題，沒有廢話!沒有廣告!
 
