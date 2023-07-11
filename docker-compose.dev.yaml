@@ -37,7 +37,10 @@ services:
       dockerfile: Dockerfile
     ports:
       - "80:80"
+      - "443:443"
     depends_on:
       - flask
     container_name: a_nginx
     restart: always
+    volumes:
+      - /etc/ssl/motivetag.com:/etc/ssl/motivetag.com

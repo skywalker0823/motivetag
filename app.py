@@ -18,7 +18,7 @@ if __name__ == "__main__":
 # docker build -t motivetag .  
 # docker run -dp 3000:3000 --name motivetag motivetag  
 
-# Start server with docker-compose
+# Start website with docker-compose
 # docker-compose up --build -d(Production)
 # docker-compose -f docker-compose.dev.yaml up -d --build(Development)
 # Open localhost on browser(sometimes need to wait for mysql and flask to start completely)

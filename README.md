@@ -4,14 +4,12 @@ Designed with photoshop.
 # MotiveTag
 https://motivetag.com
 
-待辦清單Note
-* Images in ECR should be seperated or not?
-
+## 待辦清單:
 0. ~~Nginx~~
 0. ~~ECS nearly完成, 環境變數done, 連線設定done~~
 0. ~~DB自動切換可用連線~~ 
 1. Nginx SSL
-1. Full CICD
+1. Full CICD-Jenkins
 2. EKS
 3. Redis/Kafka setting(chat status)
 4. MySQL improve, ORM
@@ -20,6 +18,7 @@ https://motivetag.com
 7. Basic code improve
 8. PlanetScale
 9. Axiom
+10. chatgpt assistant
 
 ## Note
 * Redis for managing online/chat status.
@@ -27,19 +26,16 @@ https://motivetag.com
 * MySQL for data storage.
 * All resources should in AWS.
 
-貼文、標記、送出，跟其他人一起討論並認識新朋友，加入/訂閱你有興趣的內容(Tag)，持續關注你想關注的話題，沒有廢話!沒有廣告!
-
-
 ## About
-
+* 貼文、標記、送出，跟其他人一起討論並認識新朋友，加入/訂閱你有興趣的內容(Tag)，持續關注你想關注的話題，沒有廢話!沒有廣告!
 * Motivetag is a website covers main functionality of social networks. With a "Tag cored" design.
 * 這是一個社群網站，本身以 Tag 為核心運作。
 
 ### 目前已部署功能
-* 貼文(包含匿名、投票、圖片上傳), 加tag, 按讚與留言
+* 貼文(包含匿名、投票、圖片上傳), 加tag, 按讚與留言,且可複合使用
 * 訂閱你有興趣的內容(Tag)並追蹤
-* 聊天功能 包含上線狀態與來訊提示
-* 好友系統
+* 即時聊天功能
+* 好友系統, 包含上線狀態與來訊提示
 * 通知功能
 * 無限多的討論區
 
