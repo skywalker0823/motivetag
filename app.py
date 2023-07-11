@@ -7,14 +7,14 @@ if __name__ == "__main__":
 
 # The AWS_motivetag_DB in .env should be changed to current database
 
-# local test docker for mysql
+# local dev for mysql on docker
 # docker run -dp 3306:3306 --name a_mysql_local -e MYSQL_ROOT_PASSWORD=yourDBpassword mysql:8
 # python3 database/build.py
 
 # local development
 # gunicorn -k geventwebsocket.gunicorn.workers.GeventWebSocketWorker -b 0.0.0.0:3000 -w 1 app:app
 
-# Start server
+# Start flask server only
 # docker build -t motivetag .  
 # docker run -dp 3000:3000 --name motivetag motivetag  
 

@@ -216,14 +216,12 @@ box-icon{
 }
 
 .main_frame{
-    display: flex;
+    /* display: flex;
     background-color: #0b0c1b;
     justify-content: space-around;
     width: 100%;
     margin: 0 auto;
     background-size: cover;
-}
-.main_frame .member_functions{
     width: 20%;
     border-radius: 15px;
     margin: 4px;
@@ -232,6 +230,35 @@ box-icon{
     max-height: 100%;
     flex-direction: column;
     justify-content: space-between;
+    width: 55%;
+    border-radius: 20px;
+    margin: 4px;
+    padding: 4px;
+    height: 800px;
+    overflow: scroll;
+    overflow-x: auto;
+    text-align: center;
+    justify-content: space-around;
+    width: 20%;
+    overflow: scroll;
+    border-radius: 20px;
+    margin: 4px;
+    padding: 4px;
+    color: #FFF;
+    height: 750px;
+    overflow-x: hidden; */
+    display: flex;
+    justify-content: space-around;
+
+}
+.member_functions{
+    width: 20%;
+    border-radius: 15px;
+    margin: 4px;
+    padding: 4px;
+    display: flex;
+    height: 100%;
+    flex-direction: column;
 
 }
 
@@ -434,12 +461,12 @@ box-icon{
     cursor: pointer;
     color: rgb(226, 12, 252);
 }
-.main_frame .member_blocks{
-    width: 55%;
+.member_blocks{
+    width: 45%;
     border-radius: 20px;
     margin: 4px;
     padding: 4px;
-    height: 800px;
+    height: calc(100vh - 100px);
     overflow: scroll;
     overflow-x: auto;
     text-align: center;
@@ -692,14 +719,14 @@ box-icon{
 }
 
 
-.main_frame .member_chats{
+.member_chats{
     width: 20%;
     overflow: scroll;
     border-radius: 20px;
     margin: 4px;
     padding: 4px;
     color: #FFF;
-    height: 750px;
+    height: 100%;
     overflow-x: hidden;
 }
 

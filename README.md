@@ -8,7 +8,9 @@ https://motivetag.com
 0. ~~Nginx~~
 0. ~~ECS nearly完成, 環境變數done, 連線設定done~~
 0. ~~DB自動切換可用連線~~ 
-1. Nginx SSL
+0. ~~Nginx SSL~~ Now supported Full-strict SSL mode.
+0. ~~MySQL data persistance(mounted).~~
+0. Async for uploading larger images.
 1. Full CICD-Jenkins
 2. EKS
 3. Redis/Kafka setting(chat status)
@@ -16,9 +18,8 @@ https://motivetag.com
 5. Security
 6. UI/UX and RWD redesign
 7. Basic code improve
-8. PlanetScale
-9. Axiom
-10. chatgpt assistant
+8. Axiom
+9. chatgpt assistant
 
 ## Note
 * Redis for managing online/chat status.
