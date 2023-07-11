@@ -322,16 +322,16 @@ box-icon{
     margin-top: 10px;
 }
 .a_tag{
-    padding: 4px 6px;
+    padding: 2px 2px;
     background: #0b0c1b;
     color: #1cbfff;
     border-radius: 999px;
     display: flex;
     align-items: center;
     justify-content: space-between;
-    margin-left: 5px;
+    margin-left: 3px;
     margin-top: 3px;
-    font-size: 15px;
+    font-size: 6px;
     word-wrap: break-word;
 }
 .a_tag:hover{
@@ -449,6 +449,7 @@ box-icon{
     padding-left: 25px;
     padding-right: 25px;
     border-bottom: #666 1px solid;
+    font-size: 6px;
     
 }
 .a_hot_box:hover{

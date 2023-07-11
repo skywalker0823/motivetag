@@ -45,7 +45,7 @@ services:
     volumes:
       - /etc/ssl/motivetag.com:/etc/ssl/motivetag.com
   redis:
-    image: redis:latest
+    image: redis:5
     container_name: a_redis
     restart: always
     # ports:

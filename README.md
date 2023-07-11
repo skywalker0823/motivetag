@@ -5,7 +5,7 @@ Designed with photoshop.
 https://motivetag.com
 
 ## 待辦清單:
-0. ~~Nginx~~
+0. ~~Nginx+Docker~~
 0. ~~ECS nearly完成, 環境變數done, 連線設定done~~
 0. ~~DB自動切換可用連線~~ 
 0. ~~Nginx SSL~~ Now supported Full-strict SSL mode.
