@@ -29,6 +29,8 @@ services:
     depends_on:
       mysql:
         condition: service_healthy
+      # redis:
+      #   condition: service_healthy
     container_name: a_flask
     restart: always
   nginx:
@@ -44,13 +46,39 @@ services:
     restart: always
     volumes:
       - /etc/ssl/motivetag.com:/etc/ssl/motivetag.com
+
   redis:
-    image: redis:5
-    container_name: a_redis
-    restart: always
-    # ports:
-    #   - "6379:6379"
-    depends_on:
-      - flask
-    # volumes:
-    #   - ./redis/data:/data
+      image: redis:5
+      container_name: a_redis
+      restart: always
+      # ports:
+      #   - "6379:6379"
+      depends_on:
+        - flask
+      # volumes:
+      #   - ./redis/data:/data
+      
+  # redis:
+  #   image: redis:5
+  #   container_name: a_redis
+  #   restart: always
+  #   healthcheck:
+  #     test: ["CMD", "redis-cli", "ping"]
+  #     interval: 10s
+  #     timeout: 5s
+  #     retries: 5
+  #     start_period: 50s
+  #   # ports:
+  #   #   - "6379:6379"
+  #   # volumes:
+  #   #   - ./redis/data:/data
+  # worker:
+  #   build: .
+  #   command: celery -A app.celery worker --loglevel=info
+  #   depends_on:
+  #     mysql:
+  #       condition: service_healthy
+  #     redis:
+  #       condition: service_healthy
+  #   container_name: a_worker
+  #   restart: always

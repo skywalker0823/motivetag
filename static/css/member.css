@@ -1085,3 +1085,17 @@ footer{
 .mood_input:focus{
     outline: none;
 }
+
+
+/* make .member_functions and  .member_chats disapear when width is less than 800px */
+@media (max-width: 800px){
+    .member_functions{
+        display: none;
+    }
+    .member_chats{
+        display: none;
+    }
+    .member_blocks{
+        width: 100%;
+    }
+}
