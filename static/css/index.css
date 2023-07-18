@@ -268,3 +268,13 @@ input{
 input::-webkit-input-placeholder{
     color:white;
 }
+
+
+@media (max-width: 800px){
+    .left{
+        display: none;
+    }
+    .right{
+        width: 100%;
+    }
+}
