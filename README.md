@@ -5,21 +5,22 @@ A tag-based social network website.
 https://motivetag.com
 
 ## 待辦清單:
-0. ~~Nginx+Docker~~
-0. ~~ECS nearly完成, 環境變數done, 連線設定done~~
-0. ~~DB自動切換可用連線~~ 
-0. ~~Nginx SSL~~ Now supported Full-strict SSL mode.
-0. ~~MySQL data persistance(mounted).~~
-0. Async for uploading larger images.
-1. Full CICD-Jenkins
-2. EKS
-3. Redis/Kafka setting(chat status)
-4. MySQL improve, ORM
-5. Security
-6. UI/UX and RWD redesign
-7. Basic code improve
-8. Axiom
-9. chatgpt assistant
+1. ~~Nginx+Docker~~
+2. ~~ECS nearly完成, 環境變數done, 連線設定done~~
+3. ~~DB自動切換可用連線~~ 
+4. ~~Nginx SSL~~ Now supported Full-strict SSL mode.
+5. ~~MySQL data persistance(mounted).~~
+6. ~~Prometheus+GrafanaCloud for monitoring.~~
+7. Async for uploading larger images.
+8. Full CICD-Jenkins
+9. EKS
+10. Redis/Kafka setting(chat status)
+11. MySQL improve, ORM
+12. Security
+13. UI/UX and RWD redesign
+14. Basic code improve
+15. Axiom
+16. chatgpt assistant
 
 ## Note
 * Redis for managing online/chat status.

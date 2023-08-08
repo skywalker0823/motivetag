@@ -108,27 +108,31 @@ class Member:
 class Block:
     def get_block(member_id,page,obseve_key=None,order_by=None):
         page=int(page)
+        # sql_me=None
+        # sql_by_score = None
+        sql_observe_key = """SELECT account,block_id, block.member_id, content_type, content, build_time,good,bad,block_img
+                                FROM block RIGHT JOIN member ON member.member_id=block.member_id
+                                WHERE block_id IN(SELECT block_id FROM block_tag WHERE tag_id=(SELECT tag_id FROM tag WHERE name=%s))ORDER BY build_time DESC LIMIT %s,%s"""
+        sql_all = """SELECT account,block_id, block.member_id, content_type, content, build_time,good,bad,block_img
+                                FROM block RIGHT JOIN member ON member.member_id=block.member_id
+                                WHERE block.member_id IN
+                                (
+                                    SELECT request_from AS ids FROM friendship WHERE status="0" 
+                                    AND(request_from=%s OR request_to=%s) 
+                                    UNION
+                                    SELECT request_to AS ids FROM friendship WHERE status="0" AND(request_from=%s OR request_to=%s)) AND content_type <> "SECRET" AND content_type <> "Anonymous"
+                                    UNION
+                                    SELECT (SELECT account FROM member WHERE member_id=block.member_id)AS account,block_id, block.member_id, content_type, content, build_time,good,bad,block_img FROM block WHERE member_id=%s
+                                    UNION
+                                    SELECT (SELECT account FROM member WHERE member_id=block.member_id)AS account,block_id,block.member_id,content_type,content,build_time,good,bad,block_img FROM block WHERE block_id IN(SELECT block_id FROM block_tag WHERE tag_id IN(SELECT tag_id FROM member_tags WHERE member_id=%s)
+                                )
+                                ORDER BY build_time DESC
+                                LIMIT %s,%s"""
+        sql_all_altered = """"""
         with connection.cursor() as cursor:
-            sql_me=None
-            sql_by_score = None
-            sql_observe_key = """SELECT account,block_id, block.member_id, content_type, content, build_time,good,bad,block_img
-                                 FROM block RIGHT JOIN member ON member.member_id=block.member_id
-                                 WHERE block_id IN(SELECT block_id FROM block_tag WHERE tag_id=(SELECT tag_id FROM tag WHERE name=%s))ORDER BY build_time DESC LIMIT %s,%s"""
-            sql_all = """SELECT account,block_id, block.member_id, content_type, content, build_time,good,bad,block_img
-                                 FROM block RIGHT JOIN member ON member.member_id=block.member_id
-                                 WHERE block.member_id IN(
-                                     SELECT request_from AS ids FROM friendship WHERE status="0" 
-                                     AND(request_from=%s OR request_to=%s) 
-                                                               UNION
-                                                               SELECT request_to AS ids FROM friendship WHERE status="0" AND(request_from=%s OR request_to=%s)) AND content_type <> "SECRET" AND content_type <> "Anonymous"
-                                                               UNION
-                                                               SELECT (SELECT account FROM member WHERE member_id=block.member_id)AS account,block_id, block.member_id, content_type, content, build_time,good,bad,block_img FROM block WHERE member_id=%s
-                                                               UNION
-                                                               SELECT (SELECT account FROM member WHERE member_id=block.member_id)AS account,block_id,block.member_id,content_type,content,build_time,good,bad,block_img FROM block WHERE block_id IN(SELECT block_id FROM block_tag WHERE tag_id IN(SELECT tag_id FROM member_tags WHERE member_id=%s))
-                                 ORDER BY build_time DESC
-                                 LIMIT %s,%s"""
             if obseve_key==None:
                 got = cursor.execute(sql_all, (member_id, member_id, member_id, member_id, member_id,member_id,page,5))
+                # got = cursor.execute(sql_all_altered, (member_id, member_id, member_id, member_id, member_id,member_id,page,5))
             else:
                 got = cursor.execute(sql_observe_key,(obseve_key,page,5))
             result = cursor.fetchall()
