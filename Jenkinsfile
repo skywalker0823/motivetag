@@ -1,9 +1,11 @@
 pipeline{
     agent any
     stages{
-        stage('Build'){
+        stage('Pull'){
             steps{
-                echo 'Building the app'
+                echo 'Pulling the code from the repository'
+                cd '/data/motivetag'
+                git 'pull'
             }
         }
         stage('Test'){
@@ -14,6 +16,9 @@ pipeline{
         stage('Deploy'){
             steps{
                 echo 'Deploying the app'
+                cd '/data/motivetag'
+                docker compose -f docker-compose.dev.yaml down
+                docker compose -f docker-compose.dev.yaml up -d --build
             }
         }
     }
