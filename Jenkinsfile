@@ -4,8 +4,9 @@ pipeline{
         stage('Pull'){
             steps{
                 echo 'Pulling the code from the repository'
-                sh 'cd /data/motivetag'
-                git 'pull'
+                dir ('/data/motivetag'){
+                    git 'pull'
+                }
             }
         }
         stage('Test'){
@@ -16,9 +17,10 @@ pipeline{
         stage('Deploy'){
             steps{
                 echo 'Deploying the app'
-                sh 'cd /data/motivetag'
-                sh 'docker compose -f docker-compose.dev.yaml down'
-                sh 'docker compose -f docker-compose.dev.yaml up -d --build'
+                dir('/data/motivetag'){
+                    sh 'docker-compose -f docker-compose.dev.yaml down'
+                    sh 'docker-compose -f docker-compose.dev.yaml up -d --build'
+                }
             }
         }
     }
