@@ -1,6 +1,13 @@
 pipeline{
     agent any
     stages{
+        stage('check'){
+            steps{
+                echo 'Checking...'
+                sh 'pwd'
+                sh 'ls -la'
+            }
+        }
         stage('Pull'){
             steps{
                 echo 'Pulling the code from the repository'
