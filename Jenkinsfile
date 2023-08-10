@@ -14,12 +14,14 @@ pipeline{
         stage('Test'){
             steps{
                 echo 'Testing the app'
+                sh 'docker ps -a'
             }
         }
         stage('Deploy'){
             steps{
                 echo 'Deploying the app'
                 sh 'docker compose -f docker-compose.dev.yaml down'
+                sh 'docker ps -a'
                 sh 'docker compose -f docker-compose.dev.yaml up -d --build'
             }
         }
