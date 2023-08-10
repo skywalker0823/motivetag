@@ -12,7 +12,7 @@ https://motivetag.com
 5. ~~MySQL data persistance(mounted).~~
 6. ~~Prometheus+GrafanaCloud for monitoring.~~
 7. Async for uploading larger images.
-8. Full CICD-Jenkins(testing)
+8. ~~Full CICD-Jenkins~~
 9. EKS
 10. Redis/Kafka setting(chat status)
 11. MySQL improve, ORM
