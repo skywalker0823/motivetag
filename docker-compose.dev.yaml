@@ -20,6 +20,7 @@ services:
       start_period: 50s
     volumes:
       - ./database/data:/var/lib/mysql
+      - ./database/data:/var/jenkins_home/workspace/Motivetag_pipeline/database/data
   flask:
     build:
       context: .
