@@ -7,6 +7,7 @@ pipeline{
                     echo 'Checking the app'
                     docker info
                     docker compose version
+                    git status
                 '''
             }
         }
@@ -18,8 +19,8 @@ pipeline{
         stage('Deploy'){
             steps{
                 echo 'Deploying the app'
-                // sh 'docker compose -f docker-compose.dev.yaml down'
-                // sh 'docker compose -f docker-compose.dev.yaml up -d --build'
+                sh 'docker compose -f docker-compose.dev.yaml down'
+                sh 'docker compose -f docker-compose.dev.yaml up -d --build'
             }
         }
     }
