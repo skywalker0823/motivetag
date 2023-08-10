@@ -3,7 +3,7 @@ pipeline{
     stages{
         stage('check'){
             steps{
-                '''
+                sh '''
                     echo 'Checking the app'
                     docker info
                     docker compose version
