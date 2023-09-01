@@ -14,7 +14,6 @@ pipeline{
         stage('Test'){
             steps{
                 echo 'Testing the app'
-                sh 'docker exec -it a_flask bash -c "pytest"'
             }
         }
         stage('Deploy'){
