@@ -8,8 +8,8 @@ def test_get_user():
     WHEN a User try to get data with account
     THEN check should return user data account include
     """
-    user = Member.get_member("123")
-    assert user["account"] == "123"
+    user = Member.get_member("guest")
+    assert user["account"] == "guest"
 
 def test_new_user():
     """
@@ -17,6 +17,6 @@ def test_new_user():
     WHEN a User is created before
     THEN check should return Already registed
     """
-    user = Member.sign_up("123", "321","123@123.com","1988-09-12","2022-01-01")
+    user = Member.sign_up("guest", "guest","guest@mail.com","1988-09-12","NULL")
     assert user == "Already registed"
 

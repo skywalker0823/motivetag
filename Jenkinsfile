@@ -15,6 +15,7 @@ pipeline{
             steps{
                 echo 'Testing the app'
                 sh 'docker ps -a'
+                sh 'pytest'
             }
         }
         stage('Deploy'){

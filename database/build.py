@@ -315,6 +315,11 @@ def pre_insert_tags(conn):
     cursor.execute("INSERT INTO tag(name,popularity,prime_level)VALUES(%s,%s,%s)",("MotiveTag",0,None))
     conn.commit()
 
+#Create guest account
+def create_guest_account(conn):
+    cursor.execute("INSERT INTO member(account,password,email,first_signup)VALUES(%s,%s,%s,%s)",("guest","guest","guest@mail.com","1988-09-12"))
+    conn.commit()
+
 
 if __name__ == "__main__":
     load_dotenv()
@@ -344,6 +349,10 @@ if __name__ == "__main__":
     build_foreign_key_ref(conn)
     auto_increment_set(conn)
     pre_insert_tags(conn)
+
+    print("start creating guest account...")
+    create_guest_account(conn)
+    
     print("OK")
     cursor.close()
     conn.close()
