@@ -2,7 +2,8 @@
 A tag-based social network website.
 
 # MotiveTag
-https://motivetag.com
+https://motivetag.com Temorarily closed due to VM costs :(
+因費用緣故暫時關閉 :(
 
 ## 待辦清單:
 1. ~~Nginx+Docker~~
