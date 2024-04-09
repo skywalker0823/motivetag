@@ -26,7 +26,7 @@ python-socketio==5.8.0
 redis==4.5.5
 s3transfer==0.6.1
 six==1.16.0
-urllib3==1.26.16
+urllib3==1.26.18
 Werkzeug==2.3.8
 zope.event==4.6
 zope.interface==6.0
