@@ -5,7 +5,7 @@ A tag-based social network website.
 https://motivetag.com Temorarily closed due to VM costs :(
 因費用緣故暫時關閉 :(
 
-## 待辦清單:
+## ToDos:
 1. ~~Nginx+Docker~~
 2. ~~ECS nearly完成, 環境變數done, 連線設定done~~
 3. ~~DB自動切換可用連線~~ 
