@@ -6,7 +6,9 @@ Terraform for the AWS side of motivetag. Everything runs from your Mac with the
 | Directory | What it creates | State |
 |---|---|---|
 | `bootstrap/` | S3 bucket that stores Terraform state (run once) | local file |
-| `main/` | EC2 server, data volume, Elastic IP, security group, IAM role | in that S3 bucket |
+| `main/` | EC2 server, data volume, Elastic IP, security group, IAM roles, ECR, S3 buckets, secrets, backups, monitoring | in that S3 bucket |
+
+Why things are set up this way: [`docs/adr/`](../docs/adr/README.md).
 
 ## Before you start
 
@@ -101,9 +103,110 @@ cat current_image                            # deployed image
 Migrations run on container start. Write them so the previous release still works
 with the new schema, because a rollback does not undo a migration.
 
+## Backups, monitoring and Sentry (one time)
+
+Apply this before merging the change that adds them to `main` (the deploy works
+either way, but backups only start once the bucket exists).
+
+1. **E-mail for alarms.** Add `alert_email = "you@example.com"` to
+   `infra/main/terraform.tfvars`.
+2. **Apply.**
+
+   ```bash
+   cd infra/main
+   terraform init
+   terraform plan    # backup bucket, SNS topics, health check, alarms, agent associations, CORS
+   terraform apply
+   ```
+
+3. **Confirm the two SNS e-mails** (one from `ap-east-2`, one from `us-east-1` for the
+   uptime alarm). Until you click them, alarms go nowhere.
+4. **Sentry (optional).** Create a Flask project in Sentry, copy its DSN, then:
+
+   ```bash
+   aws ssm put-parameter --name /motivetag/sentry-dsn --type SecureString --value 'https://...@....ingest.sentry.io/...' --region ap-east-2
+   ```
+
+   The next deploy picks it up; without it Sentry stays off.
+5. **Merge to `main`.** The deploy installs the backup and restore-drill timers.
+6. **Check on the server** (Session Manager shell, `sudo -i`):
+
+   ```bash
+   systemctl list-timers 'motivetag-*'           # next backup / drill times
+   systemctl start motivetag-backup               # first backup now
+   journalctl -u motivetag-backup -n 20
+   systemctl start motivetag-restore-drill        # prove it restores
+   journalctl -u motivetag-restore-drill -n 40
+   /opt/aws/amazon-cloudwatch-agent/bin/amazon-cloudwatch-agent-ctl -a status
+   ```
+
+   The `backup-missing` alarm fires once right after the apply, until the first
+   backup has run. If the agent is not `running`, re-run its setup:
+   `aws ssm start-associations-once --association-ids $(terraform output -json cloudwatch_agent_associations | jq -r '.[]') --region ap-east-2`.
+
+## Backups
+
+- Daily at 03:00 Taipei time: `mysqldump` → gzip → `s3://<backup_bucket>/mysql/`
+  (kept 35 days). The last three dumps also stay in `/srv/motivetag/backups`.
+- Sundays at 04:30: the restore drill loads the newest dump into a throwaway MySQL
+  container, checks it, and logs the backup age and restore time. Production is
+  only read.
+- Both publish success metrics; `motivetag-backup-missing` and
+  `motivetag-restore-drill-failed` alarm on them.
+- The server can add backups but not delete them. List them from your Mac:
+  `aws s3 ls s3://$(terraform output -raw backup_bucket)/mysql/`.
+
+### Restoring production
+
+```bash
+$(terraform output -raw connect)
+sudo -i && cd /srv/motivetag/app
+
+# 1. Pick a dump: a local one, or the newest from S3.
+ls -lt /srv/motivetag/backups/
+docker run --rm --user 0 -e AWS_REGION=ap-east-2 -v /srv/motivetag/backups:/backups \
+  --entrypoint python "$(cat current_image)" deploy/backup_s3.py latest \
+  "$(grep ^BACKUP_BUCKET= .env | cut -d= -f2)" /backups
+# (An older one: aws s3 cp s3://<bucket>/mysql/<file> . on your Mac, then upload it.)
+
+# 2. Keep a copy of the current state, then stop writes.
+systemctl start motivetag-backup
+docker compose stop nginx app
+
+# 3. Load it. The dump recreates every table it contains.
+zcat /srv/motivetag/backups/<file>.sql.gz \
+  | docker compose exec -T mysql sh -c 'exec mysql -uroot -p"$MYSQL_ROOT_PASSWORD"'
+
+# 4. Start again (migrations bring an older schema up to date).
+docker compose up -d --wait
+```
+
+The weekly drill times step 3; expect about the same.
+
+## Monitoring
+
+| Alarm | Fires when |
+|---|---|
+| `motivetag-site-down` (us-east-1) | `https://motivetag.com/healthz` fails for 2 minutes from Route 53's checkers |
+| `motivetag-system-check-failed` | AWS hardware problem; the instance is recovered automatically |
+| `motivetag-instance-check-failed` | The OS stops responding; the instance is rebooted automatically |
+| `motivetag-cpu-high` | CPU > 80 % for 15 minutes |
+| `motivetag-memory-high` | Memory > 90 % for 15 minutes |
+| `motivetag-disk-root` / `-disk-data` | `/` or `/srv/motivetag` > 85 % full, or the agent stops reporting |
+| `motivetag-backup-missing` | No successful backup in 24 hours |
+| `motivetag-restore-drill-failed` | The weekly restore drill failed |
+
+Disk and memory come from the CloudWatch agent, which Systems Manager installs and
+configures (config: Parameter Store `AmazonCloudWatch-motivetag`). Application
+errors go to Sentry when `/motivetag/sentry-dsn` is set, tagged with the git SHA.
+
+If `site-down` fires while the site works in a browser, Cloudflare may be
+challenging the health checkers: add a WAF custom rule that skips bot protection
+for user agent `Amazon-Route53-Health-Check-Service`.
+
 ## Notes
 
-- There is no SSH and no open inbound port. HTTPS from Cloudflare is added with the web stack.
+- There is no SSH; the only inbound port is 443, from Cloudflare's IP ranges.
 - The data volume has `prevent_destroy`; `terraform destroy` stops on it on purpose.
 - Changing the AMI or `user_data.sh.tftpl` does not replace a running server
   (`ignore_changes`). To rebuild: `terraform apply -replace=aws_instance.app`
