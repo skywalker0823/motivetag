@@ -16,13 +16,22 @@ NAMES = {
     "tls/origin-cert": None,
     "tls/origin-key": None,
 }
+# Written empty when missing, so a deploy works before they are set up.
+OPTIONAL = {
+    "backup-bucket": "BACKUP_BUCKET",  # created by infra/main/backup.tf
+    "sentry-dsn": "SENTRY_DSN",  # added by hand, see infra/README.md
+}
 
 
 def main():
     ssm = boto3.client("ssm", region_name=os.environ["AWS_REGION"])
-    response = ssm.get_parameters(Names=[f"/motivetag/{n}" for n in NAMES], WithDecryption=True)
-    if response["InvalidParameters"]:
-        sys.exit("missing parameters: " + ", ".join(response["InvalidParameters"]))
+    names = [f"/motivetag/{n}" for n in {**NAMES, **OPTIONAL}]
+    response = ssm.get_parameters(Names=names, WithDecryption=True)
+    missing = [
+        n for n in response["InvalidParameters"] if n.removeprefix("/motivetag/") not in OPTIONAL
+    ]
+    if missing:
+        sys.exit("missing parameters: " + ", ".join(missing))
     values = {p["Name"].removeprefix("/motivetag/"): p["Value"] for p in response["Parameters"]}
     for name, value in values.items():
         if not value.strip():
@@ -38,6 +47,8 @@ def main():
         for name, env in NAMES.items():
             if env:
                 f.write(f"{env}={values[name]}\n")
+        for name, env in OPTIONAL.items():
+            f.write(f"{env}={values.get(name, '').strip()}\n")
 
 
 if __name__ == "__main__":

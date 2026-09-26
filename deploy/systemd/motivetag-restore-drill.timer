@@ -1,0 +1,11 @@
+[Unit]
+Description=Weekly motivetag restore drill
+
+[Timer]
+# After Sunday's backup has had time to finish.
+OnCalendar=Sun *-*-* 04:30:00 Asia/Taipei
+RandomizedDelaySec=10min
+Persistent=true
+
+[Install]
+WantedBy=timers.target
