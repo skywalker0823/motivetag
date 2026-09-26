@@ -36,8 +36,6 @@ def get_connection():
 
 connection = get_connection()
 
-# Columns that are safe to send back to the member themselves (never the password hash).
-MEMBER_PUBLIC_COLUMNS = "member_id, account, email, birthday, first_signup, last_signin, member_img, follower, mood, exp"
 
 
 def _is_password_hash(value):
@@ -47,8 +45,10 @@ def _is_password_hash(value):
 class Member:
     def get_member(account):
         with connection.cursor() as cursor:
+            # Every column except the password hash.
             cursor.execute(
-                "SELECT " + MEMBER_PUBLIC_COLUMNS + " FROM member WHERE account=%s", (account,))  # noqa: S608 - constant column list
+                """SELECT member_id, account, email, birthday, first_signup, last_signin,
+                member_img, follower, mood, exp FROM member WHERE account=%s""", (account,))
             result = cursor.fetchone()
             connection.commit()
             return result
