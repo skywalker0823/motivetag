@@ -144,3 +144,9 @@ cython_debug/
 client_secret.json
 
 database/data
+# Terraform (commit .terraform.lock.hcl, never state or real tfvars)
+.terraform/
+*.tfstate
+*.tfstate.*
+*.tfvars
+!*.tfvars.example

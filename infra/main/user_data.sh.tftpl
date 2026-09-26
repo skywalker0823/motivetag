@@ -1,0 +1,45 @@
+#!/bin/bash
+# First-boot setup for the motivetag server (Ubuntu 24.04). Runs once, as root.
+set -euxo pipefail
+
+export DEBIAN_FRONTEND=noninteractive
+
+# 2 GB swap as a safety margin for MySQL on a 2 GB instance.
+if [ ! -f /swapfile ]; then
+  fallocate -l 2G /swapfile
+  chmod 600 /swapfile
+  mkswap /swapfile
+  echo '/swapfile none swap sw 0 0' >> /etc/fstab
+  swapon /swapfile
+fi
+
+# Docker Engine + compose plugin from Docker's official apt repository.
+apt-get update
+apt-get install -y ca-certificates curl
+install -m 0755 -d /etc/apt/keyrings
+curl -fsSL https://download.docker.com/linux/ubuntu/gpg -o /etc/apt/keyrings/docker.asc
+chmod a+r /etc/apt/keyrings/docker.asc
+echo "deb [arch=$(dpkg --print-architecture) signed-by=/etc/apt/keyrings/docker.asc] https://download.docker.com/linux/ubuntu $(. /etc/os-release && echo "$VERSION_CODENAME") stable" \
+  > /etc/apt/sources.list.d/docker.list
+apt-get update
+apt-get install -y docker-ce docker-ce-cli containerd.io docker-compose-plugin
+systemctl enable --now docker
+
+# Data volume: attached by Terraform shortly after boot, so wait for it.
+# Nitro instances expose EBS volumes by ID under /dev/disk/by-id.
+volume_id="${data_volume_id}"
+device="/dev/disk/by-id/nvme-Amazon_Elastic_Block_Store_$${volume_id/-/}"
+for _ in $(seq 1 60); do
+  [ -e "$device" ] && break
+  sleep 5
+done
+[ -e "$device" ] || { echo "data volume $volume_id never appeared" >&2; exit 1; }
+
+# Format only a blank volume; an existing filesystem (e.g. after a rebuild) is kept.
+if ! blkid "$device"; then
+  mkfs.ext4 -L motivetag-data "$device"
+fi
+mkdir -p /srv/motivetag
+uuid=$(blkid -s UUID -o value "$device")
+grep -q "$uuid" /etc/fstab || echo "UUID=$uuid /srv/motivetag ext4 defaults,nofail 0 2" >> /etc/fstab
+mount -a
