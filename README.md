@@ -29,6 +29,32 @@ https://motivetag.com Temorarily closed due to VM costs :(
 * MySQL for data storage.
 * All resources should in AWS.
 
+## Development
+
+Requires [uv](https://docs.astral.sh/uv/) and Docker.
+
+```bash
+uv sync                                   # install dependencies into .venv
+uvx pre-commit install                    # run ruff on every commit
+cp .env.example .env                      # then fill in the values
+
+# MySQL for local work and tests
+docker run -d --name motivetag-mysql -p 3306:3306 \
+  -e MYSQL_ROOT_PASSWORD=testpw -e MYSQL_DATABASE=motivetag mysql:8.4
+
+export AWS_motivetag_DB=127.0.0.1 DB_PASSWORD=testpw
+uv run alembic upgrade head               # create / update the schema
+uv run pytest                             # integration tests against that MySQL
+FLASK_CONFIG=dev uv run python app.py     # http://localhost:3000
+```
+
+Schema changes: `uv run alembic revision -m "describe change"`, write the SQL in the new
+file under `migrations/versions/`, and commit it with the code. The container applies
+pending migrations on start.
+
+Every pull request runs lint, tests, a dependency audit and an image scan
+(`.github/workflows/ci.yml`).
+
 ## About
 * 貼文、標記、送出，跟其他人一起討論並認識新朋友，加入/訂閱你有興趣的內容(Tag)，持續關注你想關注的話題，沒有廢話!沒有廣告!
 * Motivetag is a website covers main functionality of social networks. With a "Tag cored" design.

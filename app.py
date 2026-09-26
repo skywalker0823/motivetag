@@ -8,21 +8,4 @@ app = create_app(os.getenv("FLASK_CONFIG", "pro"))
 if __name__ == "__main__":
     socketio.run(app, host="0.0.0.0", port=3000, debug=False)  # noqa: S104 - runs inside a container
 
-# The AWS_motivetag_DB in .env should be changed to current database
-
-# local dev for mysql on docker
-# docker run -dp 3306:3306 --name a_mysql_local -e MYSQL_ROOT_PASSWORD=yourDBpassword mysql:8
-# python3 database/build.py
-
-# local development
-# gunicorn -k geventwebsocket.gunicorn.workers.GeventWebSocketWorker -b 0.0.0.0:3000 -w 1 app:app
-
-# Start flask server only
-# docker build -t motivetag .
-# docker run -dp 3000:3000 --name motivetag motivetag
-
-# Start website with docker-compose
-# docker-compose up --build -d(Production)
-# docker-compose -f docker-compose.dev.yaml up -d --build(Development)
-# Open localhost on browser(sometimes need to wait for mysql and flask to start completely)
-# docker-compose down
+# Local setup, tests and migrations: see "Development" in README.md.
