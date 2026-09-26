@@ -1,9 +1,11 @@
+import os
+import re
 import traceback
 
 import boto3
-from flask import request, session
+from botocore.config import Config
+from flask import abort, redirect, request, session
 
-from config import Config_dev
 from data.data import Block, Images
 from module.auth import login_required
 
@@ -16,14 +18,25 @@ def allowed_file(filename):
     return "." in filename and filename.rsplit(".", 1)[1].lower() in ALLOWED_EXTENSIONS
 
 
+# Credentials come from the EC2 instance role; the bucket stays private and
+# images are served through short-lived presigned URLs.
+BUCKET_NAME = os.getenv("IMAGE_BUCKET")
+IMAGE_KEY = re.compile(r"^(avatar|block)_\d+$")
 s3 = boto3.client(
     "s3",
-    aws_access_key_id=Config_dev.ACCESS_KEY_ID,
-    aws_secret_access_key=Config_dev.ACCESS_SECRET_ID,
+    region_name=os.getenv("AWS_REGION"),
+    config=Config(signature_version="s3v4"),
 )
 
 
-BUCKET_NAME = "motivetag"
+@api_images.route("/images/<key>")
+def show_img(key):
+    if not BUCKET_NAME or not IMAGE_KEY.match(key):
+        abort(404)
+    url = s3.generate_presigned_url(
+        "get_object", Params={"Bucket": BUCKET_NAME, "Key": key}, ExpiresIn=3600
+    )
+    return redirect(url)
 
 
 @api_images.route("/api/images", methods=["GET"])

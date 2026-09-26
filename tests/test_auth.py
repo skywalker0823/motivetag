@@ -45,12 +45,3 @@ def test_legacy_plaintext_password_is_upgraded(client, query):
 def test_member_api_never_returns_password(member):
     client, _, _ = member()
     assert "password" not in client.get("/api/member").get_json()["data"]
-
-
-def test_forged_google_profile_rejected(client):
-    forged = {"user_data": {"given_name": "guest", "sub": "12345", "email": "a@example.com"}}
-    assert client.post("/api/google_sign_in", json=forged).status_code == 401
-
-
-def test_invalid_google_token_rejected(client):
-    assert client.post("/api/google_sign_in", json={"credential": "not.a.jwt"}).status_code == 401

@@ -1,17 +1,9 @@
-import os
-import secrets
-from datetime import datetime
-
 from flask import request, session
-from google.auth.transport import requests as google_requests
-from google.oauth2 import id_token
 
 from data.data import Friend, Member, Member_tags
 from module.auth import login_required
 
 from . import api_member
-
-GOOGLE_CLIENT_ID = os.getenv("GOOGLE_CLIENT_ID")
 
 
 @api_member.route("/api/member", methods=["GET"])
@@ -79,38 +71,6 @@ def sign_out_member():
     session["account"] = None
     session.clear()
     return {"ok": True}
-
-
-@api_member.route("/api/google_sign_in", methods=["POST"])
-def g_login():
-    data = request.get_json()
-    if not GOOGLE_CLIENT_ID:
-        return {"error": "google sign in not configured"}
-    try:
-        # Verify the signed ID token with Google instead of trusting client-decoded fields.
-        user_data = id_token.verify_oauth2_token(
-            data["credential"], google_requests.Request(), GOOGLE_CLIENT_ID
-        )
-    except (KeyError, TypeError, ValueError):
-        return {"error": "invalid google credential"}, 401
-    if not user_data.get("email_verified"):
-        return {"error": "google email not verified"}, 401
-    email = user_data["email"]
-    account = user_data.get("given_name", "user") + user_data["sub"][0:5]
-    account_check = Member.get_member(account)
-    if account_check is None:
-        today = datetime.date(datetime.now())
-        # Google members sign in through Google only; this password is never shown to anyone.
-        result = Member.sign_up(account, secrets.token_urlsafe(32), email, today, today)
-        if result != "ok":
-            return {"error": result}
-        account_check = Member.get_member(account)
-    elif account_check["email"] != email:
-        return {"error": "account belongs to another member"}, 403
-    session.clear()
-    session["member_id"] = account_check["member_id"]
-    session["account"] = account_check["account"]
-    return {"ok": "let_in", "account": account_check["account"]}
 
 
 @api_member.route("/api/get_user_sp", methods=["GET"])

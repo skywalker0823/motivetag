@@ -75,7 +75,7 @@ block_builder = async (data) => {
     }else{
       block_avatar.setAttribute(
         "src",
-        "https://images.vivien.fun/avatar_" + member_id
+        "/images/avatar_" + member_id
       );
     }
 
@@ -144,7 +144,7 @@ block_builder = async (data) => {
     if (image) {
       block_image.setAttribute(
         "src",
-        "https://images.vivien.fun/" + image
+        "/images/" + image
       );
     }
 
@@ -482,7 +482,7 @@ block_click = async (id) => {
       );
       mess_avatar.setAttribute(
         "src",
-        "https://images.vivien.fun/avatar_" + a_message.member_id
+        "/images/avatar_" + a_message.member_id
       );
 
       let who = document.createElement("p");
@@ -575,7 +575,7 @@ leave_message = async (message_block_id) => {
     );
     mess_avatar.setAttribute(
       "src",
-      "https://images.vivien.fun/avatar_" + result.member_id
+      "/images/avatar_" + result.member_id
     );
 
     //score
@@ -872,7 +872,7 @@ display_member_info = async(member_block_id) => {
   );
   mask.style.display="block";
   user_sq.style.display="block";
-  avatar.src = "https://images.vivien.fun/avatar_"+member_id;
+  avatar.src = "/images/avatar_"+member_id;
 
   const response = await fetch(
     "/api/get_user_sp?member_id=" + member_id

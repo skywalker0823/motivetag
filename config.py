@@ -39,8 +39,6 @@ class Config_dev(object):
     SESSION_COOKIE_SAMESITE = "Lax"
     SESSION_COOKIE_SECURE = False
     MAX_CONTENT_LENGTH = 5 * 1024 * 1024
-    ACCESS_KEY_ID = os.getenv("ACCESS_KEY_ID")
-    ACCESS_SECRET_ID = os.getenv("ACCESS_SECRET_ID")
     DB = os.getenv("AWS_motivetag_DB")
 
 
