@@ -50,6 +50,13 @@ services:
         condition: service_healthy
     ports:
       - "443:443"
+    # Without a health check, `compose up --wait` treats a crash-looping nginx as up.
+    healthcheck:
+      test: ["CMD", "curl", "-fsk", "--resolve", "motivetag.com:443:127.0.0.1", "https://motivetag.com/healthz"]
+      interval: 10s
+      timeout: 5s
+      retries: 6
+      start_period: 10s
     volumes:
       - ./nginx.conf:/etc/nginx/conf.d/default.conf:ro
       - ./certs:/etc/nginx/certs:ro
