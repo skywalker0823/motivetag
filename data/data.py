@@ -1,20 +1,16 @@
 
+import traceback
+
 import pymysql
-import os, traceback
 from dbutils.pooled_db import PooledDB
-from dotenv import load_dotenv
-from werkzeug.security import generate_password_hash, check_password_hash
+from werkzeug.security import check_password_hash, generate_password_hash
 
-load_dotenv()
+from config import db_settings
 
-hosts = [
-    os.getenv("AWS_motivetag_DB"),
-    os.getenv("DB_BK1"),
-    os.getenv("DB_BK2")
-]
+settings = db_settings()
 
 def get_connection():
-    for host in hosts:
+    for host in settings["hosts"]:
         print(f"try to connect to host:{host}")
         try:
             POOL = PooledDB(
@@ -25,9 +21,9 @@ def get_connection():
                     ping=0,
                     host=host,
                     port=3306,
-                    user='root',
-                    password=os.getenv("DB_PASSWORD"),
-                    database='motivetag',
+                    user=settings["user"],
+                    password=settings["password"],
+                    database=settings["database"],
                     charset='utf8',
                     cursorclass=pymysql.cursors.DictCursor
                 )
@@ -52,7 +48,7 @@ class Member:
     def get_member(account):
         with connection.cursor() as cursor:
             cursor.execute(
-                "SELECT " + MEMBER_PUBLIC_COLUMNS + " FROM member WHERE account=%s", (account,))
+                "SELECT " + MEMBER_PUBLIC_COLUMNS + " FROM member WHERE account=%s", (account,))  # noqa: S608 - constant column list
             result = cursor.fetchone()
             connection.commit()
             return result
@@ -127,7 +123,7 @@ class Member:
 
     def getting_data_without_private(member_id):
         with connection.cursor() as cursor:
-            cursor.execute("SELECT account,birthday,first_signup,last_signin,mood,exp FROM member WHERE member_id=%s",(member_id))
+            cursor.execute("SELECT account,birthday,first_signup,last_signin,mood,exp FROM member WHERE member_id=%s",(member_id,))
             data = cursor.fetchone()
             return data
 
@@ -155,9 +151,8 @@ class Block:
                                 )
                                 ORDER BY build_time DESC
                                 LIMIT %s,%s"""
-        sql_all_altered = """"""
         with connection.cursor() as cursor:
-            if obseve_key==None:
+            if obseve_key is None:
                 got = cursor.execute(sql_all, (member_id, member_id, member_id, member_id, member_id,member_id,page,5))
                 # got = cursor.execute(sql_all_altered, (member_id, member_id, member_id, member_id, member_id,member_id,page,5))
             else:
@@ -198,7 +193,7 @@ class Block:
 
     def good_block(block_id):
         with connection.cursor() as cursor:
-            result=cursor.execute("UPDATE block SET good=good+1 WHERE block_id=%s",(block_id))
+            result=cursor.execute("UPDATE block SET good=good+1 WHERE block_id=%s",(block_id,))
             connection.commit()
             return {"ok":result}
 
@@ -212,7 +207,7 @@ class Block:
     def bad_block(block_id):
         with connection.cursor() as cursor:
             result = cursor.execute(
-                "UPDATE block SET bad=bad+1 WHERE block_id=%s", (block_id))
+                "UPDATE block SET bad=bad+1 WHERE block_id=%s", (block_id,))
             connection.commit()
             return {"ok": result}
 
@@ -319,14 +314,14 @@ class Tag:
 
     def downing_global_tag(tag):
         with connection.cursor() as cursor:
-            result = cursor.execute("UPDATE tag SET popularity=popularity-1 WHERE name=%s",(tag))
+            result = cursor.execute("UPDATE tag SET popularity=popularity-1 WHERE name=%s",(tag,))
             connection.commit()
             return result
 
 
 class Friend:
     def confrim_relationship(me,someone_else):
-        if someone_else==None or someone_else=="" or someone_else==False or someone_else=="undefined":
+        if not someone_else or someone_else=="undefined":
             with connection.cursor() as cursor:
                 result = cursor.execute(
                     "SELECT friend_ship_id,request_from AS req_from_id,request_to AS req_to_id,(SELECT account FROM member WHERE request_from=member_id)AS req_from,(SELECT account FROM member WHERE request_to=member_id)AS req_to,status FROM friendship WHERE (request_from=%s OR request_to=%s)AND(status=%s OR status=%s)", (me, me, "0", "1"))
@@ -334,7 +329,7 @@ class Friend:
                 connection.commit()
             return {"data":data,"count":result,"msg":"friend status fetch"}
         with connection.cursor() as cursor:
-            result = cursor.execute("SELECT * FROM member WHERE account=%s",(someone_else))
+            result = cursor.execute("SELECT * FROM member WHERE account=%s",(someone_else,))
             data = cursor.fetchall()
             connection.commit()
             if result==0:
@@ -380,7 +375,7 @@ class Friend:
         # Only the member who received the request may accept it.
         with connection.cursor() as cursor:
             result = cursor.execute("UPDATE friendship SET status=%s WHERE friend_ship_id=%s AND request_to=%s",("0",target,me))
-            cursor.execute("SELECT * FROM friendship WHERE friend_ship_id=%s",(target))
+            cursor.execute("SELECT * FROM friendship WHERE friend_ship_id=%s",(target,))
             data = cursor.fetchone()
             connection.commit()
             return {"ok":"friendship updated","result":result,"data":data}
@@ -405,7 +400,7 @@ class Message:
         with connection.cursor() as cursor:
             cursor.execute("""
                 SELECT (SELECT account FROM member WHERE block_comment.member_id=member.member_id)AS account,comment_id,member_id,content,build_time,nice_comment,given_score FROM block_comment WHERE block_id=%s
-            """,(block_id))
+            """,(block_id,))
             data = cursor.fetchall()
             connection.commit()
             return data
@@ -431,7 +426,7 @@ class Message:
     def nice_message(comment_id):
         with connection.cursor() as cursor:
             result = cursor.execute(
-                "UPDATE block_comment SET nice_comment=nice_comment+1 WHERE comment_id=%s", (comment_id))
+                "UPDATE block_comment SET nice_comment=nice_comment+1 WHERE comment_id=%s", (comment_id,))
             connection.commit()
             return {"ok": result}
 
@@ -450,7 +445,7 @@ class Images:
     def post_image(member_id,filename):
         try:
             with connection.cursor() as cursor:
-                result = cursor.execute("UPDATE member SET member_img=%s WHERE member_id=%s",(filename,member_id))
+                cursor.execute("UPDATE member SET member_img=%s WHERE member_id=%s",(filename,member_id))
             connection.commit()
             return "ok"
         except Exception as e:
@@ -462,7 +457,7 @@ class Notification:
     def get_notifi(member_id):
         try:
             with connection.cursor() as cursor:
-                result = cursor.execute("SELECT * FROM notifi WHERE reciever_id=%s",(member_id))
+                result = cursor.execute("SELECT * FROM notifi WHERE reciever_id=%s",(member_id,))
             data = cursor.fetchall()
             connection.commit()
             return {"ok": "Notification GET","data":data,"count":result}
@@ -493,7 +488,7 @@ class Notification:
 
     def delete_notifi(member_id):
         with connection.cursor() as cursor:
-            cursor.execute("DELETE FROM notifi WHERE reciever_id=%s",(member_id))
+            cursor.execute("DELETE FROM notifi WHERE reciever_id=%s",(member_id,))
             connection.commit()
             return {"ok":"notifi read"}
 
@@ -502,7 +497,7 @@ class Vote_table:
     def get_vote(block_id):
         with connection.cursor() as cursor:
             cursor.execute(
-                "SELECT * FROM vote_options WHERE block_id=%s", (block_id))
+                "SELECT * FROM vote_options WHERE block_id=%s", (block_id,))
             data = cursor.fetchall()
             connection.commit()
         return data
@@ -517,7 +512,7 @@ class Vote_table:
                         option_name
                     )VALUES(%s,%s)""", (block_id,vote)
                     )
-                cursor.execute("SELECT * FROM vote_options WHERE block_id=%s",(block_id))
+                cursor.execute("SELECT * FROM vote_options WHERE block_id=%s",(block_id,))
                 data = cursor.fetchall()
                 connection.commit()
             return {"msg":data}
@@ -547,7 +542,7 @@ class Vote:
         with connection.cursor() as cursor:
             cursor.execute("""
             SELECT * FROM votes WHERE vote_option_id IN (SELECT vote_option_id FROM vote_options WHERE block_id=%s)
-            """,(block_id))
+            """,(block_id,))
             data = cursor.fetchall()
             connection.commit()
         return data
@@ -563,7 +558,7 @@ class Tag_info:
         with connection.cursor() as cursor:
             cursor.execute("""
             SELECT brick_id,(SELECT account FROM member WHERE member.member_id=bricks.member_id)AS account,tag_id,title,classifi,popularity,feedbacks,time FROM bricks WHERE tag_id=(SELECT tag_id FROM tag WHERE name=%s) ORDER BY time DESC
-            """,(tag_name))
+            """,(tag_name,))
             data = cursor.fetchall()
             connection.commit()
         return data
@@ -584,7 +579,7 @@ class Tag_info:
 
     def modify_tag_info(brick_id):
                 with connection.cursor() as cursor:
-                    result = cursor.execute("UPDATE bricks SET popularity=popularity+1 WHERE brick_id=%s",(brick_id))
+                    result = cursor.execute("UPDATE bricks SET popularity=popularity+1 WHERE brick_id=%s",(brick_id,))
                     connection.commit()
                     return result
 
@@ -618,14 +613,14 @@ class Level:
 class Bricks:
     def getting_brick(brick_id):
         with connection.cursor() as cursor:
-            cursor.execute("SELECT brick_id,(SELECT account FROM member WHERE bricks.member_id=member.member_id)AS account,tag_id,title,content,classifi,feedbacks,popularity,time FROM bricks WHERE brick_id=%s",(brick_id))
+            cursor.execute("SELECT brick_id,(SELECT account FROM member WHERE bricks.member_id=member.member_id)AS account,tag_id,title,content,classifi,feedbacks,popularity,time FROM bricks WHERE brick_id=%s",(brick_id,))
             result = cursor.fetchall()
             connection.commit()
         return result
 
     def getting_brick_discuss(brick_id):
         with connection.cursor() as cursor:
-            cursor.execute("SELECT (SELECT account FROM member WHERE member.member_id=brick_discuss.member_id)AS account,content,time FROM brick_discuss WHERE brick_id=%s ORDER BY time DESC",(brick_id))
+            cursor.execute("SELECT (SELECT account FROM member WHERE member.member_id=brick_discuss.member_id)AS account,content,time FROM brick_discuss WHERE brick_id=%s ORDER BY time DESC",(brick_id,))
             datas = cursor.fetchall()
             connection.commit()
             return datas
@@ -638,6 +633,6 @@ class Bricks:
 
     def patching_brick_discuss(brick_id):
         with connection.cursor() as cursor:
-            result = cursor.execute("UPDATE bricks SET feedbacks=feedbacks+1 WHERE brick_id=%s",(brick_id))
+            result = cursor.execute("UPDATE bricks SET feedbacks=feedbacks+1 WHERE brick_id=%s",(brick_id,))
             connection.commit()
             return result
