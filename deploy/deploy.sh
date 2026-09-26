@@ -21,8 +21,25 @@ param() {
 # compose.yaml and nginx.conf come from the same image, so a release is one artifact.
 docker run --rm --entrypoint cat "$IMAGE" deploy/compose.yaml > compose.yaml
 docker run --rm --entrypoint cat "$IMAGE" deploy/nginx.conf > nginx.conf
-param tls/origin-cert > certs/origin.pem
-param tls/origin-key > certs/origin.key
+
+# Check the Cloudflare origin certificate before touching the running stack:
+# nginx exits on a bad certificate, which would take the site down.
+param tls/origin-cert > certs/origin.pem.new
+param tls/origin-key > certs/origin.key.new
+if ! openssl x509 -noout -in certs/origin.pem.new 2>/dev/null; then
+  echo "/motivetag/tls/origin-cert is not a PEM certificate (first line must be -----BEGIN CERTIFICATE-----)" >&2
+  exit 1
+fi
+if ! openssl pkey -noout -in certs/origin.key.new 2>/dev/null; then
+  echo "/motivetag/tls/origin-key is not a PEM private key (first line must be -----BEGIN PRIVATE KEY-----)" >&2
+  exit 1
+fi
+if [ "$(openssl x509 -noout -pubkey -in certs/origin.pem.new)" != "$(openssl pkey -pubout -in certs/origin.key.new)" ]; then
+  echo "/motivetag/tls/origin-cert and /motivetag/tls/origin-key are not a matching pair" >&2
+  exit 1
+fi
+mv certs/origin.pem.new certs/origin.pem
+mv certs/origin.key.new certs/origin.key
 
 secret_key=$(param secret-key)
 db_password=$(param db-password)
