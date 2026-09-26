@@ -107,7 +107,7 @@
                         <label for="upload_user_avatar">
                             <img style="width: 15px;cursor: pointer;" src="img/upload-regular-24.png"/>
                         </label>
-                        <input id="upload_user_avatar" onchange="upload_user_img()" type="file" style="display:none;" />
+                        <input id="upload_user_avatar" accept="image/png,image/jpeg,image/gif" onchange="upload_user_img()" type="file" style="display:none;" />
                     </div>
                     </div>
 
@@ -179,7 +179,7 @@
                             <label for="upload_block_img">
                                 <box-icon name='image-alt' color="#09ed5b" for="upload_user_avatar"></box-icon>
                             </label>
-                            <input id="upload_block_img" onchange="upload_block_img_preview()" type="file" style="display: none;"/>
+                            <input id="upload_block_img" accept="image/png,image/jpeg,image/gif" onchange="upload_block_img_preview()" type="file" style="display: none;"/>
                         </div>
                         <box-icon name='poll' color="#ed096d" onclick="start_poll()"></box-icon>
                         <!-- <box-icon name='face' type='solid' color='#e9ed09' ></box-icon>

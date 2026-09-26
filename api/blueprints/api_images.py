@@ -1,9 +1,9 @@
 import os
 import re
-import traceback
 
 import boto3
 from botocore.config import Config
+from botocore.exceptions import ClientError
 from flask import abort, redirect, request, session
 
 from data.data import Block, Images
@@ -11,22 +11,41 @@ from module.auth import login_required
 
 from . import api_images
 
-ALLOWED_EXTENSIONS = {"png", "jpg", "jpeg", "gif"}
-
-
-def allowed_file(filename):
-    return "." in filename and filename.rsplit(".", 1)[1].lower() in ALLOWED_EXTENSIONS
-
+# Browsers upload straight to S3 with a presigned POST (docs/adr/0007); the app only
+# signs the upload and records the key afterwards, so image bytes never pass through
+# nginx or gunicorn.
+ALLOWED_TYPES = {"image/png", "image/jpeg", "image/gif"}
+MAX_IMAGE_BYTES = 5 * 1024 * 1024
+UPLOAD_EXPIRES = 300
 
 # Credentials come from the EC2 instance role; the bucket stays private and
 # images are served through short-lived presigned URLs.
 BUCKET_NAME = os.getenv("IMAGE_BUCKET")
+REGION = os.getenv("AWS_REGION")
 IMAGE_KEY = re.compile(r"^(avatar|block)_\d+$")
 s3 = boto3.client(
     "s3",
-    region_name=os.getenv("AWS_REGION"),
-    config=Config(signature_version="s3v4"),
+    region_name=REGION,
+    # The regional endpoint: the global one does not serve buckets in opt-in regions
+    # such as ap-east-2, and browsers do not follow its redirects on a CORS POST.
+    endpoint_url=f"https://s3.{REGION}.amazonaws.com" if REGION else None,
+    config=Config(signature_version="s3v4", s3={"addressing_style": "virtual"}),
 )
+
+
+def image_key(member_id, kind, target_id):
+    """The S3 key this member may write for kind/target_id, or an error response."""
+    if kind == "avatar":
+        return f"avatar_{member_id}", None
+    if kind == "block":
+        try:
+            block_id = int(target_id)
+        except (TypeError, ValueError):
+            return None, ({"error": "block not found or not yours"}, 403)
+        if not Block.is_owner(member_id, block_id):
+            return None, ({"error": "block not found or not yours"}, 403)
+        return f"block_{block_id}", None
+    return None, ({"error": "unknown image type"}, 400)
 
 
 @api_images.route("/images/<key>")
@@ -39,49 +58,49 @@ def show_img(key):
     return redirect(url)
 
 
-@api_images.route("/api/images", methods=["GET"])
-def get_imgs():
-    return None
+@api_images.route("/api/images/upload", methods=["POST"])
+@login_required
+def sign_upload():
+    """Step 1: return a presigned POST the browser sends the file to."""
+    body = request.get_json(silent=True) or {}
+    content_type = body.get("content_type")
+    if content_type not in ALLOWED_TYPES:
+        return {"error": "file type not allowed"}, 400
+    if not BUCKET_NAME:
+        return {"error": "image uploads are disabled"}, 503
+    key, error = image_key(session["member_id"], body.get("type"), body.get("target_id"))
+    if error:
+        return error
+    post = s3.generate_presigned_post(
+        BUCKET_NAME,
+        key,
+        Fields={"Content-Type": content_type},
+        Conditions=[
+            {"Content-Type": content_type},
+            ["content-length-range", 1, MAX_IMAGE_BYTES],
+        ],
+        ExpiresIn=UPLOAD_EXPIRES,
+    )
+    return {"ok": True, "url": post["url"], "fields": post["fields"]}
 
 
 @api_images.route("/api/images", methods=["POST"])
 @login_required
-def post_imgs():
+def finish_upload():
+    """Step 2: after the browser's upload succeeded, point the avatar or block at it."""
+    body = request.get_json(silent=True) or {}
+    member_id = session["member_id"]
+    key, error = image_key(member_id, body.get("type"), body.get("target_id"))
+    if error:
+        return error
     try:
-        img = request.files["image"]
-        member_id = session.get("member_id")
-        type = request.form["type"]
-        target_id = request.form["target_id"]
-        if not allowed_file(img.filename):
-            return {"error": "file type not allowed"}, 400
-        if type == "avatar":
-            id = member_id
-        elif type == "block":
-            if not Block.is_owner(member_id, target_id):
-                return {"error": "block not found or not yours"}, 403
-            id = int(target_id)
-        else:
-            return {"error": "unknown image type"}, 400
-        key = type + "_" + str(id)
-        # Stream straight to S3 instead of writing a user-named file to the working directory.
-        s3.upload_fileobj(img.stream, BUCKET_NAME, key)
-        if type == "avatar":
-            result = Images.post_image(member_id, "avatar_" + str(member_id))
-        else:
-            result = Block.modify_block(id, "block_" + str(id))
-        return {"ok": result}
-
-    except Exception as e:
-        print("type error: " + str(e))
-        print(traceback.format_exc())
-        return {"error": "image upload error"}, 500
-
-
-@api_images.route("/api/images", methods=["PATCH"])
-def change_imgs():
-    return None
-
-
-@api_images.route("/api/images", methods=["DELETE"])
-def delete_imgs():
-    return None
+        head = s3.head_object(Bucket=BUCKET_NAME, Key=key)
+    except ClientError:
+        return {"error": "upload not found"}, 400
+    if head.get("ContentType") not in ALLOWED_TYPES:
+        return {"error": "file type not allowed"}, 400
+    if key.startswith("avatar_"):
+        result = Images.post_image(member_id, key)
+    else:
+        result = Block.modify_block(int(key.removeprefix("block_")), key)
+    return {"ok": result}

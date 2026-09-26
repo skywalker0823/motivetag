@@ -88,19 +88,46 @@ init_render_user = (user_data) => {
 }
 
 
+// Uploads go straight from the browser to S3 with a presigned POST, then the server
+// records the image (see api/blueprints/api_images.py).
+upload_image = async (file, type, target_id) => {
+  const sign = await fetch("/api/images/upload", {
+    method: "POST",
+    headers: { "content-type": "application/json" },
+    body: JSON.stringify({ type: type, target_id: target_id, content_type: file.type }),
+  });
+  const signed = await sign.json();
+  if (!signed.ok) {
+    alert(signed.error === "file type not allowed" ? "只能上傳 PNG、JPEG 或 GIF 圖片" : "圖片上傳失敗");
+    return false;
+  }
+  const form = new FormData();
+  for (const [name, value] of Object.entries(signed.fields)) {
+    form.append(name, value);
+  }
+  form.append("file", file); // S3 requires the file to be the last field
+  const upload = await fetch(signed.url, { method: "POST", body: form });
+  if (!upload.ok) {
+    alert(file.size > 5 * 1024 * 1024 ? "圖片不能超過 5 MB" : "圖片上傳失敗");
+    return false;
+  }
+  const done = await fetch("/api/images", {
+    method: "POST",
+    headers: { "content-type": "application/json" },
+    body: JSON.stringify({ type: type, target_id: target_id }),
+  });
+  const result = await done.json();
+  return Boolean(result.ok);
+}
+
 upload_user_img = async() => {
-  let file = document.getElementById("upload_user_avatar").files;
-  let data = new FormData();
-  console.log("start upload")
-  data.append("image",file[0])
-  data.append("type","avatar")
-  data.append("target_id",null)
-  const options = { method: "POST", body: data };
-  const response = await fetch("/api/images", options);
-  const result = await response.json();
-  if (result.ok) {
-    console.log("Upload OK!");
-    document.getElementById("user_main_avatar").setAttribute("src", "/images/avatar_"+my_id);
+  let file = document.getElementById("upload_user_avatar").files[0];
+  if (!file) {
+    return;
+  }
+  if (await upload_image(file, "avatar", null)) {
+    // A new query string makes the browser fetch the new avatar instead of its cached one.
+    document.getElementById("user_main_avatar").setAttribute("src", "/images/avatar_" + my_id + "?t=" + Date.now());
   }
 }
 

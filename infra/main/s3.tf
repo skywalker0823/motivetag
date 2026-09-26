@@ -21,3 +21,14 @@ resource "aws_s3_bucket_server_side_encryption_configuration" "images" {
     }
   }
 }
+
+# Browsers upload images straight to the bucket with presigned POSTs (docs/adr/0007).
+resource "aws_s3_bucket_cors_configuration" "images" {
+  bucket = aws_s3_bucket.images.id
+  cors_rule {
+    allowed_methods = ["POST"]
+    allowed_origins = ["https://${var.domain}"]
+    allowed_headers = ["*"]
+    max_age_seconds = 3600
+  }
+}
