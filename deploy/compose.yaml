@@ -35,6 +35,7 @@ services:
       DB_DATABASE: motivetag
       IMAGE_BUCKET: ${IMAGE_BUCKET}
       AWS_REGION: ${AWS_REGION}
+      SENTRY_DSN: ${SENTRY_DSN:-}
     healthcheck:
       test: ["CMD", "python", "-c", "import urllib.request; urllib.request.urlopen('http://127.0.0.1:3000/healthz')"]
       interval: 10s

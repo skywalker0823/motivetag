@@ -11,7 +11,25 @@ socketio = SocketIO()
 load_dotenv()
 
 
+def init_sentry(config_name):
+    """Report unhandled errors to Sentry when SENTRY_DSN is set (only production sets it)."""
+    dsn = os.getenv("SENTRY_DSN")
+    if not dsn:
+        return
+    import sentry_sdk
+
+    sentry_sdk.init(
+        dsn=dsn,
+        environment="production" if config_name == "pro" else config_name,
+        release=os.getenv("GIT_SHA") or None,
+        send_default_pii=False,
+        # Errors only; performance tracing would use up the free quota.
+        traces_sample_rate=0,
+    )
+
+
 def create_app(config_name):
+    init_sentry(config_name)
     app = Flask(
         __name__, static_folder="../static", static_url_path="/", template_folder="../templates"
     )

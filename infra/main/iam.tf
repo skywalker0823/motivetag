@@ -19,6 +19,12 @@ resource "aws_iam_role_policy_attachment" "ssm" {
   policy_arn = "arn:aws:iam::aws:policy/AmazonSSMManagedInstanceCore"
 }
 
+# Lets the CloudWatch agent publish disk and memory metrics and read its config.
+resource "aws_iam_role_policy_attachment" "cloudwatch_agent" {
+  role       = aws_iam_role.app.name
+  policy_arn = "arn:aws:iam::aws:policy/CloudWatchAgentServerPolicy"
+}
+
 resource "aws_iam_instance_profile" "app" {
   name = "${var.project}-app"
   role = aws_iam_role.app.name
@@ -51,6 +57,32 @@ data "aws_iam_policy_document" "app" {
     sid       = "Images"
     actions   = ["s3:GetObject", "s3:PutObject"]
     resources = ["${aws_s3_bucket.images.arn}/*"]
+  }
+  # Add and read backups, never delete them (the bucket's lifecycle rule does that).
+  statement {
+    sid       = "WriteBackups"
+    actions   = ["s3:PutObject", "s3:GetObject"]
+    resources = ["${aws_s3_bucket.backups.arn}/mysql/*"]
+  }
+  statement {
+    sid       = "ListBackups"
+    actions   = ["s3:ListBucket"]
+    resources = [aws_s3_bucket.backups.arn]
+    condition {
+      test     = "StringLike"
+      variable = "s3:prefix"
+      values   = ["mysql/*"]
+    }
+  }
+  statement {
+    sid       = "BackupMetrics"
+    actions   = ["cloudwatch:PutMetricData"]
+    resources = ["*"]
+    condition {
+      test     = "StringEquals"
+      variable = "cloudwatch:namespace"
+      values   = [var.project]
+    }
   }
 }
 

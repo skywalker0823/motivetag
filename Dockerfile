@@ -16,6 +16,10 @@ RUN uv sync --frozen --no-dev
 
 COPY . .
 
+# The commit this image was built from; Sentry tags errors with it as the release.
+ARG GIT_SHA=""
+ENV GIT_SHA=$GIT_SHA
+
 RUN useradd --system --no-create-home app && chmod +x docker-entrypoint.sh
 USER app
 

@@ -32,3 +32,21 @@ variable "data_volume_size" {
   type        = number
   default     = 20
 }
+
+variable "domain" {
+  description = "Public site name, served through Cloudflare."
+  type        = string
+  default     = "motivetag.com"
+}
+
+variable "alert_email" {
+  description = "Where alarms are e-mailed (confirm the two SNS subscription e-mails). Null disables e-mail."
+  type        = string
+  default     = null
+}
+
+variable "backup_retention_days" {
+  description = "How long MySQL dumps are kept in S3."
+  type        = number
+  default     = 35
+}
