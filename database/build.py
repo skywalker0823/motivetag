@@ -15,7 +15,7 @@ def build_member(conn):
     sql = """CREATE TABLE member(
         member_id INT NOT NULL AUTO_INCREMENT PRIMARY KEY,
         account varchar(50) UNIQUE KEY NOT NULL,
-        password varchar(50) NOT NULL,
+        password varchar(255) NOT NULL,
         email varchar(100) NOT NULL,
         birthday DATE,
         first_signup DATE NOT NULL,

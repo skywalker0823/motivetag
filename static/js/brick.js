@@ -35,8 +35,8 @@ main_brick_builder = (data) => {
     let time = data.time
     let title = data.title
 
-    document.getElementById("by_who").innerHTML = account
-    document.getElementById("content").innerHTML = content
+    document.getElementById("by_who").textContent = account
+    document.getElementById("content").textContent = content
 
 }
 

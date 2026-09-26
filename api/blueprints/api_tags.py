@@ -1,9 +1,11 @@
 from data.data import Member_tags, Tag
 from flask import request, session
+from module.auth import login_required
 from . import api_tags
 
 
 @api_tags.route("/api/member_tags", methods=["GET"])
+@login_required
 def get_tags():
     member_id = session.get("member_id")
     tag = request.args.get("tag")
@@ -12,6 +14,7 @@ def get_tags():
 
 
 @api_tags.route("/api/find_member_tags", methods=["GET"])
+@login_required
 def check_tags():
     member_id = session.get("member_id")
     tag = request.args.get("tag")
@@ -22,6 +25,7 @@ def check_tags():
 
 
 @api_tags.route("/api/member_tags", methods=["PATCH"])
+@login_required
 def append_tags():
     data = request.get_json()
     member_id = session.get("member_id")
@@ -34,6 +38,7 @@ def append_tags():
 
 
 @api_tags.route("/api/member_tags", methods=["DELETE"])
+@login_required
 def del_tags():
     data = request.get_json()
     member_tag_id = data["tag"]
@@ -51,6 +56,7 @@ def get_tags_global():
 
 
 @api_tags.route("/api/tag", methods=["PATCH"])
+@login_required
 def upgrade_global_tag():
     data = request.get_json()
     tag = data["tag"]
@@ -60,6 +66,7 @@ def upgrade_global_tag():
 
 
 @api_tags.route("/api/tag", methods=["DELETE"])
+@login_required
 def down_tag():
     data = request.get_json()
     tag = data["tag"]

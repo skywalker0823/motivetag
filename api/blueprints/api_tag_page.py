@@ -2,9 +2,11 @@
 from flask import request, session
 from . import api_tag_page
 from data.data import Tag_info
+from module.auth import login_required
 
 
 @api_tag_page.route("/api/tag_page", methods=["GET"])
+@login_required
 def get_tag_datas():
     key = request.args.get("keyword")
     result = Tag_info.get_tag_info(key)
@@ -12,6 +14,7 @@ def get_tag_datas():
 
 
 @api_tag_page.route("/api/tag_page", methods=["POST"])
+@login_required
 def post_discuss():
     data = request.get_json()
     member_id = session.get("member_id")
@@ -23,6 +26,7 @@ def post_discuss():
 
 
 @api_tag_page.route("/api/tag_page", methods=["PATCH"])
+@login_required
 def modify_discuss():
     data = request.get_json()
     member_id = session.get("member_id")

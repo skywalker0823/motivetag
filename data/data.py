@@ -3,6 +3,7 @@ import pymysql
 import os, traceback
 from dbutils.pooled_db import PooledDB
 from dotenv import load_dotenv
+from werkzeug.security import generate_password_hash, check_password_hash
 
 load_dotenv()
 
@@ -39,14 +40,28 @@ def get_connection():
 
 connection = get_connection()
 
+# Columns that are safe to send back to the member themselves (never the password hash).
+MEMBER_PUBLIC_COLUMNS = "member_id, account, email, birthday, first_signup, last_signin, member_img, follower, mood, exp"
+
+
+def _is_password_hash(value):
+    return isinstance(value, str) and (value.startswith("scrypt:") or value.startswith("pbkdf2:"))
+
+
 class Member:
     def get_member(account):
         with connection.cursor() as cursor:
             cursor.execute(
-                "SELECT * FROM member WHERE account=%s", (account,))
+                "SELECT " + MEMBER_PUBLIC_COLUMNS + " FROM member WHERE account=%s", (account,))
             result = cursor.fetchone()
             connection.commit()
             return result
+
+    def account_exists(account):
+        with connection.cursor() as cursor:
+            got = cursor.execute("SELECT member_id FROM member WHERE account=%s", (account,))
+            connection.commit()
+            return got != 0
 
     def sign_up(account,password,email,birthday,first_signup):
         try:
@@ -68,7 +83,7 @@ class Member:
                         birthday,
                         first_signup
                     )VALUES(%s,%s,%s,%s,%s)""",
-                    (account,password,email,birthday,first_signup,))
+                    (account,generate_password_hash(password),email,birthday,first_signup,))
                 connection.commit()
                 return "ok"
         except Exception as e:
@@ -78,15 +93,27 @@ class Member:
 
     def sign_in(account,password,time):
         with connection.cursor() as cursor:
-            cursor.execute("UPDATE member SET last_signin=%s WHERE account=%s",(time,account))
             got=cursor.execute("SELECT * FROM member WHERE account=%s", (account,))
             result = cursor.fetchone()
             connection.commit()
             if got==0:
-                return {"msg":"account not find"}
-            if password == result["password"]:
-                return {"msg":"ok","data":result}
-            return {"msg":"wrong password"}
+                return {"msg":"wrong account or password"}
+            stored = result["password"]
+            if _is_password_hash(stored):
+                valid = check_password_hash(stored, password)
+            else:
+                # Legacy plaintext row: compare once, then upgrade it to a hash.
+                valid = stored == password
+                if valid:
+                    cursor.execute("UPDATE member SET password=%s WHERE member_id=%s",
+                                   (generate_password_hash(password), result["member_id"]))
+            if not valid:
+                connection.commit()
+                return {"msg":"wrong account or password"}
+            cursor.execute("UPDATE member SET last_signin=%s WHERE member_id=%s",(time,result["member_id"]))
+            connection.commit()
+            del result["password"]
+            return {"msg":"ok","data":result}
 
     def patch_user_data(member_id,category,content):
         if category=="mood":
@@ -196,17 +223,23 @@ class Block:
             connection.commit()
             return result
 
+    def is_owner(member_id,block_id):
+        with connection.cursor() as cursor:
+            got = cursor.execute("SELECT block_id FROM block WHERE block_id=%s AND member_id=%s",(block_id,member_id))
+            connection.commit()
+            return got != 0
+
     def modify_block(key,value):
         with connection.cursor() as cursor:
             result = cursor.execute("UPDATE block SET block_img=%s WHERE block_id=%s",(value,key))
             connection.commit()
             return {"ok":result}
 
-    def delete_block(block_id):
+    def delete_block(member_id,block_id):
         with connection.cursor() as cursor:
-            cursor.execute("DELETE FROM block WHERE block_id=%s",(block_id))
+            result = cursor.execute("DELETE FROM block WHERE block_id=%s AND member_id=%s",(block_id,member_id))
             connection.commit()
-        return {"msg":block_id+" delete complete"}
+        return result
 
 
 class Block_tags:
@@ -253,7 +286,7 @@ class Member_tags:
 
     def del_member_tag(member_id, member_tag_id):
         with connection.cursor() as cursor:
-            result = cursor.execute("DELETE FROM member_tags WHERE member_tag_id=%s",(member_tag_id))
+            result = cursor.execute("DELETE FROM member_tags WHERE member_tag_id=%s AND member_id=%s",(member_tag_id,member_id))
             connection.commit()
             return {"ok":True,"count":result}
 
@@ -343,17 +376,18 @@ class Friend:
             print(traceback.format_exc())
             return {"error": "friend requet error","msg":"already invite"}
     
-    def forge_friend_request(target):
+    def forge_friend_request(me,target):
+        # Only the member who received the request may accept it.
         with connection.cursor() as cursor:
-            result = cursor.execute("UPDATE friendship SET status=%s WHERE friend_ship_id=%s",("0",target))
+            result = cursor.execute("UPDATE friendship SET status=%s WHERE friend_ship_id=%s AND request_to=%s",("0",target,me))
             cursor.execute("SELECT * FROM friendship WHERE friend_ship_id=%s",(target))
             data = cursor.fetchone()
             connection.commit()
             return {"ok":"friendship updated","result":result,"data":data}
             
-    def delete_relation(target):
+    def delete_relation(me,target):
         with connection.cursor() as cursor:
-            result = cursor.execute("DELETE FROM friendship WHERE friend_ship_id=%s",(target))
+            result = cursor.execute("DELETE FROM friendship WHERE friend_ship_id=%s AND (request_from=%s OR request_to=%s)",(target,me,me))
             connection.commit()
             if result!=1:
                 return {"error":"Delete friend fail"}
@@ -559,11 +593,23 @@ class Level:
     def get_current_exp(member_id):
         return
 
+    # Exp is awarded by the server for actions it has already verified, never by client-sent amounts.
+    EXP_REWARDS = {
+        "block_creater": 50,
+        "block_destroy": -150,
+        "good_bad": 5,
+        "good_message": 5,
+        "message": 3,
+    }
+
     def exp_up(member_id,exp):
         with connection.cursor() as cursor:
             result = cursor.execute("UPDATE member SET exp=exp+%s WHERE member_id=%s",(exp,member_id))
             connection.commit()
         return result
+
+    def reward(member_id,action):
+        return Level.exp_up(member_id, Level.EXP_REWARDS[action])
 
     def exp_down(member_id,exp):
         return

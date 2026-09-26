@@ -141,7 +141,7 @@ account_checker = () => {
       check_ok.style.display = "block";
       x.style.display = "none"
       fetching= false
-      preview_span.innerHTML = sign_account.value;
+      preview_span.textContent = sign_account.value;
 
     }else{
       changing = false
@@ -149,7 +149,7 @@ account_checker = () => {
       check_ok.style.display = "none";
       x.style.display="block"
       fetching = false;
-      preview_span.innerHTML = sign_account.value;
+      preview_span.textContent = sign_account.value;
     }
   },5000);
 }
@@ -186,38 +186,20 @@ render_dates = () => {
 
 
 handleCredentialResponse = (response) => {
-  const responsePayload = decodeJwtResponse(response.credential);
-  google_login(responsePayload)
+  google_login(response.credential)
 }
 
-function decodeJwtResponse(token) {
-  var base64Url = token.split(".")[1];
-  var base64 = base64Url.replace(/-/g, "+").replace(/_/g, "/");
-  var jsonPayload = decodeURIComponent(
-    atob(base64)
-      .split("")
-      .map(function (c) {
-        return "%" + ("00" + c.charCodeAt(0).toString(16)).slice(-2);
-      })
-      .join("")
-  );
-  return JSON.parse(jsonPayload);
-};
-
-google_login = async(user_data)=>{
+// The server verifies the Google ID token itself, so send it untouched.
+google_login = async(credential)=>{
     const options = {
       method: "POST",
       headers: { "content-type": "application/json" },
-      body: JSON.stringify({ user_data:user_data }),
+      body: JSON.stringify({ credential:credential }),
     };
     const response = await fetch("/api/google_sign_in", options);
     const result = await response.json();
     if(result.ok=="let_in"){
       window.location.href = result.account;
-      return
-    }
-    if(result.ok=="again"){
-      google_login(user_data);
       return
     }
     console.log(result.error)

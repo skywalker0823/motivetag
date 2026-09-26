@@ -1,6 +1,7 @@
 
 from flask import request, session
 from data.data import Notification
+from module.auth import login_required
 from . import api_notification
 
 
@@ -15,9 +16,10 @@ def getting_notifi():
 
 
 @api_notification.route("/api/notifi", methods=["POST"])
+@login_required
 def posting_notifi():
     data = request.get_json()
-    me = data["me"]
+    me = session.get("member_id")
     who = data["who"]
     type = data["type"]
     time = data["time"]
@@ -27,6 +29,7 @@ def posting_notifi():
 
 
 @api_notification.route("/api/notifi", methods=["DELETE"])
+@login_required
 def reading_notifi():
     member_id = session.get("member_id")
     result = Notification.delete_notifi(member_id)
