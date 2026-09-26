@@ -1,10 +1,14 @@
 
 
-from flask import Flask, redirect, session, render_template as rt
-from config import config_sets
-from flask_socketio import SocketIO
 import os
+
 from dotenv import load_dotenv
+from flask import Flask, redirect, session
+from flask import render_template as rt
+from flask_socketio import SocketIO
+
+from config import config_sets
+
 socketio = SocketIO()
 load_dotenv()
 
@@ -13,19 +17,19 @@ load_dotenv()
 def create_app(config_name):
     app = Flask(__name__, static_folder="../static",static_url_path="/", template_folder="../templates")
     app.config.from_object(config_sets[config_name])
-    from api.blueprints.api_member import api_member
     from api.blueprints.api_blocks import api_blocks
-    from api.blueprints.api_tags import api_tags
-    from api.blueprints.api_friends import api_friends
-    from api.blueprints.api_message import api_message
-    from api.blueprints.api_images import api_images
-    from api.blueprints.api_notification import api_notification
-    from api.blueprints.api_chat import api_chat
-    from api.blueprints.api_tag_page import api_tag_page
-    from api.blueprints.api_vote import api_vote
-    from api.blueprints.api_level import api_level
     from api.blueprints.api_bricks import api_bricks
+    from api.blueprints.api_chat import api_chat
+    from api.blueprints.api_friends import api_friends
     from api.blueprints.api_guild import api_guild
+    from api.blueprints.api_images import api_images
+    from api.blueprints.api_level import api_level
+    from api.blueprints.api_member import api_member
+    from api.blueprints.api_message import api_message
+    from api.blueprints.api_notification import api_notification
+    from api.blueprints.api_tag_page import api_tag_page
+    from api.blueprints.api_tags import api_tags
+    from api.blueprints.api_vote import api_vote
     from module.counter import get_hit_count
 
     app.register_blueprint(api_member)

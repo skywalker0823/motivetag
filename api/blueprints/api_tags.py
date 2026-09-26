@@ -1,6 +1,8 @@
-from data.data import Member_tags, Tag
 from flask import request, session
+
+from data.data import Member_tags, Tag
 from module.auth import login_required
+
 from . import api_tags
 
 
@@ -8,7 +10,6 @@ from . import api_tags
 @login_required
 def get_tags():
     member_id = session.get("member_id")
-    tag = request.args.get("tag")
     result = Member_tags.getting_member_tags(member_id)
     return {"ok": True, "tag": result["all_tags"]}
 

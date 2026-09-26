@@ -1,10 +1,12 @@
 
+import secrets
+
 from flask import request, session
-from flask_socketio import emit, join_room, leave_room, rooms as joined_rooms
-from random import randint
+from flask_socketio import emit, join_room, leave_room
+from flask_socketio import rooms as joined_rooms
+
 from .. import socketio
-from . import api_chat
-import time
+from . import api_chat  # noqa: F401 - re-exported for api/__init__.py
 
 online = {}  # {account:socketid}
 
@@ -33,7 +35,7 @@ def init_chat(data):
 
 
 @socketio.on('logout')
-def init_chat(data):
+def logout(data):
     me = current_account()
     if online.get(me) == request.sid:
         del online[me]
@@ -56,7 +58,7 @@ def init_room(data):
         emit("message", {"type": "message", "to": who_to_chat, "from": me,
              "content": me + " JOINED!", "room": rooms[who_sid][me]}, room=rooms[who_sid][me])
         return
-    new_room = "room" + str(randint(10000, 99999)) + str(time.time())
+    new_room = "room" + secrets.token_hex(16)
     if request.sid not in rooms or len(rooms[request.sid]) == 0:
         rooms[request.sid] = {who_to_chat: new_room}
     else:

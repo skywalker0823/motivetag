@@ -1,6 +1,7 @@
 
 import re
 
+
 def filter(data):
     box = []
     keys = re.findall("#\S+", data)

@@ -1,7 +1,9 @@
-from flask import request, session, redirect
+from flask import redirect, request, session
 from flask import render_template as rt
+
 from data.data import Friend
 from module.auth import login_required
+
 from . import api_friends
 
 

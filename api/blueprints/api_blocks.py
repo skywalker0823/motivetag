@@ -1,8 +1,11 @@
-from data.data import Block, Block_tags, Vote_table, Level
+import traceback
+
+from flask import request, session
+
+from data.data import Block, Block_tags, Level, Vote_table
 from module import tag_filter
 from module.auth import login_required
-from flask import request, session
-import traceback
+
 from . import api_blocks
 
 

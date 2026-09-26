@@ -1,7 +1,9 @@
 from flask import request, session
-from . import api_bricks
+
 from data.data import Bricks
 from module.auth import login_required
+
+from . import api_bricks
 
 
 @api_bricks.route("/api/bricks", methods=["GET"])
