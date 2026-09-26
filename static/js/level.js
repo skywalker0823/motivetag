@@ -1,32 +1,3 @@
-exp_mod = async(action,who) =>{
-    let self_exp_modify
-    if (action == "block_creater") {
-      self_exp_modify = 50;
-    } else if (action == "block_destroy") {
-      self_exp_modify = -150;
-    }  else if (action == "good_bad" || action == "good_message") {
-      self_exp_modify = 5;
-    } else if (action == "message") {
-      self_exp_modify = 3;
-    }  else {
-      return "error";
-    }
-  
-    const options = {
-        method: "POST",
-        headers: { "content-type": "application/json" },
-        body: JSON.stringify({exp: self_exp_modify}),
-    };
-    const response = await fetch("/api/level", options);
-    const result = await response.json();
-
-    if(result.ok){
-
-        return
-    }
-    console.log(result.error)
-}
-
 open_talent = () =>{
     console.log("open_talent")
     mask = document.getElementById("mask")

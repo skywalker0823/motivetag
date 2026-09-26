@@ -1,6 +1,7 @@
 from flask import request, session, redirect
 from flask import render_template as rt
 from data.data import Friend
+from module.auth import login_required
 from . import api_friends
 
 
@@ -12,6 +13,7 @@ def to_member(account):
 
 
 @api_friends.route("/api/friend", methods=["GET"])
+@login_required
 def checking_relationship():
     someone = request.args.get("who")
     if someone == session.get("account"):
@@ -30,6 +32,7 @@ def checking_relationship():
 
 
 @api_friends.route("/api/friend", methods=["POST"])
+@login_required
 def waiting_relationship():
     data = request.get_json()
     someone_else = data["who"]
@@ -41,17 +44,21 @@ def waiting_relationship():
 
 
 @api_friends.route("/api/friend", methods=["PATCH"])
+@login_required
 def forgeing_relationship():
     data = request.get_json()
     target = data["friend_ship_id"]
-    result = Friend.forge_friend_request(target)
+    result = Friend.forge_friend_request(session.get("member_id"), target)
     return {"ok": result["ok"], "data_changed": result["result"],
             "data": data, "datas": result["data"]}
 
 
 @api_friends.route("/api/friend", methods=["DELETE"])
+@login_required
 def deleting_relationship():
     data = request.get_json()
     target = data["friend_ship_id"]
-    result = Friend.delete_relation(target)
+    result = Friend.delete_relation(session.get("member_id"), target)
+    if "error" in result:
+        return {"error": result["error"]}
     return {"ok": result["ok"], "data_changed": result["result"], "data": data}

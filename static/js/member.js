@@ -79,7 +79,7 @@ init_render_user = (user_data) => {
   if(mood==null){
     mood_text.innerHTML = "今天心情如何?";
   }else{
-    mood_text.innerHTML=mood
+    mood_text.textContent=mood
   }
   user_account.appendChild(account)
   user_mail.appendChild(email)
@@ -126,7 +126,7 @@ mood_input.addEventListener("focusout",() => {
   if(new_mood=="" || new_mood==null || !new_mood){
     return
   }
-  mood_text.innerHTML=new_mood
+  mood_text.textContent=new_mood
   
   upload_mood(new_mood)
 })

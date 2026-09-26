@@ -1,8 +1,14 @@
 from data.data import Member, Member_tags, Friend
 from flask import request, session
-import random
+from google.oauth2 import id_token
+from google.auth.transport import requests as google_requests
+from module.auth import login_required
+import os
+import secrets
 from datetime import datetime
 from . import api_member
+
+GOOGLE_CLIENT_ID = os.getenv("GOOGLE_CLIENT_ID")
 
 
 @api_member.route("/api/member", methods=["GET"])
@@ -13,8 +19,8 @@ def check_member():
         return {"ok": True, "data": data}
     elif request.args.get("account_check"):
         account = request.args.get("account_check")
-        data = Member.get_member(account)
-        return {"ok": data}
+        # Only reveal whether the name is taken; null means it is available.
+        return {"ok": True if Member.account_exists(account) else None}
     return {"error": "not loged in"}
 
 
@@ -46,6 +52,7 @@ def sign_in_member():
         session["FIRST_TIME"] = "NO"
     if result["msg"] == "ok":
         result = result["data"]
+        session.clear()
         session["account"] = account
         session["member_id"] = result["member_id"]
         return {"ok": True, "data": result}
@@ -53,6 +60,7 @@ def sign_in_member():
 
 
 @api_member.route("/api/member", methods=["PATCH"])
+@login_required
 def modify_member():
     data = request.get_json()
     member_id = session.get("member_id")
@@ -74,29 +82,41 @@ def sign_out_member():
 @api_member.route("/api/google_sign_in", methods=["POST"])
 def g_login():
     data = request.get_json()
-    account = data["user_data"]["given_name"] + data["user_data"]["sub"][0:5]
+    if not GOOGLE_CLIENT_ID:
+        return {"error": "google sign in not configured"}
+    try:
+        # Verify the signed ID token with Google instead of trusting client-decoded fields.
+        user_data = id_token.verify_oauth2_token(
+            data["credential"], google_requests.Request(), GOOGLE_CLIENT_ID)
+    except (KeyError, TypeError, ValueError):
+        return {"error": "invalid google credential"}, 401
+    if not user_data.get("email_verified"):
+        return {"error": "google email not verified"}, 401
+    email = user_data["email"]
+    account = user_data.get("given_name", "user") + user_data["sub"][0:5]
     account_check = Member.get_member(account)
     if account_check is None:
-        password = str(random.randint(10000, 999999))
-        email = data["user_data"]["email"]
-        birthday = datetime.date(datetime.now())
-        first_signup = datetime.date(datetime.now())
-        print("辦新帳號!")
+        today = datetime.date(datetime.now())
+        # Google members sign in through Google only; this password is never shown to anyone.
         result = Member.sign_up(
             account,
-            password,
+            secrets.token_urlsafe(32),
             email,
-            birthday,
-            first_signup)
-        if result == "ok":
-            return {"ok": "again"}
-        return {"error": result}
+            today,
+            today)
+        if result != "ok":
+            return {"error": result}
+        account_check = Member.get_member(account)
+    elif account_check["email"] != email:
+        return {"error": "account belongs to another member"}, 403
+    session.clear()
     session["member_id"] = account_check["member_id"]
     session["account"] = account_check["account"]
     return {"ok": "let_in", "account": account_check["account"]}
 
 
 @api_member.route("/api/get_user_sp", methods=["GET"])
+@login_required
 def get_user_sp():
     target_id = request.args.get("member_id")
     member_id = session.get("member_id")

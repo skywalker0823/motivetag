@@ -2,9 +2,11 @@
 from flask import request, session
 from . import api_vote
 from data.data import Vote
+from module.auth import login_required
 
 
 @api_vote.route("/api/vote", methods=["GET"])
+@login_required
 def checking_vote_result():
     block_id = request.args.get("block_id")
     result = Vote.get_vote(block_id)
@@ -12,6 +14,7 @@ def checking_vote_result():
 
 
 @api_vote.route("/api/vote", methods=["POST"])
+@login_required
 def doing_vote():
     data = request.get_json()
     member_id = session.get("member_id")

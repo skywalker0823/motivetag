@@ -1,11 +1,13 @@
-from data.data import Block, Block_tags, Vote_table
+from data.data import Block, Block_tags, Vote_table, Level
 from module import tag_filter
+from module.auth import login_required
 from flask import request, session
 import traceback
 from . import api_blocks
 
 
 @api_blocks.route("/api/blocks", methods=["GET"])
+@login_required
 def check_blocks():
     page = request.args.get("page")
     key = request.args.get("key")
@@ -25,6 +27,7 @@ def check_blocks():
 
 
 @api_blocks.route("/api/blocks", methods=["POST"])
+@login_required
 def build_blocks():
     block = request.get_json()
     member_id = session.get("member_id")
@@ -41,10 +44,12 @@ def build_blocks():
         vote_table_create = Vote_table.create_vote(
             result["content"]["block_id"], block["vote_box"])
         result["content"]["votes"] = vote_table_create["msg"]
+    Level.reward(member_id, "block_creater")
     return {"ok": True, "data": [result["content"]]}
 
 
 @api_blocks.route("/api/blocks", methods=["PATCH"])
+@login_required
 def gooding_blocks():
     try:
         data = request.get_json()
@@ -54,6 +59,7 @@ def gooding_blocks():
         if checker == 0:
             return {"error": "you pressed this good before"}
         result = Block.good_block(block_id)
+        Level.reward(member_id, "good_bad")
         return result
     except Exception as e:
         print("type error: " + str(e))
@@ -62,6 +68,7 @@ def gooding_blocks():
 
 
 @api_blocks.route("/api/blocks", methods=["PUT"])
+@login_required
 def bading_blocks():
     try:
         data = request.get_json()
@@ -71,6 +78,7 @@ def bading_blocks():
         if checker == 0:
             return {"error": "you pressed this boo before"}
         result = Block.bad_block(block_id)
+        Level.reward(member_id, "good_bad")
         return result
     except Exception as e:
         print("type error: " + str(e))
@@ -79,12 +87,16 @@ def bading_blocks():
 
 
 @api_blocks.route("/api/blocks", methods=["DELETE"])
+@login_required
 def delete_blocks():
     try:
         data = request.get_json()
         block_id = data["block_id"]
-        result = Block.delete_block(block_id)
-        return {"ok": True, "msg": result["msg"]}
+        member_id = session.get("member_id")
+        if Block.delete_block(member_id, block_id) != 1:
+            return {"error": True, "msg": "block not found or not yours"}, 403
+        Level.reward(member_id, "block_destroy")
+        return {"ok": True, "msg": str(block_id) + " delete complete"}
     except Exception as e:
         print("type error: " + str(e))
         print(traceback.format_exc())

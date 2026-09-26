@@ -410,7 +410,6 @@ document
       }
       document.getElementById("blockor_content").value = "";
       document.getElementById("blockor_content").style.height="37px";
-      exp_mod("block_creater");
     } else {
       console.log(result.msg, result.msg2);
     }
@@ -444,7 +443,6 @@ del_block = async (block) => {
     document.getElementById("block" + block_id).remove();
     open = false;
     deleting = false;
-    exp_mod("block_destroy");
     return;
   }
   deleting = false;
@@ -646,7 +644,6 @@ leave_message = async (message_block_id) => {
     target.appendChild(a_message);
     message.value = "";
     document.getElementById("score" + block_id).innerHTML=0;
-    exp_mod("message")
     return;
   }
 };
@@ -664,7 +661,6 @@ gooder = async (id) => {
   const response = await fetch("/api/blocks", options);
   const result = await response.json();
   if (result.ok) {
-    exp_mod("good_bad")
     let add_this = document.getElementById("good_count" + target);
     if (add_this.innerHTML == "") {
       add_this.innerHTML = "1";
@@ -691,7 +687,6 @@ badder = async (id) => {
   const response = await fetch("/api/blocks", options);
   const result = await response.json();
   if (result.ok) {
-    exp_mod("good_bad");
     let add_this = document.getElementById("bad_count" + target);
     if (add_this.innerHTML == "") {
       add_this.innerHTML = "1";
@@ -778,7 +773,6 @@ nice = async (id) => {
   const result = await response.json();
 
   if (result.ok) {
-    exp_mod("good_message");
     let add_this = document.getElementById("how_nice" + target);
     if (add_this.innerHTML == "") {
       add_this.innerHTML = "1";
@@ -893,7 +887,7 @@ display_member_info = async(member_block_id) => {
     if(!mood){
       mood = "沒有任何紀錄:)"
     }
-    document.getElementById("pop_account").innerHTML=user_info.account
+    document.getElementById("pop_account").textContent=user_info.account
     document.getElementById("pop_birthday").innerHTML =
       moment(user_info.birthday).format("YYYY MMM Do") +
       "(" +
@@ -902,7 +896,7 @@ display_member_info = async(member_block_id) => {
       ")";
     document.getElementById("pop_first").innerHTML=moment(user_info.first_signup).format("YYYY MMM Do")
     document.getElementById("pop_last").innerHTML=moment(user_info.last_signin).subtract(8, "hours").fromNow()
-    document.getElementById("pop_mood").innerHTML=mood
+    document.getElementById("pop_mood").textContent=mood
     document.getElementById("pop_level").innerHTML =
       parseInt((((8 * user_info.exp) / 50 + 1) ** 0.5 + 1) / 2) +
       "(總經驗值" +

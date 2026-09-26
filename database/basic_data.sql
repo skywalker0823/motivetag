@@ -322,7 +322,7 @@ DROP TABLE IF EXISTS `member`;
 CREATE TABLE `member` (
   `member_id` int NOT NULL AUTO_INCREMENT,
   `account` varchar(50) NOT NULL,
-  `password` varchar(50) NOT NULL,
+  `password` varchar(255) NOT NULL,
   `email` varchar(100) NOT NULL,
   `birthday` date DEFAULT NULL,
   `first_signup` date NOT NULL,

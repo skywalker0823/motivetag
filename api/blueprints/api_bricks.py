@@ -1,9 +1,11 @@
 from flask import request, session
 from . import api_bricks
 from data.data import Bricks
+from module.auth import login_required
 
 
 @api_bricks.route("/api/bricks", methods=["GET"])
+@login_required
 def get_brick():
     brick_id = request.args.get("brick_id")
     data = Bricks.getting_brick(brick_id)
@@ -11,6 +13,7 @@ def get_brick():
 
 
 @api_bricks.route("/api/get_brick_discuss", methods=["GET"])
+@login_required
 def get_discuss():
     brick_id = request.args.get("brick_id")
     datas = Bricks.getting_brick_discuss(brick_id)
@@ -18,6 +21,7 @@ def get_discuss():
 
 
 @api_bricks.route("/api/bricks", methods=["POST"])
+@login_required
 def post_brick_discuss():
     data = request.get_json()
     data["member_id"] = session.get("member_id")
