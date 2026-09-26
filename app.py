@@ -18,8 +18,8 @@ if __name__ == "__main__":
 # gunicorn -k geventwebsocket.gunicorn.workers.GeventWebSocketWorker -b 0.0.0.0:3000 -w 1 app:app
 
 # Start flask server only
-# docker build -t motivetag .  
-# docker run -dp 3000:3000 --name motivetag motivetag  
+# docker build -t motivetag .
+# docker run -dp 3000:3000 --name motivetag motivetag
 
 # Start website with docker-compose
 # docker-compose up --build -d(Production)

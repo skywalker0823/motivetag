@@ -2,6 +2,7 @@
 
 Point them at a database with AWS_motivetag_DB / DB_PASSWORD (see README).
 """
+
 import importlib
 import os
 import uuid

@@ -49,8 +49,7 @@ def sign_in_member():
     password = data["password"]
     time = data["time"]
     result = Member.sign_in(account, password, time)
-    if session.get(
-            "FIRST_TIME") and session["FIRST_TIME"] == "YES" and result["msg"] == "ok":
+    if session.get("FIRST_TIME") and session["FIRST_TIME"] == "YES" and result["msg"] == "ok":
         Member_tags.new_bie_tag(result["data"]["member_id"], "新手引導")
         session["FIRST_TIME"] = "NO"
     if result["msg"] == "ok":
@@ -90,7 +89,8 @@ def g_login():
     try:
         # Verify the signed ID token with Google instead of trusting client-decoded fields.
         user_data = id_token.verify_oauth2_token(
-            data["credential"], google_requests.Request(), GOOGLE_CLIENT_ID)
+            data["credential"], google_requests.Request(), GOOGLE_CLIENT_ID
+        )
     except (KeyError, TypeError, ValueError):
         return {"error": "invalid google credential"}, 401
     if not user_data.get("email_verified"):
@@ -101,12 +101,7 @@ def g_login():
     if account_check is None:
         today = datetime.date(datetime.now())
         # Google members sign in through Google only; this password is never shown to anyone.
-        result = Member.sign_up(
-            account,
-            secrets.token_urlsafe(32),
-            email,
-            today,
-            today)
+        result = Member.sign_up(account, secrets.token_urlsafe(32), email, today, today)
         if result != "ok":
             return {"error": result}
         account_check = Member.get_member(account)

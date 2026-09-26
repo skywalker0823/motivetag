@@ -1,5 +1,3 @@
-
-
 import os
 
 from dotenv import load_dotenv
@@ -13,9 +11,10 @@ socketio = SocketIO()
 load_dotenv()
 
 
-
 def create_app(config_name):
-    app = Flask(__name__, static_folder="../static",static_url_path="/", template_folder="../templates")
+    app = Flask(
+        __name__, static_folder="../static", static_url_path="/", template_folder="../templates"
+    )
     app.config.from_object(config_sets[config_name])
     from api.blueprints.api_blocks import api_blocks
     from api.blueprints.api_bricks import api_bricks
@@ -47,16 +46,16 @@ def create_app(config_name):
     app.register_blueprint(api_guild)
 
     GOOGLE_OAUTH2_CLIENT_ID = os.getenv("GOOGLE_CLIENT_ID")
-    
+
     @app.route("/test")
     def test():
         count = get_hit_count()
-        return 'Hello! I have been seen {} times.\n'.format(count)
+        return "Hello! I have been seen {} times.\n".format(count)
 
     @app.route("/")
     def index():
         if session.get("account"):
-            return redirect("/"+session["account"])
+            return redirect("/" + session["account"])
         else:
             return rt("index.html", google_oauth2_client_id=GOOGLE_OAUTH2_CLIENT_ID)
 
@@ -68,7 +67,7 @@ def create_app(config_name):
             return redirect("/")
 
     @app.route("/tag/<tag_name>/<brick_id>")
-    def brick(tag_name,brick_id):
+    def brick(tag_name, brick_id):
         if session.get("account"):
             return rt("brick.html")
         else:
@@ -79,4 +78,5 @@ def create_app(config_name):
     socketio.init_app(app, cors_allowed_origins=cors_origins.split(",") if cors_origins else None)
     return app
 
-#test
+
+# test

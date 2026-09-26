@@ -51,8 +51,12 @@ def forgeing_relationship():
     data = request.get_json()
     target = data["friend_ship_id"]
     result = Friend.forge_friend_request(session.get("member_id"), target)
-    return {"ok": result["ok"], "data_changed": result["result"],
-            "data": data, "datas": result["data"]}
+    return {
+        "ok": result["ok"],
+        "data_changed": result["result"],
+        "data": data,
+        "datas": result["data"],
+    }
 
 
 @api_friends.route("/api/friend", methods=["DELETE"])

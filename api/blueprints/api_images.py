@@ -9,17 +9,18 @@ from module.auth import login_required
 
 from . import api_images
 
-ALLOWED_EXTENSIONS = {'png', 'jpg', 'jpeg', 'gif'}
+ALLOWED_EXTENSIONS = {"png", "jpg", "jpeg", "gif"}
 
 
 def allowed_file(filename):
     return "." in filename and filename.rsplit(".", 1)[1].lower() in ALLOWED_EXTENSIONS
 
 
-s3 = boto3.client("s3",
-                  aws_access_key_id=Config_dev.ACCESS_KEY_ID,
-                  aws_secret_access_key=Config_dev.ACCESS_SECRET_ID
-                  )
+s3 = boto3.client(
+    "s3",
+    aws_access_key_id=Config_dev.ACCESS_KEY_ID,
+    aws_secret_access_key=Config_dev.ACCESS_SECRET_ID,
+)
 
 
 BUCKET_NAME = "motivetag"
@@ -40,9 +41,9 @@ def post_imgs():
         target_id = request.form["target_id"]
         if not allowed_file(img.filename):
             return {"error": "file type not allowed"}, 400
-        if type == 'avatar':
+        if type == "avatar":
             id = member_id
-        elif type == 'block':
+        elif type == "block":
             if not Block.is_owner(member_id, target_id):
                 return {"error": "block not found or not yours"}, 403
             id = int(target_id)

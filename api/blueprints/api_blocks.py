@@ -38,14 +38,12 @@ def build_blocks():
     if block["tags"] is not None and block["type"] == "Anonymous":
         tags.append(block["tags"])
     result = Block.create_my_block(member_id, block)
-    result_block_tags = Block_tags.tag_into_block(
-        tags, result["content"]["block_id"], member_id)
+    result_block_tags = Block_tags.tag_into_block(tags, result["content"]["block_id"], member_id)
     if result["msg"] and result_block_tags["msg"] == "ok":
         result["content"]["tags"] = tags
         result["content"]["votes"] = []
     if block["vote_box"] != [] and block["vote_box"] is not None:
-        vote_table_create = Vote_table.create_vote(
-            result["content"]["block_id"], block["vote_box"])
+        vote_table_create = Vote_table.create_vote(result["content"]["block_id"], block["vote_box"])
         result["content"]["votes"] = vote_table_create["msg"]
     Level.reward(member_id, "block_creater")
     return {"ok": True, "data": [result["content"]]}

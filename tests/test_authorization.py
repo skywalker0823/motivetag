@@ -97,5 +97,7 @@ def test_member_tag_delete_is_scoped(member):
     alice, _, _ = member()
     carol, _, _ = member()
     alice.patch("/api/tag", json={"tag": "cats"})
-    member_tag_id = alice.patch("/api/member_tags", json={"tag": "cats"}).get_json()["member_tag_id"]
+    member_tag_id = alice.patch("/api/member_tags", json={"tag": "cats"}).get_json()[
+        "member_tag_id"
+    ]
     assert "error" in carol.delete("/api/member_tags", json={"tag": member_tag_id}).get_json()
