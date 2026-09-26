@@ -25,6 +25,9 @@ apt-get update
 apt-get install -y docker-ce docker-ce-cli containerd.io docker-compose-plugin
 systemctl enable --now docker
 
+# AWS CLI for the deploy script (ECR login, Parameter Store).
+snap install aws-cli --classic
+
 # Data volume: attached by Terraform shortly after boot, so wait for it.
 # Nitro instances expose EBS volumes by ID under /dev/disk/by-id.
 volume_id="${data_volume_id}"

@@ -2,7 +2,7 @@
 # This directory keeps its own (tiny) state locally; see infra/README.md.
 
 terraform {
-  required_version = ">= 1.10"
+  required_version = ">= 1.16"
   required_providers {
     aws = {
       source  = "hashicorp/aws"

@@ -23,3 +23,39 @@ resource "aws_iam_instance_profile" "app" {
   name = "${var.project}-app"
   role = aws_iam_role.app.name
 }
+
+# What the running app and deploy script on the server may touch.
+data "aws_iam_policy_document" "app" {
+  statement {
+    sid       = "EcrLogin"
+    actions   = ["ecr:GetAuthorizationToken"]
+    resources = ["*"]
+  }
+  statement {
+    sid = "EcrPull"
+    actions = [
+      "ecr:BatchCheckLayerAvailability",
+      "ecr:BatchGetImage",
+      "ecr:GetDownloadUrlForLayer",
+    ]
+    resources = [aws_ecr_repository.app.arn]
+  }
+  statement {
+    sid     = "ReadConfig"
+    actions = ["ssm:GetParameter", "ssm:GetParameters", "ssm:GetParametersByPath"]
+    resources = [
+      "arn:aws:ssm:${var.region}:${data.aws_caller_identity.current.account_id}:parameter/${var.project}/*",
+    ]
+  }
+  statement {
+    sid       = "Images"
+    actions   = ["s3:GetObject", "s3:PutObject"]
+    resources = ["${aws_s3_bucket.images.arn}/*"]
+  }
+}
+
+resource "aws_iam_role_policy" "app" {
+  name   = "${var.project}-app"
+  role   = aws_iam_role.app.id
+  policy = data.aws_iam_policy_document.app.json
+}
