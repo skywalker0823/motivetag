@@ -3,13 +3,11 @@ services:
   mysql:
     env_file:
       - .env
-    build:
-      context: database
-      dockerfile: Dockerfile
+    # Schema is created by Alembic migrations when the flask container starts.
+    image: mysql:8.4
     environment:
       MYSQL_ROOT_PASSWORD: ${DB_PASSWORD}
       MYSQL_DATABASE: ${DB_DATABASE}
-    command: --init-file /docker-entrypoint-initdb.d/basic_data.sql
     container_name: a_mysql
     restart: on-failure:5
     healthcheck:

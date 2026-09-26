@@ -1,8 +1,9 @@
-
 from flask import request, session
-from . import api_vote
+
 from data.data import Vote
 from module.auth import login_required
+
+from . import api_vote
 
 
 @api_vote.route("/api/vote", methods=["GET"])

@@ -1,8 +1,9 @@
-
 from flask import request, session
-from . import api_tag_page
+
 from data.data import Tag_info
 from module.auth import login_required
+
+from . import api_tag_page
 
 
 @api_tag_page.route("/api/tag_page", methods=["GET"])
@@ -29,7 +30,6 @@ def post_discuss():
 @login_required
 def modify_discuss():
     data = request.get_json()
-    member_id = session.get("member_id")
     brick_id = data["brick_id"]
     result = Tag_info.modify_tag_info(brick_id)
     if result != 1:

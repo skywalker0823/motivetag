@@ -1,6 +1,8 @@
-from data.data import Member_tags, Tag
 from flask import request, session
+
+from data.data import Member_tags, Tag
 from module.auth import login_required
+
 from . import api_tags
 
 
@@ -8,7 +10,6 @@ from . import api_tags
 @login_required
 def get_tags():
     member_id = session.get("member_id")
-    tag = request.args.get("tag")
     result = Member_tags.getting_member_tags(member_id)
     return {"ok": True, "tag": result["all_tags"]}
 
@@ -33,8 +34,7 @@ def append_tags():
     result = Member_tags.add_member_tag(member_id, tag)
     if result["result"] == 0:
         return {"error": "already have this tag"}
-    return {"ok": True,
-            "member_tag_id": result["data"]["member_tag_id"], "tag": tag}
+    return {"ok": True, "member_tag_id": result["data"]["member_tag_id"], "tag": tag}
 
 
 @api_tags.route("/api/member_tags", methods=["DELETE"])
@@ -71,6 +71,6 @@ def down_tag():
     data = request.get_json()
     tag = data["tag"]
     tag_update = Tag.downing_global_tag(tag)
-    if(tag_update == 1):
+    if tag_update == 1:
         return {"ok": tag_update}
     return {"error": "dowing failed"}

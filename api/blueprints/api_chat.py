@@ -1,10 +1,11 @@
+import secrets
 
 from flask import request, session
-from flask_socketio import emit, join_room, leave_room, rooms as joined_rooms
-from random import randint
+from flask_socketio import emit, join_room, leave_room
+from flask_socketio import rooms as joined_rooms
+
 from .. import socketio
-from . import api_chat
-import time
+from . import api_chat  # noqa: F401 - re-exported for api/__init__.py
 
 online = {}  # {account:socketid}
 
@@ -16,7 +17,7 @@ def current_account():
     return session.get("account")
 
 
-@socketio.on('awake')
+@socketio.on("awake")
 def init_chat(data):
     me = current_account()
     online[me] = request.sid
@@ -32,8 +33,8 @@ def init_chat(data):
     emit("awake_result", online_box)
 
 
-@socketio.on('logout')
-def init_chat(data):
+@socketio.on("logout")
+def logout(data):
     me = current_account()
     if online.get(me) == request.sid:
         del online[me]
@@ -53,10 +54,19 @@ def init_room(data):
             rooms[request.sid] = {who_to_chat: rooms[who_sid][me]}
         join_room(rooms[who_sid][me])
         emit("init_result", {"ok": "JOINED", "room": rooms[who_sid][me]})
-        emit("message", {"type": "message", "to": who_to_chat, "from": me,
-             "content": me + " JOINED!", "room": rooms[who_sid][me]}, room=rooms[who_sid][me])
+        emit(
+            "message",
+            {
+                "type": "message",
+                "to": who_to_chat,
+                "from": me,
+                "content": me + " JOINED!",
+                "room": rooms[who_sid][me],
+            },
+            room=rooms[who_sid][me],
+        )
         return
-    new_room = "room" + str(randint(10000, 99999)) + str(time.time())
+    new_room = "room" + secrets.token_hex(16)
     if request.sid not in rooms or len(rooms[request.sid]) == 0:
         rooms[request.sid] = {who_to_chat: new_room}
     else:
@@ -65,7 +75,7 @@ def init_room(data):
     emit("init_result", {"ok": "CREATED & WAITING", "room": new_room})
 
 
-@socketio.on('send')
+@socketio.on("send")
 def send_mess(data):
     room = data["room"]
     if room not in joined_rooms():
@@ -74,14 +84,14 @@ def send_mess(data):
     emit("message", data, room=room)
 
 
-@socketio.on('connect')
+@socketio.on("connect")
 def test_connect():
     if current_account() is None:
         return False
     emit("connected", {"data": "connected confirm"})
 
 
-@socketio.on('disconnect')
+@socketio.on("disconnect")
 def test_disconnect():
     if request.sid in rooms:
         del rooms[request.sid]
@@ -90,7 +100,7 @@ def test_disconnect():
         del online[me]
 
 
-@socketio.on('left')
+@socketio.on("left")
 def left(message):
     """Sent by clients when they leave a room.
     A status message is broadcast to all people in the room."""
@@ -98,9 +108,17 @@ def left(message):
     room = message["room"]
     if room not in joined_rooms():
         return
-    emit("message", {"type": "message", "to": message["account"], "from": me,
-                     "content": me + " 離開了QQ!", "room": room}, room=room)
+    emit(
+        "message",
+        {
+            "type": "message",
+            "to": message["account"],
+            "from": me,
+            "content": me + " 離開了QQ!",
+            "room": room,
+        },
+        room=room,
+    )
     rooms.get(request.sid, {}).pop(message["account"], None)
-    emit('status', {'msg': me +
-         ' has left the room.'}, room=room)
+    emit("status", {"msg": me + " has left the room."}, room=room)
     leave_room(room)

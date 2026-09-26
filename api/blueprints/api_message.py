@@ -1,7 +1,8 @@
-import traceback
-from data.data import Message, Level
-from module.auth import login_required
 from flask import request, session
+
+from data.data import Level, Message
+from module.auth import login_required
+
 from . import api_message
 
 

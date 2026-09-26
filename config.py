@@ -1,5 +1,6 @@
 import os
 import secrets
+
 from dotenv import load_dotenv
 
 load_dotenv()
@@ -12,6 +13,20 @@ def _secret_key():
     # Without a shared key every worker/restart signs sessions differently, so set SECRET_KEY in .env.
     print("WARNING: SECRET_KEY is not set, using a temporary random key")
     return secrets.token_hex(32)
+
+
+def db_settings():
+    """Connection settings shared by the app and Alembic migrations."""
+    return {
+        "hosts": [
+            h
+            for h in (os.getenv("AWS_motivetag_DB"), os.getenv("DB_BK1"), os.getenv("DB_BK2"))
+            if h
+        ],
+        "user": os.getenv("DB_USER", "root"),
+        "password": os.getenv("DB_PASSWORD"),
+        "database": os.getenv("DB_DATABASE", "motivetag"),
+    }
 
 
 class Config_dev(object):
@@ -40,8 +55,4 @@ class Config_AWS(Config_prodution):
     pass
 
 
-config_sets = {
-    'dev': Config_dev,
-    'pro': Config_prodution,
-    'aws': Config_AWS
-}
+config_sets = {"dev": Config_dev, "pro": Config_prodution, "aws": Config_AWS}
