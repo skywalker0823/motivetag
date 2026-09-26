@@ -1,0 +1,55 @@
+# Production stack. deploy.sh copies this file out of the app image and writes
+# the .env next to it (image tag, secrets from Parameter Store).
+name: motivetag
+
+services:
+  mysql:
+    image: mysql:8.4
+    restart: unless-stopped
+    environment:
+      MYSQL_ROOT_PASSWORD: ${DB_ROOT_PASSWORD}
+      MYSQL_DATABASE: motivetag
+      MYSQL_USER: motivetag
+      MYSQL_PASSWORD: ${DB_PASSWORD}
+    volumes:
+      - /srv/motivetag/mysql:/var/lib/mysql
+    healthcheck:
+      test: ["CMD-SHELL", "mysqladmin ping -h 127.0.0.1 -u motivetag -p\"$$MYSQL_PASSWORD\" --silent"]
+      interval: 10s
+      timeout: 5s
+      retries: 30
+      start_period: 30s
+
+  app:
+    image: ${APP_IMAGE}
+    restart: unless-stopped
+    depends_on:
+      mysql:
+        condition: service_healthy
+    environment:
+      FLASK_CONFIG: pro
+      SECRET_KEY: ${SECRET_KEY}
+      AWS_motivetag_DB: mysql
+      DB_USER: motivetag
+      DB_PASSWORD: ${DB_PASSWORD}
+      DB_DATABASE: motivetag
+      IMAGE_BUCKET: ${IMAGE_BUCKET}
+      AWS_REGION: ${AWS_REGION}
+    healthcheck:
+      test: ["CMD", "python", "-c", "import urllib.request; urllib.request.urlopen('http://127.0.0.1:3000/healthz')"]
+      interval: 10s
+      timeout: 5s
+      retries: 6
+      start_period: 30s
+
+  nginx:
+    image: nginx:1.30-alpine
+    restart: unless-stopped
+    depends_on:
+      app:
+        condition: service_healthy
+    ports:
+      - "443:443"
+    volumes:
+      - ./nginx.conf:/etc/nginx/conf.d/default.conf:ro
+      - ./certs:/etc/nginx/certs:ro

@@ -13,7 +13,11 @@ import pytest
 os.environ.setdefault("AWS_motivetag_DB", "127.0.0.1")
 os.environ.setdefault("DB_PASSWORD", "testpw")
 os.environ.setdefault("SECRET_KEY", "test-secret-key")
-os.environ.setdefault("GOOGLE_CLIENT_ID", "test.apps.googleusercontent.com")
+os.environ.setdefault("IMAGE_BUCKET", "motivetag-images-test")
+os.environ.setdefault("AWS_REGION", "ap-east-2")
+# Dummy credentials so boto3 can sign URLs offline; nothing talks to AWS in tests.
+os.environ.setdefault("AWS_ACCESS_KEY_ID", "testing")
+os.environ.setdefault("AWS_SECRET_ACCESS_KEY", "testing")
 
 from api import create_app, socketio  # noqa: E402
 from config import db_settings  # noqa: E402

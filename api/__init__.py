@@ -29,7 +29,6 @@ def create_app(config_name):
     from api.blueprints.api_tag_page import api_tag_page
     from api.blueprints.api_tags import api_tags
     from api.blueprints.api_vote import api_vote
-    from module.counter import get_hit_count
 
     app.register_blueprint(api_member)
     app.register_blueprint(api_blocks)
@@ -45,19 +44,16 @@ def create_app(config_name):
     app.register_blueprint(api_bricks)
     app.register_blueprint(api_guild)
 
-    GOOGLE_OAUTH2_CLIENT_ID = os.getenv("GOOGLE_CLIENT_ID")
-
-    @app.route("/test")
-    def test():
-        count = get_hit_count()
-        return "Hello! I have been seen {} times.\n".format(count)
+    @app.route("/healthz")
+    def healthz():
+        return {"ok": True}
 
     @app.route("/")
     def index():
         if session.get("account"):
             return redirect("/" + session["account"])
         else:
-            return rt("index.html", google_oauth2_client_id=GOOGLE_OAUTH2_CLIENT_ID)
+            return rt("index.html")
 
     @app.route("/tag/<tag_name>")
     def tag(tag_name):

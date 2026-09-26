@@ -9,6 +9,12 @@ variable "project" {
   default     = "motivetag"
 }
 
+variable "github_repository" {
+  description = "owner/name of the GitHub repository allowed to deploy."
+  type        = string
+  default     = "skywalker0823/motivetag"
+}
+
 variable "instance_type" {
   description = "EC2 size. 2 GB of RAM is the practical minimum for MySQL plus the app."
   type        = string

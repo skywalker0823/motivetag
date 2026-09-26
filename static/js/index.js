@@ -185,28 +185,6 @@ render_dates = () => {
 };
 
 
-handleCredentialResponse = (response) => {
-  google_login(response.credential)
-}
-
-// The server verifies the Google ID token itself, so send it untouched.
-google_login = async(credential)=>{
-    const options = {
-      method: "POST",
-      headers: { "content-type": "application/json" },
-      body: JSON.stringify({ credential:credential }),
-    };
-    const response = await fetch("/api/google_sign_in", options);
-    const result = await response.json();
-    if(result.ok=="let_in"){
-      window.location.href = result.account;
-      return
-    }
-    console.log(result.error)
-}
-
-
-
 var app = document.getElementById("demo");
 var typewriter = new Typewriter(app, {
   loop: true,

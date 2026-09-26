@@ -1,10 +1,19 @@
 terraform {
-  required_version = ">= 1.10"
+  # 1.16+ knows newer regions such as ap-east-2 (Taipei) in the S3 backend.
+  required_version = ">= 1.16"
 
   required_providers {
     aws = {
       source  = "hashicorp/aws"
       version = "~> 6.0"
+    }
+    http = {
+      source  = "hashicorp/http"
+      version = "~> 3.4"
+    }
+    random = {
+      source  = "hashicorp/random"
+      version = "~> 3.6"
     }
   }
 

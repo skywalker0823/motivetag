@@ -13,12 +13,11 @@ dependencies = [
     "Flask-SocketIO>=5.3,<6",
     "gevent>=24.2",
     "gevent-websocket>=0.10.1",
-    "google-auth>=2.35,<3",
     "gunicorn>=23,<27",
+    # gunicorn's gevent worker imports packaging without declaring it.
+    "packaging>=24",
     "PyMySQL>=1.1.1,<2",
     "python-dotenv>=1.0,<2",
-    "redis>=5.0,<9",
-    "requests>=2.32,<3",
     "SQLAlchemy>=2.0,<3",
 ]
 
