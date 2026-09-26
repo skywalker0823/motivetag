@@ -1,4 +1,4 @@
-FROM --platform=linux/amd64 python:3.9
+FROM --platform=linux/amd64 python:3.11
 
 COPY ./requirements.txt /app/requirements.txt
 
