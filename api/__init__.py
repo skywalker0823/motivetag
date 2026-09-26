@@ -70,7 +70,9 @@ def create_app(config_name):
         else:
             return redirect("/")
 
-    socketio.init_app(app, cors_allowed_origins="*")
+    # Unset means same-origin only; list extra origins comma-separated in SOCKETIO_CORS_ORIGINS.
+    cors_origins = os.getenv("SOCKETIO_CORS_ORIGINS")
+    socketio.init_app(app, cors_allowed_origins=cors_origins.split(",") if cors_origins else None)
     return app
 
 #test
