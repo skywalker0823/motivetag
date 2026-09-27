@@ -19,6 +19,10 @@ def check_blocks():
     if result["msg"] == "No blocks found":
         return {"error": "No Blocks"}
     for a_block in result["datas"]:
+        # Anonymous posts hide their author from everyone but the author.
+        if a_block["content_type"] == "Anonymous" and a_block["member_id"] != member_id:
+            a_block["account"] = None
+            a_block["member_id"] = None
         tags = tag_filter.filter(a_block["content"])
         a_block["votes"] = Vote_table.get_vote(a_block["block_id"])
         a_block["tags"] = tags

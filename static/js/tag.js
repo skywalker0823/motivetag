@@ -15,22 +15,12 @@ del_tag = async(tag) =>{
     };
     const response = await fetch("/api/member_tags", options);
     const result = await response.json();
+    // The server lowers the tag's popularity when the subscription is removed.
     if(result.ok){
-        target = document.getElementById("tag"+tag)
-        let tag_name = document.getElementById("a_tag_name"+tag).innerHTML
-        const options2 = {
-          method: "DELETE",
-          headers: { "content-type": "application/json" },
-          body: JSON.stringify({ tag: tag_name }),
-        };
-        const response = await fetch("/api/tag", options2);
-        const result = await response.json();
-        if(result.ok){
-            target.remove();
-            return
-        }
-        console.log(result.error)
+        document.getElementById("tag"+tag).remove();
+        return
     }
+    console.log(result.error)
 }
 
 document.getElementById("tag_search_btn").addEventListener("click",async()=>{
@@ -44,12 +34,7 @@ document.getElementById("tag_search_btn").addEventListener("click",async()=>{
         console.log(result.error)
         return
     }
-    global_tag_adjust = await adjust_global_tag(tag)
-    if(!global_tag_adjust.msg=="1"){
-        console.log("gloal adjust fail")
-        return
-    }
-    result = await adjust_my_tag(tag);//調整會員tag
+    result = await adjust_my_tag(tag);// creates the tag if new and counts the subscription
     if(!result.ok){
         console.log("add member tag error",result.error)
         return
@@ -62,17 +47,6 @@ document.getElementById("tag_search_btn").addEventListener("click",async()=>{
 check_tag = async(tag) =>{
     const response = await fetch("/api/find_member_tags?tag="+tag)
     const result = await response.json()
-    return result
-}
-
-adjust_global_tag = async(tag) =>{
-    const options = {
-        method: "PATCH",
-        headers: { "content-type": "application/json" },
-        body: JSON.stringify({ tag: tag }),
-    };
-    const response = await fetch("/api/tag", options);
-    const result = await response.json();
     return result
 }
 
@@ -163,12 +137,6 @@ append_from_hot = async(tag) =>{
         console.log(result.error)
         return
     }
-    global_tag_adjust = await adjust_global_tag(tag)
-    if(!global_tag_adjust.msg=="1"){
-        console.log("gloal adjust fail")
-        return
-    }
-    console.log("global tag調整完畢")
     result = await adjust_my_tag(tag);
     if(!result.ok){
         console.log("add member tag error",result.error)

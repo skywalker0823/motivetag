@@ -22,7 +22,8 @@ def exp_of(query, member_id):
         ("patch", "/api/friend"),
         ("post", "/api/notifi"),
         ("post", "/api/images"),
-        ("delete", "/api/tag"),
+        ("delete", "/api/member_tags"),
+        ("post", "/api/vote"),
     ],
 )
 def test_member_endpoints_require_login(client, method, path):
@@ -139,7 +140,6 @@ def test_notification_sender_comes_from_session(member, query):
 def test_member_tag_delete_is_scoped(member):
     alice, _, _ = member()
     carol, _, _ = member()
-    alice.patch("/api/tag", json={"tag": "cats"})
     member_tag_id = alice.patch("/api/member_tags", json={"tag": "cats"}).get_json()[
         "member_tag_id"
     ]

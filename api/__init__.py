@@ -34,6 +34,9 @@ def create_app(config_name):
         __name__, static_folder="../static", static_url_path="/", template_folder="../templates"
     )
     app.config.from_object(config_sets[config_name])
+    from data.data import release_connection
+
+    app.teardown_appcontext(release_connection)
     from api.blueprints.api_blocks import api_blocks
     from api.blueprints.api_bricks import api_bricks
     from api.blueprints.api_chat import api_chat
@@ -64,6 +67,13 @@ def create_app(config_name):
 
     @app.route("/healthz")
     def healthz():
+        # Also proves the database answers, so deploy checks and uptime checks see it.
+        from data.data import Member
+
+        try:
+            Member.ping()
+        except Exception:
+            return {"ok": False}, 503
         return {"ok": True}
 
     @app.route("/")

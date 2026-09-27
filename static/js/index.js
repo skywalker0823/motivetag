@@ -116,7 +116,7 @@ signup = async () => {
     console.log("註冊成功!")
     document.getElementById("signup_check").style.opacity="1"
   } else {
-    console.log(result.error);
+    alert(result.error);
   }
 };
 

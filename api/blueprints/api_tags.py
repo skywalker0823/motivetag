@@ -53,24 +53,3 @@ def del_tags():
 def get_tags_global():
     result = Tag.getting_tags_global()
     return {"ok": True, "hot_tags": result}
-
-
-@api_tags.route("/api/tag", methods=["PATCH"])
-@login_required
-def upgrade_global_tag():
-    data = request.get_json()
-    tag = data["tag"]
-    member_id = session.get("member_id")
-    tag_global_update = Tag.upping_global_tag(tag, member_id)
-    return {"msg": tag_global_update}
-
-
-@api_tags.route("/api/tag", methods=["DELETE"])
-@login_required
-def down_tag():
-    data = request.get_json()
-    tag = data["tag"]
-    tag_update = Tag.downing_global_tag(tag)
-    if tag_update == 1:
-        return {"ok": tag_update}
-    return {"error": "dowing failed"}
