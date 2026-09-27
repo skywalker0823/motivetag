@@ -1,7 +1,7 @@
 # Zero-cost monitoring (docs/adr/0006): EC2's free basic metrics, alarms within the
-# CloudWatch free tier, and SNS e-mail (also free at this volume). Uptime is checked
-# by a scheduled GitHub Actions workflow (.github/workflows/uptime.yml); backup
-# failures are e-mailed by deploy/backup.sh through the same topic.
+# CloudWatch free tier, and SNS e-mail (also free at this volume). Backup failures
+# are e-mailed by deploy/backup.sh through the same topic. There is no uptime check
+# yet (docs/adr/0006).
 
 resource "aws_sns_topic" "alerts" {
   name = "${var.project}-alerts"

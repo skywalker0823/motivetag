@@ -181,7 +181,6 @@ The weekly drill times step 3; expect about the same.
 
 | Alert | When |
 |---|---|
-| GitHub "Uptime" workflow failed (e-mail from GitHub) | `https://motivetag.com/healthz` did not answer; checked every 30 minutes |
 | `motivetag-system-check-failed` | AWS hardware problem; the instance is recovered automatically |
 | `motivetag-instance-check-failed` | The OS stops responding; the instance is rebooted automatically |
 | `motivetag-cpu-high` | CPU > 80 % for 15 minutes |
@@ -189,8 +188,9 @@ The weekly drill times step 3; expect about the same.
 | "… is NN% full" | `/` or `/srv/motivetag` over 85 %, checked daily by the backup job |
 
 Application errors go to Sentry when `/motivetag/sentry-dsn` is set, tagged with
-the git SHA. GitHub pauses scheduled workflows after 60 days without commits;
-re-enable "Uptime" in the Actions tab if that happens.
+the git SHA. Nothing checks from outside that the site is reachable yet; a free
+UptimeRobot or Better Stack monitor on `https://motivetag.com/healthz` would (it
+also fails when the database is down).
 
 ## Notes
 

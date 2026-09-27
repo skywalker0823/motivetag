@@ -1,4 +1,4 @@
-# 0006. Monitoring that costs nothing: EC2 alarms, script alerts, a GitHub uptime check
+# 0006. Monitoring that costs nothing: EC2 alarms and script alerts
 
 - Status: Accepted
 - Date: 2026-09-27
@@ -13,11 +13,10 @@ monitoring, so everything here must stay at **$0 a month**.
 ## Decision
 
 Alerts are e-mailed through one SNS topic (`infra/main/monitoring.tf`,
-`alert_email`); GitHub e-mails workflow failures on its own.
+`alert_email`).
 
 | Signal | Source | Alert |
 |---|---|---|
-| Site reachable | Scheduled GitHub Actions workflow (`.github/workflows/uptime.yml`) curls `https://motivetag.com/healthz` through Cloudflare every 30 min | GitHub's failed-run e-mail |
 | Host health | EC2 status checks (free basic metrics) | system check → **auto-recover**; instance check → **reboot**; e-mail both |
 | CPU | EC2 `CPUUtilization` | > 80 % for 15 min |
 | Disk | `df` in the daily backup job | e-mail when `/` or `/srv/motivetag` is > 85 % full |
@@ -27,17 +26,22 @@ Alerts are e-mailed through one SNS topic (`infra/main/monitoring.tf`,
 ## Consequences
 
 - Stays inside free tiers: three CloudWatch alarms (10 are free), no custom
-  metrics, SNS e-mail (1,000 free a month), GitHub Actions minutes are free for a
-  public repository.
-- The uptime check is coarse: an outage can go unnoticed for up to ~30 minutes, and
-  GitHub may start scheduled runs late. GitHub also pauses schedules in a public
-  repository after 60 days without commits; re-enable it in the Actions tab.
+  metrics, SNS e-mail (1,000 free a month).
+- **Nothing checks from outside that the site is reachable.** The EC2 alarms catch
+  a dead server, but not a broken nginx, app or Cloudflare setting. `/healthz`
+  (which also queries the database) is ready for an external monitor.
 - A missed backup (the timer never ran) is only caught by the weekly drill, not
   within a day.
 - Memory is not watched; an out-of-memory hang shows up as a failed instance check.
 - No log aggregation: logs are `docker compose logs` and `journalctl` on the server.
 
-## Alternatives considered (all paid)
+## Alternatives considered
+
+- **Scheduled GitHub Actions workflow curling `/healthz`** — free, but schedules
+  run late or are skipped under load, pause after 60 days without commits, and
+  fill the Actions history. Tried and removed.
+- **UptimeRobot / Better Stack free tier** — the next step: 3–5 minute checks,
+  e-mail or app alerts, set up in their UI rather than in this repository.
 
 - **Route 53 health check** from several regions — a few dollars a month for an
   HTTPS endpoint outside AWS, and its metrics live only in `us-east-1`.
