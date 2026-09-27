@@ -1,7 +1,9 @@
 from flask import request, session
 
 from data.data import Bricks
+from module import rules
 from module.auth import login_required
+from module.clock import taipei_now
 
 from . import api_bricks
 
@@ -25,9 +27,17 @@ def get_discuss():
 @api_bricks.route("/api/bricks", methods=["POST"])
 @login_required
 def post_brick_discuss():
-    data = request.get_json()
-    data["member_id"] = session.get("member_id")
-    data["account"] = session.get("account")
+    data = request.get_json(silent=True) or {}
+    content = rules.text(data.get("content"), rules.REPLY_MAX)
+    if content is None or rules.integer(data.get("brick_id")) is None:
+        return {"error": f"回覆需為 1–{rules.REPLY_MAX} 個字"}, 400
+    data = {
+        "brick_id": int(data["brick_id"]),
+        "content": content,
+        "time": taipei_now(),
+        "member_id": session.get("member_id"),
+        "account": session.get("account"),
+    }
     result = Bricks.posting_brick_discuss(data)
     if result != 1:
         return {"error": "post brick fail"}

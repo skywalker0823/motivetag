@@ -2,7 +2,7 @@
 import { api, errorMessage } from "../lib/api.js";
 import { $, busy, h } from "../lib/dom.js";
 import { hydrateIcons } from "../lib/icons.js";
-import { serverNow, timeAgo } from "../lib/time.js";
+import { timeAgo } from "../lib/time.js";
 import { toastError } from "../lib/toast.js";
 
 hydrateIcons();
@@ -72,7 +72,7 @@ form.addEventListener("submit", (event) => {
     try {
       const result = await api("/api/bricks", {
         method: "POST",
-        body: { brick_id: topicId, content, time: serverNow() },
+        body: { brick_id: topicId, content },
       });
       if (!result.ok) throw result;
       form.reset();

@@ -1,6 +1,7 @@
 from flask import request, session
 
 from data.data import Member_tags, Tag
+from module import rules
 from module.auth import login_required
 
 from . import api_tags
@@ -28,9 +29,11 @@ def check_tags():
 @api_tags.route("/api/member_tags", methods=["PATCH"])
 @login_required
 def append_tags():
-    data = request.get_json()
+    data = request.get_json(silent=True) or {}
     member_id = session.get("member_id")
-    tag = data["tag"]
+    tag = data.get("tag").strip().lstrip("#") if isinstance(data.get("tag"), str) else ""
+    if not rules.TAG_NAME.match(tag):
+        return {"error": "標籤只能包含文字、數字或底線，最多 30 個字"}, 400
     result = Member_tags.add_member_tag(member_id, tag)
     if result["result"] == 0:
         return {"error": "already have this tag"}

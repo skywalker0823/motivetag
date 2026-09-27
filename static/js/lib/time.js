@@ -15,10 +15,16 @@ const serverFormat = new Intl.DateTimeFormat("sv-SE", {
   hour12: false,
 });
 
-/** A DATETIME from the API as a real Date. */
+const WALL_CLOCK = /^(\d{4})-(\d{2})-(\d{2})[ T](\d{2}):(\d{2})(?::(\d{2}))?$/;
+
+/** A DATETIME from the API ("…GMT" or "YYYY-MM-DD HH:mm:ss", both Taipei time) as a Date. */
 export function fromServer(value) {
-  const date = new Date(value);
-  return Number.isNaN(date.getTime()) ? null : new Date(date.getTime() - TAIPEI_OFFSET_MS);
+  if (!value) return null;
+  const parts = WALL_CLOCK.exec(value);
+  const asUtc = parts
+    ? Date.UTC(+parts[1], parts[2] - 1, +parts[3], +parts[4], +parts[5], +(parts[6] ?? 0))
+    : new Date(value).getTime();
+  return Number.isNaN(asUtc) ? null : new Date(asUtc - TAIPEI_OFFSET_MS);
 }
 
 /** Now, in the "YYYY-MM-DD HH:mm:ss" Taipei form the API stores. */
@@ -62,12 +68,21 @@ export function dateOnly(value) {
 
 /** A <time> element showing relative time, with the full time on hover. */
 export function timeAgo(value) {
-  const date = fromServer(value);
+  const date = value ? fromServer(value) : new Date();
   const el = document.createElement("time");
   if (date) {
     el.dateTime = date.toISOString();
     el.title = fullDateTime(date);
+    el.dataset.relative = "";
   }
   el.textContent = relative(date);
   return el;
 }
+
+// Keeps every relative time on the page current ("剛剛" becomes "1 分鐘前").
+setInterval(() => {
+  if (document.visibilityState !== "visible") return;
+  for (const el of document.querySelectorAll("time[data-relative]")) {
+    el.textContent = relative(new Date(el.dateTime));
+  }
+}, 60_000);

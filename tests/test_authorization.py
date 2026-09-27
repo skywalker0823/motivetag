@@ -125,16 +125,20 @@ def test_friend_request_flow_is_scoped(member, query):
     assert bob.patch("/api/friend", json=body).get_json()["data_changed"] == 1
 
 
-def test_notification_sender_comes_from_session(member, query):
+def test_notifications_are_typed_and_signed_by_the_server(member, query):
     alice, alice_id, _ = member()
-    bob, bob_id, _ = member()
-    _, _, carol_account = member()
-    content = "spoof-" + str(bob_id)
-    bob.post(
-        "/api/notifi",
-        json={"me": alice_id, "who": carol_account, "type": "x", "content": content, "time": NOW},
+    _, _, bob_account = member()
+    sent = alice.post("/api/notifi", json={"who": bob_account, "type": "friend_invite"})
+    assert sent.get_json().get("ok")
+    rows = query(
+        "SELECT sender_id, content FROM notifi WHERE reciever_id="
+        "(SELECT member_id FROM member WHERE account=%s)",
+        bob_account,
     )
-    assert query("SELECT sender_id FROM notifi WHERE content=%s", content)[0]["sender_id"] == bob_id
+    assert rows[0]["sender_id"] == alice_id
+    assert rows[0]["content"].endswith("想加你為好友")
+    spoof = {"who": bob_account, "type": "custom", "content": "系統公告：請輸入密碼"}
+    assert alice.post("/api/notifi", json=spoof).status_code == 400
 
 
 def test_member_tag_delete_is_scoped(member):

@@ -1,7 +1,7 @@
 // Landing page: sign in, sign up (with a live account-name check) and the hero text.
 import { api, errorMessage } from "../lib/api.js";
-import { $, busy, debounce } from "../lib/dom.js";
-import { hydrateIcons } from "../lib/icons.js";
+import { $, busy, debounce, h } from "../lib/dom.js";
+import { hydrateIcons, icon } from "../lib/icons.js";
 import { serverNow } from "../lib/time.js";
 
 const ACCOUNT = /^[\p{L}\p{N}_]{3,20}$/u;
@@ -13,6 +13,26 @@ api("/api/member")
   .catch(() => {});
 
 hydrateIcons();
+
+// Show / hide password buttons.
+for (const input of document.querySelectorAll('input[type="password"]')) {
+  const toggle = h(
+    "button",
+    { class: "icon-btn icon-btn--sm input-wrap__action", type: "button", "aria-label": "顯示密碼", "aria-pressed": "false" },
+    icon("eye", { size: "sm" }),
+  );
+  toggle.addEventListener("click", () => {
+    const show = input.type === "password";
+    input.type = show ? "text" : "password";
+    toggle.setAttribute("aria-pressed", String(show));
+    toggle.setAttribute("aria-label", show ? "隱藏密碼" : "顯示密碼");
+    toggle.replaceChildren(icon(show ? "eye-off" : "eye", { size: "sm" }));
+    input.focus();
+  });
+  const wrap = h("span", { class: "input-wrap" });
+  input.replaceWith(wrap);
+  wrap.append(input, toggle);
+}
 
 // ---------- Tabs ----------
 
@@ -46,7 +66,7 @@ const signinForm = $("#panel-signin");
 async function signIn(account, password) {
   const result = await api("/api/member", {
     method: "PUT",
-    body: { account, password, time: serverNow() },
+    body: { account, password },
   });
   if (!result.ok) throw new Error(errorMessage(result.error, "帳號或密碼錯誤"));
   location.assign(`/${encodeURIComponent(result.data.account)}`);
@@ -136,7 +156,6 @@ signupForm.addEventListener("submit", (event) => {
           password: password.value,
           email: email.value.trim(),
           birthday: birthday.value,
-          first_signup: serverNow().slice(0, 10),
         },
       });
       if (!result.ok) throw new Error(errorMessage(result.error, "註冊失敗，請稍後再試"));
