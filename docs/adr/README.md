@@ -16,5 +16,6 @@ gets a new record that supersedes the old one rather than an edit.
 | [0007](0007-direct-browser-uploads-to-s3.md) | Browsers upload images straight to S3 with presigned POSTs | Accepted |
 | [0008](0008-single-gunicorn-worker.md) | One gunicorn worker because chat presence lives in memory | Accepted (known limit) |
 | [0009](0009-frontend-es-modules-before-react.md) | Frontend on native ES modules and design tokens now, React + Vite later | Accepted |
+| [0010](0010-roadmap-to-an-ios-app.md) | Prepare for an iOS app in phases: API v1, App Store rules, shared TypeScript core, Expo | Accepted |
 
 Template: [`template.md`](template.md).
