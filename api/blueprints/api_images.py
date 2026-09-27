@@ -100,6 +100,9 @@ def show_img(key):
     if not IMAGE_KEY.match(key):
         abort(404)
     kind, _, ident = key.partition("_")
+    # A secret post's image is as private as the post (block ids are easy to guess).
+    if kind == "block" and not Block.visible(session.get("member_id"), int(ident)):
+        abort(404)
     if _recently_signed(key):  # so it existed a moment ago; skip the lookup
         url = signed_image_url(key)
     elif kind == "avatar" and (not BUCKET_NAME or not Images.has_avatar(int(ident))):

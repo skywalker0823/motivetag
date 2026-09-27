@@ -41,8 +41,13 @@
 
 .topbar__search .icon-btn {
   position: absolute;
-  top: 3px;
-  right: 4px;
+  top: 50%;
+  right: 6px;
+  transform: translateY(-50%); /* centred whatever height the input ends up */
+}
+
+.topbar__search .icon-btn:active:not(:disabled) {
+  transform: translateY(-50%) scale(0.96);
 }
 
 .topbar__actions {
@@ -162,6 +167,15 @@
 
   .topbar__logo img {
     width: 104px;
+  }
+
+  .topbar__search .input {
+    padding-left: var(--space-3);
+    padding-right: 38px;
+  }
+
+  .topbar__search .icon-btn {
+    right: 3px;
   }
 
   #refresh {
