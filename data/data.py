@@ -25,7 +25,7 @@ def create_pool():
                 user=settings["user"],
                 password=settings["password"],
                 database=settings["database"],
-                charset="utf8",
+                charset="utf8mb4",  # the tables are utf8mb4; "utf8" cannot store emoji
                 cursorclass=pymysql.cursors.DictCursor,
             )
             print(f"Connect to host:{host} success")

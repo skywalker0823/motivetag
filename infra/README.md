@@ -105,6 +105,18 @@ stylesheet or script. The step is skipped until these two are set:
 
 The token can only purge this zone's cache; nothing else in the account.
 
+## Demo data
+
+A fresh site looks empty, so `scripts/demo_data.py` can add 16 demo members with
+posts, polls, comments, likes, friendships and tag-board topics spread over the past
+two weeks. It uses the site's own API, so every rule applies as for real members.
+Demo members have `@demo.motivetag.com` e-mail addresses and random passwords.
+
+From your phone or anywhere: GitHub → **Actions** → **Demo data** → **Run workflow**
+→ choose `seed` or `remove`. `remove` deletes every demo member and what they made
+(including their tag-board topics) and recounts the tags they used; real members'
+posts, comments and subscriptions are not touched.
+
 ## Operating the server
 
 ```bash

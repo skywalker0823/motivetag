@@ -1,0 +1,58 @@
+# Adds or removes the demo members and their activity on the live site
+# (scripts/demo_data.py), from GitHub: Actions → Demo data → Run workflow.
+name: Demo data
+
+on:
+  workflow_dispatch:
+    inputs:
+      action:
+        description: seed = add demo members and activity, remove = delete them all
+        type: choice
+        options: [seed, remove]
+        default: seed
+
+permissions:
+  contents: read
+  id-token: write # OIDC token for AWS; no stored keys
+
+concurrency:
+  group: deploy-production
+  cancel-in-progress: false
+
+jobs:
+  run:
+    # The deploy role only trusts main.
+    if: github.ref == 'refs/heads/main'
+    runs-on: ubuntu-latest
+    steps:
+      - uses: aws-actions/configure-aws-credentials@e1253824e5c10ff9df46874f81ed3ec929e19cfd # v6.3.0
+        with:
+          role-to-assume: ${{ vars.AWS_DEPLOY_ROLE_ARN }}
+          aws-region: ${{ vars.AWS_REGION }}
+      - name: Run scripts/demo_data.py in the app container
+        env:
+          ACTION: ${{ inputs.action }}
+        run: |
+          instance_id=$(aws ec2 describe-instances \
+            --filters Name=tag:Project,Values=motivetag Name=instance-state-name,Values=running \
+            --query 'Reservations[0].Instances[0].InstanceId' --output text)
+          params=$(jq -n --arg action "$ACTION" '{commands: [
+            "set -e",
+            "cd /srv/motivetag/app",
+            "docker compose exec -T app python scripts/demo_data.py \($action)"
+          ]}')
+          command_id=$(aws ssm send-command --instance-ids "$instance_id" \
+            --document-name AWS-RunShellScript --timeout-seconds 600 \
+            --comment "demo data $ACTION" --parameters "$params" \
+            --query Command.CommandId --output text)
+          while true; do
+            sleep 5
+            status=$(aws ssm get-command-invocation --command-id "$command_id" \
+              --instance-id "$instance_id" --query Status --output text 2>/dev/null || echo Pending)
+            case $status in Pending|InProgress|Delayed) continue ;; esac
+            break
+          done
+          aws ssm get-command-invocation --command-id "$command_id" --instance-id "$instance_id" \
+            --query '[StandardOutputContent, StandardErrorContent]' --output text | grep -v '^try to connect\|^Connect to host' || true
+          echo "Finished with status: $status"
+          [ "$status" = Success ]
