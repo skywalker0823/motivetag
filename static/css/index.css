@@ -160,3 +160,12 @@ body {
     padding: var(--space-4);
   }
 }
+
+.notice {
+  margin-bottom: var(--space-4);
+  padding: var(--space-3) var(--space-4);
+  border: 1px solid rgba(46, 229, 157, 0.35);
+  border-radius: var(--radius);
+  background: rgba(46, 229, 157, 0.1);
+  font-size: var(--text-sm);
+}

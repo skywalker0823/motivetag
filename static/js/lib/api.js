@@ -33,7 +33,8 @@ const MESSAGES = {
 export function errorMessage(error, fallback = "發生錯誤，請稍後再試") {
   if (!error) return fallback;
   if (error instanceof ApiError) return error.message;
-  if (typeof error === "object") return errorMessage(error.error ?? error.msg, fallback);
+  // v1 errors are {code, message}; older endpoints use {error} or {msg}.
+  if (typeof error === "object") return errorMessage(error.message ?? error.error ?? error.msg, fallback);
   return MESSAGES[error] ?? (typeof error === "string" && /[一-鿿]/.test(error) ? error : fallback);
 }
 

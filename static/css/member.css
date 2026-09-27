@@ -1287,3 +1287,35 @@ button.poll__option:hover {
   padding: var(--space-1) 0;
   text-align: left;
 }
+
+/* ---------- Settings ---------- */
+
+.profile__head {
+  position: relative;
+}
+
+.profile__settings {
+  position: absolute;
+  top: -6px;
+  right: -6px;
+}
+
+.danger-zone__title {
+  color: var(--danger);
+  font-size: var(--text-md);
+}
+
+.danger-zone__list {
+  margin: 0;
+  padding-left: 1.2em;
+  color: var(--text-muted);
+  font-size: var(--text-sm);
+}
+
+.danger-zone [data-error]:empty {
+  display: none;
+}
+
+.profile__who {
+  padding-right: 28px;
+}

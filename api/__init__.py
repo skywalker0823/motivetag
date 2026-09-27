@@ -69,6 +69,10 @@ def create_app(config_name):
     app.register_blueprint(api_bricks)
     app.register_blueprint(api_guild)
 
+    from api.v1 import v1
+
+    app.register_blueprint(v1)
+
     @app.route("/healthz")
     def healthz():
         # Also proves the database answers, so deploy checks and uptime checks see it.

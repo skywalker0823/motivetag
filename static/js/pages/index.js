@@ -14,6 +14,12 @@ api("/api/member")
 
 hydrateIcons();
 
+if (new URLSearchParams(location.search).has("deleted")) {
+  history.replaceState(null, "", "/");
+  const notice = h("p", { class: "notice", role: "status" }, "你的帳號和資料已經刪除。謝謝你曾經使用 MotiveTag。");
+  $(".auth").prepend(notice);
+}
+
 // Show / hide password buttons.
 for (const input of document.querySelectorAll('input[type="password"]')) {
   const toggle = h(

@@ -44,6 +44,7 @@
                         <p class="profile__meta" id="my-email"></p>
                         <p class="profile__meta" id="my-joined"></p>
                     </div>
+                    <button class="icon-btn icon-btn--sm profile__settings" id="settings-open" type="button" data-icon="settings" aria-label="帳號設定" title="帳號設定"></button>
                 </div>
                 <div class="level">
                     <div class="level__row"><span class="level__label" id="my-level">Lv 1</span><span class="level__exp" id="my-exp"></span></div>
@@ -145,6 +146,29 @@
     </nav>
 
     <div class="chats" id="chats" aria-live="polite"></div>
+
+    <dialog class="dialog" id="settings-dialog" aria-labelledby="settings-title">
+        <div class="dialog__header">
+            <h2 class="dialog__title" id="settings-title">帳號設定</h2>
+            <form method="dialog"><button class="icon-btn" data-icon="x" aria-label="關閉"></button></form>
+        </div>
+        <form class="dialog__body danger-zone" id="delete-account" novalidate>
+            <h3 class="danger-zone__title">刪除帳號</h3>
+            <p class="dialog__message">帳號會立即永久刪除，無法復原。以下資料會一起刪除：</p>
+            <ul class="danger-zone__list">
+                <li>你的貼文、留言、投票和按讚</li>
+                <li>好友關係、通知和訂閱的標籤</li>
+                <li>大頭貼和貼文圖片</li>
+            </ul>
+            <p class="dialog__message">你在標籤討論區發起的討論和回覆會保留，但會顯示為「已刪除的帳號」。</p>
+            <label class="field">
+                <span class="field__label">輸入密碼確認</span>
+                <input class="input" name="password" type="password" autocomplete="current-password" required>
+            </label>
+            <p class="field__hint field__hint--error" data-error role="alert"></p>
+            <button class="btn btn--danger" type="submit">永久刪除我的帳號</button>
+        </form>
+    </dialog>
 
     <dialog class="dialog" id="member-dialog" aria-labelledby="member-dialog-name">
         <div class="dialog__header">
