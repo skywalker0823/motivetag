@@ -13,6 +13,7 @@ import { initProfile, showMember } from "./profile.js";
 import { initSettings } from "./settings.js";
 import { bootstrap, me, on, showView } from "./state.js";
 import { initTags } from "./tags.js";
+import { initTour } from "./tour.js";
 
 hydrateIcons();
 
@@ -76,6 +77,7 @@ async function start() {
   const friends = initFriends();
   initChat();
   initNotifications();
+  initTour(result.data.first_signup);
 
   on("feed:tag", showFeedFor);
   on("member:show", (id) => id && showMember(id));

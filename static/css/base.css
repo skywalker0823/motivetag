@@ -750,3 +750,94 @@ dialog[open] {
 .toast__close:hover {
   color: var(--text);
 }
+
+/* ---------- Guided tour (static/js/lib/tour.js) ---------- */
+
+.tour {
+  position: fixed;
+  z-index: 1100;
+  inset: 0;
+}
+
+.tour--center {
+  background: rgba(3, 5, 12, 0.72);
+}
+
+.tour__spot {
+  position: fixed;
+  border-radius: var(--radius);
+  box-shadow: 0 0 0 9999px rgba(3, 5, 12, 0.72);
+  outline: 2px solid var(--accent);
+  pointer-events: none;
+}
+
+.tour--center .tour__spot {
+  display: none;
+}
+
+.tour__card {
+  position: fixed;
+  display: grid;
+  gap: var(--space-2);
+  padding: var(--space-4);
+  border: 1px solid var(--border-strong);
+  border-radius: var(--radius-lg);
+  background: var(--surface);
+  box-shadow: var(--shadow);
+}
+
+.tour__card:focus {
+  outline: none;
+}
+
+.tour__head {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+}
+
+.tour__count {
+  color: var(--accent);
+  font-size: var(--text-xs);
+  font-weight: 700;
+}
+
+.tour__skip {
+  padding: var(--space-1) var(--space-2);
+  border: 0;
+  background: transparent;
+  color: var(--text-muted);
+  font: inherit;
+  font-size: var(--text-xs);
+  cursor: pointer;
+}
+
+.tour__title {
+  margin: 0;
+  font-size: var(--text-lg);
+}
+
+.tour__text {
+  margin: 0;
+  color: var(--text-muted);
+  font-size: var(--text-sm);
+  line-height: 1.6;
+}
+
+.tour__actions {
+  display: flex;
+  justify-content: flex-end;
+  gap: var(--space-2);
+  margin-top: var(--space-2);
+}
+
+@media (prefers-reduced-motion: no-preference) {
+  .tour__spot,
+  .tour__card {
+    transition:
+      left 0.2s ease,
+      top 0.2s ease,
+      width 0.2s ease,
+      height 0.2s ease;
+  }
+}

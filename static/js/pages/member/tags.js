@@ -8,6 +8,7 @@ import { emit } from "./state.js";
 const list = $("#my-tags");
 const trend = $("#trend");
 const subscribed = new Map(); // tag name -> member_tag_id
+let hotTags = null; // the last trending list from /api/tag
 
 const tagUrl = (name) => `/tag/${encodeURIComponent(name)}`;
 
@@ -43,6 +44,7 @@ export async function subscribe(name) {
   subscribed.set(name, result.member_tag_id);
   renderChips();
   loadTrend();
+  emit("tags:changed");
   toast(`已訂閱 #${name}`, { type: "success" });
 }
 
@@ -53,6 +55,7 @@ async function unsubscribe(name, id) {
     subscribed.delete(name);
     renderChips();
     loadTrend();
+    emit("tags:changed");
   } catch (error) {
     toastError(error, "取消訂閱失敗");
   }
@@ -61,8 +64,9 @@ async function unsubscribe(name, id) {
 async function loadTrend() {
   try {
     const result = await api("/api/tag");
+    hotTags = result.hot_tags ?? [];
     trend.replaceChildren(
-      ...(result.hot_tags ?? []).map((tag) =>
+      ...hotTags.map((tag) =>
         h(
           "li",
           null,
@@ -97,6 +101,21 @@ async function loadTrend() {
   } catch {
     trend.replaceChildren(h("li", { class: "empty" }, "熱門標籤暫時無法載入"));
   }
+}
+
+/** Up to `count` trending tag names I have not subscribed to, for the empty feed. */
+export async function suggestedTags(count = 6) {
+  if (!hotTags) {
+    try {
+      hotTags = (await api("/api/tag")).hot_tags ?? [];
+    } catch {
+      return [];
+    }
+  }
+  return hotTags
+    .map((tag) => tag.name)
+    .filter((name) => !subscribed.has(name) && name !== "Anonymous")
+    .slice(0, count);
 }
 
 export async function initTags() {
