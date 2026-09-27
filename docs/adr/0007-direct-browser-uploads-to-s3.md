@@ -16,7 +16,7 @@ is private; images are served by redirecting to short-lived presigned GET URLs.
 Uploads take three steps (`api/blueprints/api_images.py`, `static/js/member.js`):
 
 1. `POST /api/images/upload` — the app checks the session, the image type
-   (PNG/JPEG/GIF) and, for a post image, that the member owns the post. It returns
+   (PNG/JPEG/GIF/WebP) and, for a post image, that the member owns the post. It returns
    a **presigned POST** for exactly one key (`avatar_<member>` or `block_<post>`),
    valid for 5 minutes, whose policy pins the `Content-Type` and limits the size to
    **1 B – 5 MB**.
@@ -33,7 +33,15 @@ cross-origin POST.
 
 - Image bytes never touch nginx or gunicorn, so a slow upload cannot stall chat.
 - S3 enforces the size and type limits, not our code; the app cannot inspect the
-  pixels (no resizing or EXIF stripping yet).
+  pixels. The browser shrinks photos before uploading instead
+  (`static/js/lib/upload.js`: longest side 1600 px for posts, 512 px for avatars,
+  re-encoded as WebP, or JPEG where the browser cannot write WebP; GIFs are sent as
+  they are). Re-encoding through a canvas also drops EXIF data such as GPS
+  coordinates, but only for clients that use our page.
+- `/images/<key>` hands out the same presigned GET for half an hour (in memory,
+  ADR 0008), so browsers can cache the image by URL; a new upload to that key
+  forgets it. Other members may see an old avatar for up to the redirect's
+  10-minute cache.
 - A client could upload a non-image with an image `Content-Type`; it is only ever
   served from the S3 domain with that type, never from our origin, so it cannot
   run script on `motivetag.com`.

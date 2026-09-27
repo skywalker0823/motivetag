@@ -3,7 +3,7 @@ import { api, errorMessage } from "../../lib/api.js";
 import { $, h } from "../../lib/dom.js";
 import { renderPost } from "./post.js";
 
-const PAGE = 5;
+const PAGE = 10; // FEED_PAGE in data/data.py
 const feed = $("#feed");
 const status = $("#feed-status");
 const sentinel = $("#feed-sentinel");

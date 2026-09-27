@@ -1,9 +1,11 @@
-// The bell: polls for new notifications and marks them read when the panel opens.
+// The bell: fetches new notifications when the server pushes a "notification" event
+// (and every minute as a fallback), and marks them read when the panel opens.
 import { api } from "../../lib/api.js";
 import { $, h } from "../../lib/dom.js";
+import { socket } from "../../lib/socket.js";
 import { timeAgo } from "../../lib/time.js";
 
-const POLL_MS = 15000;
+const POLL_MS = 60000;
 const button = $("#notif-button");
 const panel = $("#notif-panel");
 const list = $("#notif-list");
@@ -62,6 +64,9 @@ export function initNotifications() {
       button.focus();
     }
   });
+  socket.on("notification", poll);
+  socket.io.on("reconnect", poll); // pushes sent while disconnected were missed
+  document.addEventListener("visibilitychange", () => document.visibilityState === "visible" && poll());
   poll();
   setInterval(() => document.visibilityState === "visible" && poll(), POLL_MS);
 }

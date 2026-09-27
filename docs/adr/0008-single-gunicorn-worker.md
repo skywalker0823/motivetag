@@ -20,6 +20,10 @@ connections (HTTP and Socket.IO), which is enough for current traffic.
 - Simple and correct for chat.
 - CPU-bound work blocks everyone; anything slow must stay out of the request path
   (one reason for [0007](0007-direct-browser-uploads-to-s3.md)).
+- Presence changes, incoming calls and new notifications are pushed through a
+  Socket.IO room per member (`member:<account>`); the clients only re-check every
+  30–60 s as a fallback. With several workers those emits need the Redis message
+  queue too.
 - Horizontal scaling is not possible until this changes, which is why
   [0001](0001-single-ec2-with-docker-compose.md) is a single server.
 

@@ -3,7 +3,7 @@ import { api, errorMessage } from "../../lib/api.js";
 import { $, busy, h } from "../../lib/dom.js";
 import { icon } from "../../lib/icons.js";
 import { toast, toastError } from "../../lib/toast.js";
-import { IMAGE_TYPES, uploadImage } from "../../lib/upload.js";
+import { imageError, uploadImage } from "../../lib/upload.js";
 import { prependPost } from "./feed.js";
 
 const form = $("#composer");
@@ -54,8 +54,8 @@ function setImage(file) {
 
 function pickImage(file) {
   if (!file) return;
-  if (!IMAGE_TYPES.includes(file.type)) return toastError("file type not allowed");
-  if (file.size > 5 * 1024 * 1024) return toastError("圖片不能超過 5 MB");
+  const error = imageError(file);
+  if (error) return toastError(error);
   setImage(file);
 }
 

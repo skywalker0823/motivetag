@@ -99,6 +99,38 @@ def test_finished_upload_rejects_other_content(member, uploaded):
     assert alice.post("/api/images", json={"type": "avatar"}).status_code == 400
 
 
+def test_image_urls_are_reused_until_a_new_upload(member, uploaded, monkeypatch):
+    from api.blueprints import api_images
+
+    alice, alice_id, _ = member()
+    uploaded("image/webp")
+    assert alice.post("/api/images", json={"type": "avatar"}).get_json()["ok"]
+    first = alice.get(f"/images/avatar_{alice_id}").headers["Location"]
+    # The same URL again, without asking the database, so the browser cache hits.
+    monkeypatch.setattr(api_images.Images, "has_avatar", lambda member_id: False)
+    assert alice.get(f"/images/avatar_{alice_id}").headers["Location"] == first
+    assert "max-age%3D1800" in first
+
+    monkeypatch.setattr(api_images.time, "monotonic", lambda: 1e12)  # much later
+    assert alice.get(f"/images/avatar_{alice_id}").headers["Location"] == "/img/avatar.svg"
+
+
+def test_new_upload_gets_a_new_image_url(member, uploaded, monkeypatch):
+    from api.blueprints import api_images
+
+    alice, alice_id, _ = member()
+    uploaded("image/png")
+    alice.post("/api/images", json={"type": "avatar"})
+    signed = []
+    monkeypatch.setattr(
+        api_images.s3, "generate_presigned_url", lambda *a, **kw: signed.append(1) or "u"
+    )
+    alice.get(f"/images/avatar_{alice_id}")
+    alice.post("/api/images", json={"type": "avatar"})
+    alice.get(f"/images/avatar_{alice_id}")
+    assert len(signed) == 2
+
+
 def test_exp_is_awarded_by_server(member, query):
     alice, alice_id, _ = member()
     bob, bob_id, _ = member()

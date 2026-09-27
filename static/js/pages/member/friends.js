@@ -8,7 +8,8 @@ import { toast, toastError } from "../../lib/toast.js";
 import { notify } from "./notifications.js";
 import { avatarUrl, DEFAULT_AVATAR, emit, me } from "./state.js";
 
-const PRESENCE_MS = 5000;
+// The server pushes changes (online, offline, calling); this re-check is only a fallback.
+const PRESENCE_MS = 30000;
 let relations = [];
 const presence = new Map(); // account -> "on" | "off" | "on_calling"
 
@@ -215,6 +216,8 @@ export function initFriends() {
     if (changed) render();
   });
   setInterval(() => document.visibilityState === "visible" && askPresence(), PRESENCE_MS);
+  socket.io.on("reconnect", askPresence);
+  document.addEventListener("visibilitychange", () => document.visibilityState === "visible" && askPresence());
 
   loadFriends().then(askPresence);
   return { invite, accept };
