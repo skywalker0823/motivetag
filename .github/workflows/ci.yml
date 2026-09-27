@@ -21,8 +21,10 @@ jobs:
       - run: uv sync --frozen
       - run: uv run ruff check --output-format github
       - run: uv run ruff format --check
-      - name: Browser modules parse
-        run: for f in $(git ls-files 'static/js/*.js'); do node --check "$f"; done
+      - name: Browser modules parse and their imports are committed
+        run: |
+          for f in $(git ls-files 'static/js/*.js'); do node --check "$f"; done
+          node .github/scripts/check-js-imports.mjs
 
   test:
     runs-on: ubuntu-latest
