@@ -1,0 +1,10 @@
+[Unit]
+Description=Restore the newest motivetag backup into a throwaway MySQL and check it
+Requires=docker.service
+After=docker.service
+
+[Service]
+Type=oneshot
+ExecStart=/bin/bash /srv/motivetag/app/restore_drill.sh
+Nice=10
+TimeoutStartSec=1h

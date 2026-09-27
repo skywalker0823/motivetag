@@ -38,7 +38,8 @@ fi
 mv certs/origin.pem.new certs/origin.pem
 mv certs/origin.key.new certs/origin.key
 
-# SECRET_KEY, DB_PASSWORD, DB_ROOT_PASSWORD
+# SECRET_KEY, DB_PASSWORD, DB_ROOT_PASSWORD, BACKUP_BUCKET, ALERT_TOPIC_ARN,
+# SENTRY_DSN
 # shellcheck source=/dev/null
 . ./params.env
 rm params.env
@@ -51,7 +52,23 @@ IMAGE_BUCKET=$BUCKET
 SECRET_KEY=$SECRET_KEY
 DB_PASSWORD=$DB_PASSWORD
 DB_ROOT_PASSWORD=$DB_ROOT_PASSWORD
+BACKUP_BUCKET=$BACKUP_BUCKET
+ALERT_TOPIC_ARN=$ALERT_TOPIC_ARN
+SENTRY_DSN=$SENTRY_DSN
 ENV
+}
+
+# Backup and restore-drill scripts and their systemd timers ship in the image too.
+install_jobs() {
+  local cid
+  cid=$(docker create "$IMAGE")
+  docker cp "$cid:/app/deploy/backup.sh" backup.sh
+  docker cp "$cid:/app/deploy/restore_drill.sh" restore_drill.sh
+  docker cp "$cid:/app/deploy/systemd/." /etc/systemd/system/
+  docker rm "$cid" >/dev/null
+  chmod 644 /etc/systemd/system/motivetag-*
+  systemctl daemon-reload
+  systemctl enable --now motivetag-backup.timer motivetag-restore-drill.timer
 }
 
 previous=$(cat current_image 2>/dev/null || true)
@@ -60,6 +77,7 @@ write_env "$IMAGE"
 if docker compose up -d --remove-orphans --wait --wait-timeout 300; then
   echo "$IMAGE" > current_image
   echo "Deployed $IMAGE"
+  install_jobs
   docker image prune -af --filter "until=168h" >/dev/null
   exit 0
 fi

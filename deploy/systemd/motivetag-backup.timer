@@ -1,0 +1,11 @@
+[Unit]
+Description=Daily motivetag MySQL backup
+
+[Timer]
+OnCalendar=*-*-* 03:00:00 Asia/Taipei
+RandomizedDelaySec=10min
+# Runs at boot if the server was off at 03:00.
+Persistent=true
+
+[Install]
+WantedBy=timers.target

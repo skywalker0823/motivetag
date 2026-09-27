@@ -21,3 +21,7 @@ output "github_variables" {
     IMAGE_BUCKET        = aws_s3_bucket.images.bucket
   }
 }
+
+output "backup_bucket" {
+  value = aws_s3_bucket.backups.bucket
+}

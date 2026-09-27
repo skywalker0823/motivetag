@@ -1,5 +1,3 @@
-import io
-
 import pytest
 from conftest import NOW
 
@@ -24,7 +22,8 @@ def exp_of(query, member_id):
         ("patch", "/api/friend"),
         ("post", "/api/notifi"),
         ("post", "/api/images"),
-        ("delete", "/api/tag"),
+        ("delete", "/api/member_tags"),
+        ("post", "/api/vote"),
     ],
 )
 def test_member_endpoints_require_login(client, method, path):
@@ -41,18 +40,63 @@ def test_only_owner_can_delete_block(member, query):
     assert not query("SELECT * FROM block WHERE block_id=%s", block_id)
 
 
-def test_only_owner_can_set_block_image(member):
+def sign(client, kind, target_id, content_type="image/png"):
+    return client.post(
+        "/api/images/upload",
+        json={"type": kind, "target_id": target_id, "content_type": content_type},
+    )
+
+
+def test_only_owner_can_sign_block_image(member):
     alice, _, _ = member()
     bob, _, _ = member()
     block_id = create_block(alice)
-    upload = {"image": (io.BytesIO(b"x"), "a.png"), "type": "block", "target_id": str(block_id)}
-    assert bob.post("/api/images", data=upload).status_code == 403
+    assert sign(bob, "block", block_id).status_code == 403
+    assert sign(alice, "block", block_id).get_json()["fields"]["key"] == f"block_{block_id}"
 
 
-def test_image_extension_is_checked(member):
+def test_upload_is_signed_for_own_avatar_only(member):
+    alice, alice_id, _ = member()
+    signed = sign(alice, "avatar", 12345).get_json()
+    assert signed["fields"]["key"] == f"avatar_{alice_id}"
+    assert signed["fields"]["Content-Type"] == "image/png"
+    assert signed["url"].startswith("https://motivetag-images-test.s3.ap-east-2.amazonaws.com")
+
+
+def test_image_type_is_checked(member):
     alice, _, _ = member()
-    upload = {"image": (io.BytesIO(b"x"), "a.html"), "type": "avatar", "target_id": "null"}
-    assert alice.post("/api/images", data=upload).status_code == 400
+    assert sign(alice, "avatar", None, content_type="text/html").status_code == 400
+
+
+@pytest.fixture()
+def uploaded(monkeypatch):
+    """Pretend S3 holds an object with the given content type."""
+    from api.blueprints import api_images
+
+    def fake_head(content_type):
+        monkeypatch.setattr(
+            api_images.s3, "head_object", lambda **kw: {"ContentType": content_type}
+        )
+
+    return fake_head
+
+
+def test_finished_upload_sets_block_image(member, query, uploaded):
+    alice, _, _ = member()
+    bob, _, _ = member()
+    block_id = create_block(alice)
+    uploaded("image/jpeg")
+    finish = {"type": "block", "target_id": block_id}
+    assert bob.post("/api/images", json=finish).status_code == 403
+    assert alice.post("/api/images", json=finish).get_json()["ok"]
+    rows = query("SELECT block_img FROM block WHERE block_id=%s", block_id)
+    assert rows[0]["block_img"] == f"block_{block_id}"
+
+
+def test_finished_upload_rejects_other_content(member, uploaded):
+    alice, _, _ = member()
+    uploaded("text/html")
+    assert alice.post("/api/images", json={"type": "avatar"}).status_code == 400
 
 
 def test_exp_is_awarded_by_server(member, query):
@@ -96,7 +140,6 @@ def test_notification_sender_comes_from_session(member, query):
 def test_member_tag_delete_is_scoped(member):
     alice, _, _ = member()
     carol, _, _ = member()
-    alice.patch("/api/tag", json={"tag": "cats"})
     member_tag_id = alice.patch("/api/member_tags", json={"tag": "cats"}).get_json()[
         "member_tag_id"
     ]

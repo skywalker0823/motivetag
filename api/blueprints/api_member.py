@@ -1,3 +1,6 @@
+import re
+from datetime import date
+
 from flask import request, session
 
 from data.data import Friend, Member, Member_tags
@@ -19,9 +22,40 @@ def check_member():
     return {"error": "not loged in"}
 
 
+# Letters (any language), digits and _; the name becomes the member's page at
+# /<account>, so it must not shadow the site's own paths.
+ACCOUNT = re.compile(r"^\w{3,20}$")
+RESERVED = {"api", "tag", "images", "healthz", "js", "css", "img"}
+EMAIL = re.compile(r"^[^@\s]+@[^@\s]+\.[^@\s]+$")
+MIN_PASSWORD = 8
+
+
+def signup_error(data):
+    """Why this sign-up is invalid, or None."""
+    fields = ("account", "password", "email", "birthday", "first_signup")
+    if not all(isinstance(data.get(f), str) for f in fields):
+        return "missing fields"
+    if not ACCOUNT.match(data["account"]) or data["account"].lower() in RESERVED:
+        return "帳號需為 3-20 個字母、數字或底線"
+    if len(data["password"]) < MIN_PASSWORD:
+        return f"密碼至少 {MIN_PASSWORD} 個字元"
+    if len(data["email"]) > 254 or not EMAIL.match(data["email"]):
+        return "Email 格式不正確"
+    try:
+        birthday = date(*map(int, data["birthday"].split("-")))
+    except (TypeError, ValueError):
+        return "生日格式不正確"
+    if not date(1900, 1, 1) <= birthday <= date.today():
+        return "生日格式不正確"
+    return None
+
+
 @api_member.route("/api/member", methods=["POST"])
 def sign_up_member():
-    data = request.get_json()
+    data = request.get_json(silent=True) or {}
+    error = signup_error(data)
+    if error:
+        return {"error": error}, 400
     account = data["account"]
     password = data["password"]
     email = data["email"]
@@ -36,10 +70,12 @@ def sign_up_member():
 
 @api_member.route("/api/member", methods=["PUT"])
 def sign_in_member():
-    data = request.get_json()
-    account = data["account"]
-    password = data["password"]
-    time = data["time"]
+    data = request.get_json(silent=True) or {}
+    account = data.get("account")
+    password = data.get("password")
+    time = data.get("time")
+    if not all(isinstance(v, str) for v in (account, password, time)):
+        return {"error": "wrong account or password"}, 400
     result = Member.sign_in(account, password, time)
     if session.get("FIRST_TIME") and session["FIRST_TIME"] == "YES" and result["msg"] == "ok":
         Member_tags.new_bie_tag(result["data"]["member_id"], "新手引導")

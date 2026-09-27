@@ -2,6 +2,7 @@ import traceback
 
 import pymysql
 from dbutils.pooled_db import PooledDB
+from flask import g
 from werkzeug.security import check_password_hash, generate_password_hash
 
 from config import db_settings
@@ -9,16 +10,16 @@ from config import db_settings
 settings = db_settings()
 
 
-def get_connection():
+def create_pool():
     for host in settings["hosts"]:
         print(f"try to connect to host:{host}")
         try:
-            POOL = PooledDB(
+            pool = PooledDB(
                 creator=pymysql,
-                maxconnections=7,
-                mincached=3,
+                maxconnections=10,
+                mincached=2,
                 blocking=True,
-                ping=0,
+                ping=1,  # check a connection when it is taken, so a MySQL restart heals itself
                 host=host,
                 port=3306,
                 user=settings["user"],
@@ -27,15 +28,44 @@ def get_connection():
                 charset="utf8",
                 cursorclass=pymysql.cursors.DictCursor,
             )
-            connection = POOL.connection()
             print(f"Connect to host:{host} success")
-            return connection
+            return pool
         except pymysql.Error as e:
             print(f"Connect to host:{host} failed: {e}")
     raise Exception("All DB's host are down")
 
 
-connection = get_connection()
+POOL = create_pool()
+
+
+class _RequestConnection:
+    """The pooled connection of the current request.
+
+    gunicorn's gevent worker serves many requests at once in one process; sharing a
+    single pymysql connection between them interleaves their queries and fails
+    ("reentrant call"). Each request (and Socket.IO event) takes its own connection
+    from the pool on first use, and release_connection() returns it afterwards.
+    """
+
+    def _get(self):
+        if "db" not in g:
+            g.db = POOL.connection()
+        return g.db
+
+    def cursor(self):
+        return self._get().cursor()
+
+    def commit(self):
+        self._get().commit()
+
+
+connection = _RequestConnection()
+
+
+def release_connection(exc=None):
+    db = g.pop("db", None)
+    if db is not None:
+        db.close()  # back to the pool; an unfinished transaction is rolled back
 
 
 def _is_password_hash(value):
@@ -54,6 +84,10 @@ class Member:
             result = cursor.fetchone()
             connection.commit()
             return result
+
+    def ping():
+        with connection.cursor() as cursor:
+            cursor.execute("SELECT 1")
 
     def account_exists(account):
         with connection.cursor() as cursor:
@@ -155,7 +189,9 @@ class Block:
         # sql_by_score = None
         sql_observe_key = """SELECT account,block_id, block.member_id, content_type, content, build_time,good,bad,block_img
                                 FROM block RIGHT JOIN member ON member.member_id=block.member_id
-                                WHERE block_id IN(SELECT block_id FROM block_tag WHERE tag_id=(SELECT tag_id FROM tag WHERE name=%s))ORDER BY build_time DESC LIMIT %s,%s"""
+                                WHERE block_id IN(SELECT block_id FROM block_tag WHERE tag_id=(SELECT tag_id FROM tag WHERE name=%s))
+                                AND (content_type <> "SECRET" OR block.member_id=%s)
+                                ORDER BY build_time DESC LIMIT %s,%s"""
         sql_all = """SELECT account,block_id, block.member_id, content_type, content, build_time,good,bad,block_img
                                 FROM block RIGHT JOIN member ON member.member_id=block.member_id
                                 WHERE block.member_id IN
@@ -168,7 +204,7 @@ class Block:
                                     SELECT (SELECT account FROM member WHERE member_id=block.member_id)AS account,block_id, block.member_id, content_type, content, build_time,good,bad,block_img FROM block WHERE member_id=%s
                                     UNION
                                     SELECT (SELECT account FROM member WHERE member_id=block.member_id)AS account,block_id,block.member_id,content_type,content,build_time,good,bad,block_img FROM block WHERE block_id IN(SELECT block_id FROM block_tag WHERE tag_id IN(SELECT tag_id FROM member_tags WHERE member_id=%s)
-                                )
+                                ) AND content_type <> "SECRET"
                                 ORDER BY build_time DESC
                                 LIMIT %s,%s"""
         with connection.cursor() as cursor:
@@ -179,7 +215,7 @@ class Block:
                 )
                 # got = cursor.execute(sql_all_altered, (member_id, member_id, member_id, member_id, member_id,member_id,page,5))
             else:
-                got = cursor.execute(sql_observe_key, (obseve_key, page, 5))
+                got = cursor.execute(sql_observe_key, (obseve_key, member_id, page, 5))
             result = cursor.fetchall()
             connection.commit()
             if got == 0:
@@ -203,12 +239,13 @@ class Block:
                     """,
                     (member_id, type, content, time),
                 )
+                block_id = cursor.lastrowid
                 connection.commit()
                 cursor.execute(
                     """SELECT account, block_id, block.member_id, content_type, content, build_time,good,bad,block_img
                                FROM block RIGHT JOIN member ON member.member_id=block.member_id
-                               WHERE build_time=%s AND block.member_id=%s""",
-                    (time, member_id),
+                               WHERE block_id=%s""",
+                    (block_id,),
                 )
                 result = cursor.fetchone()
                 connection.commit()
@@ -312,12 +349,21 @@ class Member_tags:
             return count
 
     def add_member_tag(member_id, tag):
+        """Subscribe to a tag (creating it if new); popularity counts each subscriber once."""
         with connection.cursor() as cursor:
             cursor.execute(
-                "INSERT INTO member_tags(member_id,tag_id)VALUES(%s,(SELECT tag_id FROM tag WHERE name=%s))",
-                (member_id, tag),
+                "INSERT INTO tag(name,popularity,create_by)VALUES(%s,0,%s) ON DUPLICATE KEY UPDATE tag_id=tag_id",
+                (tag, member_id),
             )
             result = cursor.execute(
+                """INSERT INTO member_tags(member_id,tag_id)
+                SELECT %s, tag_id FROM tag WHERE name=%s AND NOT EXISTS
+                (SELECT 1 FROM member_tags WHERE member_id=%s AND tag_id=(SELECT tag_id FROM tag WHERE name=%s))""",
+                (member_id, tag, member_id, tag),
+            )
+            if result:
+                cursor.execute("UPDATE tag SET popularity=popularity+1 WHERE name=%s", (tag,))
+            cursor.execute(
                 "SELECT member_tag_id from member_tags WHERE member_id=%s AND tag_id=(SELECT tag_id from tag WHERE name=%s)",
                 (member_id, tag),
             )
@@ -327,10 +373,20 @@ class Member_tags:
 
     def del_member_tag(member_id, member_tag_id):
         with connection.cursor() as cursor:
+            cursor.execute(
+                "SELECT tag_id FROM member_tags WHERE member_tag_id=%s AND member_id=%s",
+                (member_tag_id, member_id),
+            )
+            row = cursor.fetchone()
             result = cursor.execute(
                 "DELETE FROM member_tags WHERE member_tag_id=%s AND member_id=%s",
                 (member_tag_id, member_id),
             )
+            if result and row:
+                cursor.execute(
+                    "UPDATE tag SET popularity=GREATEST(popularity-1,0) WHERE tag_id=%s",
+                    (row["tag_id"],),
+                )
             connection.commit()
             return {"ok": True, "count": result}
 
@@ -351,26 +407,6 @@ class Tag:
                 "SELECT tag_id,name,popularity,create_date,create_by FROM tag ORDER BY popularity DESC LIMIT 10"
             )
             result = cursor.fetchall()
-            connection.commit()
-            return result
-
-    def upping_global_tag(tag, member_id):
-        try:
-            with connection.cursor() as cursor:
-                result = cursor.execute(
-                    "INSERT INTO tag(name,popularity,create_by)VALUES(%s,%s,%s) ON DUPLICATE KEY UPDATE popularity=popularity+1",
-                    (tag, 1, member_id),
-                )
-                connection.commit()
-                return result
-        except Exception as e:
-            print("type error: " + str(e))
-            print(traceback.format_exc())
-            return {"msg": "global tag adjust database error"}
-
-    def downing_global_tag(tag):
-        with connection.cursor() as cursor:
-            result = cursor.execute("UPDATE tag SET popularity=popularity-1 WHERE name=%s", (tag,))
             connection.commit()
             return result
 
@@ -632,16 +668,18 @@ class Vote:
             connection.commit()
         return {"count": result, "data": data}
 
-    def do_vote(member_id, vote_option_id):
+    def do_vote(member_id, vote_option_id, block_id):
+        # The option must belong to the post checked by check_vote, or a member could
+        # vote again by pairing an option with some other post's id.
         with connection.cursor() as cursor:
-            cursor.execute(
-                """INSERT INTO votes(
-                member_id,
-                vote_option_id
-            )VALUES(%s,%s)""",
-                (member_id, vote_option_id),
+            result = cursor.execute(
+                """INSERT INTO votes(member_id, vote_option_id)
+                SELECT %s, vote_option_id FROM vote_options WHERE vote_option_id=%s AND block_id=%s""",
+                (member_id, vote_option_id, block_id),
             )
             connection.commit()
+        if not result:
+            return {"error": "no such option on this post"}
         return {"ok": True}
 
     def get_vote(block_id):

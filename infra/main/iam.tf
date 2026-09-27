@@ -52,6 +52,27 @@ data "aws_iam_policy_document" "app" {
     actions   = ["s3:GetObject", "s3:PutObject"]
     resources = ["${aws_s3_bucket.images.arn}/*"]
   }
+  # Add and read backups, never delete them (the bucket's lifecycle rule does that).
+  statement {
+    sid       = "WriteBackups"
+    actions   = ["s3:PutObject", "s3:GetObject"]
+    resources = ["${aws_s3_bucket.backups.arn}/mysql/*"]
+  }
+  statement {
+    sid       = "ListBackups"
+    actions   = ["s3:ListBucket"]
+    resources = [aws_s3_bucket.backups.arn]
+    condition {
+      test     = "StringLike"
+      variable = "s3:prefix"
+      values   = ["mysql/*"]
+    }
+  }
+  statement {
+    sid       = "BackupAlerts"
+    actions   = ["sns:Publish"]
+    resources = [aws_sns_topic.alerts.arn]
+  }
 }
 
 resource "aws_iam_role_policy" "app" {

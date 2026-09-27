@@ -1,0 +1,11 @@
+[Unit]
+Description=Back up the motivetag MySQL database to S3
+Requires=docker.service
+After=docker.service
+
+[Service]
+Type=oneshot
+ExecStart=/bin/bash /srv/motivetag/app/backup.sh
+Nice=10
+IOSchedulingClass=idle
+TimeoutStartSec=30min

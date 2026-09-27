@@ -739,17 +739,7 @@ block_img_uploader = async (block_data) => {
   if (!file) {
     return;
   }
-  console.log("有圖片 開始上傳");
-
-  let data = new FormData();
-  data.append("image", file);
-  data.append("type", "block");
-  data.append("target_id", block_id);
-  const options = { method: "POST", body: data };
-  const response = await fetch("/api/images", options);
-  const result = await response.json();
-  if (result.ok) {
-    console.log("Upload OK!");
+  if (await upload_image(file, "block", block_id)) {
     document.getElementById("upload_block_img").value = "";
   }
 };

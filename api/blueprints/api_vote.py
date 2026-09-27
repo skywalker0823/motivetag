@@ -24,5 +24,5 @@ def doing_vote():
     check = Vote.check_vote(member_id, block_id)
     if check["count"] != 0:
         return {"error": "You have voted before!", "data": check["data"]}
-    result = Vote.do_vote(member_id, vote_option_id)
+    result = Vote.do_vote(member_id, vote_option_id, block_id)
     return result
