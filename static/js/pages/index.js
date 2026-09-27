@@ -72,12 +72,6 @@ signinForm.addEventListener("submit", (event) => {
   );
 });
 
-$("#guest").addEventListener("click", (event) =>
-  busy(event.currentTarget, () =>
-    signIn("guest", "guest").catch(() => showError(signinForm, "訪客帳號目前無法使用")),
-  ),
-);
-
 // ---------- Sign up ----------
 
 const signupForm = $("#panel-signup");

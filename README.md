@@ -129,12 +129,6 @@ Every pull request runs lint, tests, a dependency audit and an image scan
 
 ## PREVIEW
 
-### Testing account
-| Account     | Password|
-| ------------- |:-------------:|
-| guest     | guest | 
-
-
 ### Front page
 <img width="1327" alt="截圖 2022-06-09 下午8 53 59" src="https://user-images.githubusercontent.com/56625237/172851655-beb06ce6-0d45-4943-b34b-886799ac5339.png" style="width:49%;">
 
