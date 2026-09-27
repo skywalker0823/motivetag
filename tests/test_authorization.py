@@ -131,6 +131,20 @@ def test_new_upload_gets_a_new_image_url(member, uploaded, monkeypatch):
     assert len(signed) == 2
 
 
+def test_secret_post_image_is_private(member, client, uploaded):
+    alice, _, _ = member()
+    bob, _, _ = member()
+    result = alice.post("/api/blocks", json={"type": "SECRET", "content": "diary"}).get_json()
+    block_id = result["data"][0]["block_id"]
+    uploaded("image/webp")
+    assert alice.post("/api/images", json={"type": "block", "target_id": block_id}).get_json()["ok"]
+    url = f"/images/block_{block_id}"
+    assert alice.get(url).status_code == 302
+    # Even right after the owner's request put the URL in the reuse cache.
+    assert bob.get(url).status_code == 404
+    assert client.get(url).status_code == 404
+
+
 def test_exp_is_awarded_by_server(member, query):
     alice, alice_id, _ = member()
     bob, bob_id, _ = member()
