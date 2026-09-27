@@ -1,14 +1,8 @@
 <!DOCTYPE html>
 <html lang="zh-TW">
 <head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1">
-    <meta name="theme-color" content="#070a16">
+    {% with entry="/js/pages/tag.js", stylesheets=['/css/tag.css'] %}{% include "_head.html" %}{% endwith %}
     <title>標籤討論區 - MotiveTag</title>
-    <link rel="icon" href="/img/main.PNG">
-    <link rel="stylesheet" href="/css/base.css">
-    <link rel="stylesheet" href="/css/tag.css">
-    <script type="module" src="/js/pages/tag.js"></script>
 </head>
 <body>
     <header class="page-bar">

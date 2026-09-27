@@ -23,6 +23,9 @@ export function showView(view) {
   window.scrollTo({ top: 0 });
 }
 
+/** Data the server put in the page (templates/member.html): me and asset URLs. */
+export const bootstrap = JSON.parse(document.getElementById("bootstrap")?.textContent || "{}");
+
 export const avatarUrl = (memberId) => `/images/avatar_${memberId}`;
-export const DEFAULT_AVATAR = "/img/user-regular-24.png";
-export const ANON_AVATAR = "/img/ghost-regular-24.png";
+export const DEFAULT_AVATAR = bootstrap.avatar ?? "/img/avatar.svg";
+export const ANON_AVATAR = bootstrap.anon ?? "/img/anon.svg";

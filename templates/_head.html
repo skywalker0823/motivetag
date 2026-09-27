@@ -1,0 +1,12 @@
+{# Shared <head> assets. `entry` is the page's module, e.g. "/js/pages/index.js". #}
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<meta name="theme-color" content="#070a16">
+<link rel="icon" href="{{ asset('/img/main.PNG') }}">
+<link rel="stylesheet" href="{{ asset('/css/base.css') }}">
+{% for sheet in stylesheets %}<link rel="stylesheet" href="{{ asset(sheet) }}">
+{% endfor %}
+<script type="importmap">{{ import_map() | safe }}</script>
+{% for href in preload(entry) %}<link rel="modulepreload" href="{{ href }}">
+{% endfor %}
+<script type="module" src="{{ asset(entry) }}"></script>

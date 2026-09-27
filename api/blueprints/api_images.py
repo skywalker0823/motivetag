@@ -48,14 +48,36 @@ def image_key(member_id, kind, target_id):
     return None, ({"error": "unknown image type"}, 400)
 
 
+DEFAULT_AVATAR = "/img/avatar.svg"
+# Browsers keep the redirect for a while, so a feed full of the same avatars does not
+# ask again on every page. Shorter than the presigned URL's hour so it never goes stale.
+REDIRECT_CACHE = "private, max-age=600"
+
+
 @api_images.route("/images/<key>")
 def show_img(key):
-    if not BUCKET_NAME or not IMAGE_KEY.match(key):
+    if not IMAGE_KEY.match(key):
+        abort(404)
+    kind, _, ident = key.partition("_")
+    if kind == "avatar" and (not BUCKET_NAME or not Images.has_avatar(int(ident))):
+        response = redirect(DEFAULT_AVATAR)
+        response.headers["Cache-Control"] = REDIRECT_CACHE
+        return response
+    if kind == "block" and (not BUCKET_NAME or not Images.has_block_image(int(ident))):
         abort(404)
     url = s3.generate_presigned_url(
-        "get_object", Params={"Bucket": BUCKET_NAME, "Key": key}, ExpiresIn=3600
+        "get_object",
+        Params={
+            "Bucket": BUCKET_NAME,
+            "Key": key,
+            # S3 sends this header back, so the browser caches the image itself too.
+            "ResponseCacheControl": "private, max-age=3600",
+        },
+        ExpiresIn=3600,
     )
-    return redirect(url)
+    response = redirect(url)
+    response.headers["Cache-Control"] = REDIRECT_CACHE
+    return response
 
 
 @api_images.route("/api/images/upload", methods=["POST"])

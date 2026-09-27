@@ -1,19 +1,14 @@
 <!DOCTYPE html>
 <html lang="zh-TW">
 <head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
-    <meta name="theme-color" content="#070a16">
+    {% with entry="/js/pages/member/main.js", stylesheets=['/css/member.css'] %}{% include "_head.html" %}{% endwith %}
     <title>MotiveTag</title>
-    <link rel="icon" href="/img/main.PNG">
-    <link rel="stylesheet" href="/css/base.css">
-    <link rel="stylesheet" href="/css/member.css">
-    <script type="module" src="/js/pages/member/main.js"></script>
 </head>
 <body data-view="feed">
+    <script type="application/json" id="bootstrap">{{ {"me": me, "avatar": asset("/img/avatar.svg"), "anon": asset("/img/anon.svg")} | tojson }}</script>
     <header class="topbar">
         <a class="topbar__logo" href="/" aria-label="MotiveTag 首頁">
-            <img src="/img/title_member.png" alt="MotiveTag" width="1890" height="339">
+            <img src="{{ asset('/img/title-member.webp') }}" alt="MotiveTag" width="320" height="57">
         </a>
         <form class="topbar__search" id="tag-search" role="search">
             <label class="visually-hidden" for="tag-search-input">搜尋標籤</label>
@@ -40,7 +35,7 @@
             <section class="card profile" id="profile" data-panel="me" aria-label="我的資料">
                 <div class="profile__head">
                     <label class="profile__avatar" title="更換大頭貼">
-                        <img class="avatar avatar--lg" id="my-avatar" src="/img/user-regular-24.png" alt="">
+                        <img class="avatar avatar--lg" id="my-avatar" src="{{ asset('/img/avatar.svg') }}" alt="" width="72" height="72">
                         <span class="profile__avatar-edit" data-icon="camera"></span>
                         <input class="visually-hidden" id="avatar-input" type="file" accept="image/png,image/jpeg,image/gif" aria-label="更換大頭貼">
                     </label>
@@ -90,6 +85,7 @@
                     <button class="btn btn--ghost btn--sm" type="button" id="poll-add" data-icon="plus">新增選項</button>
                 </fieldset>
                 <p class="composer__hint" id="composer-hint"></p>
+                <p class="composer__drop" aria-hidden="true">放開以加入圖片</p>
                 <div class="composer__bar">
                     <div class="segmented" role="radiogroup" aria-label="誰可以看到">
                         <label><input type="radio" name="visibility" value="PUBLIC" checked><span data-icon="globe">公開</span></label>
@@ -97,6 +93,7 @@
                         <label class="segmented__anon"><input type="radio" name="visibility" value="Anonymous"><span data-icon="ghost">匿名</span></label>
                     </div>
                     <div class="composer__tools">
+                        <span class="composer__count" id="composer-count" aria-live="polite"></span>
                         <label class="icon-btn" title="加入圖片">
                             <span data-icon="image"></span>
                             <input class="visually-hidden" id="composer-file" type="file" accept="image/png,image/jpeg,image/gif" aria-label="加入圖片">
@@ -111,9 +108,8 @@
                 <span>正在看 <strong id="feed-filter-tag"></strong> 的貼文</span>
                 <button class="btn btn--secondary btn--sm" type="button" id="feed-filter-clear">顯示全部動態</button>
             </div>
-            <div class="feed" id="feed" aria-live="polite"></div>
-            <div class="spinner" id="feed-spinner" role="status" aria-label="載入中"></div>
-            <p class="empty" id="feed-end" hidden></p>
+            <div class="feed" id="feed"></div>
+            <div class="feed" id="feed-status" aria-live="polite"></div>
             <div id="feed-sentinel" aria-hidden="true"></div>
         </main>
 
