@@ -1,8 +1,9 @@
 #!/bin/bash
 # Daily MySQL backup to S3. deploy.sh installs this with the motivetag-backup systemd
 # timer; run it by hand with `systemctl start motivetag-backup`.
-# Every run publishes BackupSuccess (1 or 0); a CloudWatch alarm fires when a day
-# passes without a 1 (infra/main/monitoring.tf).
+# A failure e-mails the last log lines through the SNS alerts topic; the weekly
+# restore drill also fails if the newest backup is more than a day old. It also
+# e-mails a warning when a disk is more than 85% full.
 set -euo pipefail
 
 APP_DIR=/srv/motivetag/app
@@ -14,20 +15,32 @@ env_value() { grep "^$1=" .env | cut -d= -f2-; }
 IMAGE=$(env_value APP_IMAGE)
 REGION=$(env_value AWS_REGION)
 BUCKET=$(env_value BACKUP_BUCKET)
+TOPIC=$(env_value ALERT_TOPIC_ARN)
 
 # Runs a backup_s3.py command inside the app image (boto3 + the instance role).
 s3() {
-  docker run --rm --user 0 -e AWS_REGION="$REGION" -v "$OUT:/backups" \
+  docker run --rm -i --user 0 -e AWS_REGION="$REGION" -v "$OUT:/backups" \
     --entrypoint python "$IMAGE" deploy/backup_s3.py "$@"
 }
 
 report() {
   local status=$?
-  s3 metric BackupSuccess "$([ "$status" = 0 ] && echo 1 || echo 0)" || true
+  if [ "$status" != 0 ] && [ -n "$TOPIC" ]; then
+    journalctl -u motivetag-backup -n 40 --no-pager 2>/dev/null \
+      | s3 alert "$TOPIC" "motivetag: MySQL backup failed" || true
+  fi
   rm -f "$OUT"/*.partial
   exit "$status"
 }
 trap report EXIT
+
+# Daily disk check, standing in for a paid CloudWatch agent (docs/adr/0006).
+for mount in / /srv/motivetag; do
+  used=$(df --output=pcent "$mount" | tail -n 1 | tr -dc 0-9)
+  if [ "$used" -gt 85 ] && [ -n "$TOPIC" ]; then
+    df -h / /srv/motivetag | s3 alert "$TOPIC" "motivetag: $mount is ${used}% full" || true
+  fi
+done
 
 [ -n "$BUCKET" ] || { echo "BACKUP_BUCKET is not set in $APP_DIR/.env" >&2; exit 1; }
 mkdir -p "$OUT"

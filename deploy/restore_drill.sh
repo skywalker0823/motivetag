@@ -15,15 +15,19 @@ env_value() { grep "^$1=" .env | cut -d= -f2-; }
 IMAGE=$(env_value APP_IMAGE)
 REGION=$(env_value AWS_REGION)
 BUCKET=$(env_value BACKUP_BUCKET)
+TOPIC=$(env_value ALERT_TOPIC_ARN)
 
 s3() {
-  docker run --rm --user 0 -e AWS_REGION="$REGION" -v "$WORK:/backups" \
+  docker run --rm -i --user 0 -e AWS_REGION="$REGION" -v "$WORK:/backups" \
     --entrypoint python "$IMAGE" deploy/backup_s3.py "$@"
 }
 
 report() {
   local status=$?
-  s3 metric RestoreDrillSuccess "$([ "$status" = 0 ] && echo 1 || echo 0)" || true
+  if [ "$status" != 0 ] && [ -n "$TOPIC" ]; then
+    journalctl -u motivetag-restore-drill -n 40 --no-pager 2>/dev/null \
+      | s3 alert "$TOPIC" "motivetag: Restore drill failed" || true
+  fi
   docker rm -f "$DRILL" >/dev/null 2>&1 || true
   rm -rf "$WORK"
   exit "$status"
@@ -39,6 +43,11 @@ latest=$(s3 latest "$BUCKET" /backups)
 read -r dump age_hours <<< "$latest"
 file="$WORK/$(basename "$dump")"
 echo "Newest backup: $(basename "$dump"), ${age_hours}h old"
+# Daily backups mean the newest is never much more than a day old.
+if [ "${age_hours%.*}" -ge 26 ]; then
+  echo "newest backup is ${age_hours}h old; is motivetag-backup.timer running?" >&2
+  exit 1
+fi
 
 # Same MySQL version as production, data on tmpfs so nothing is left behind.
 password=$(openssl rand -hex 16)
@@ -74,5 +83,3 @@ members=$(sql motivetag -e 'SELECT COUNT(*) FROM member')
 
 seconds=$((restored - started))
 echo "Restore drill passed: backup ${age_hours}h old (RPO), restored in ${seconds}s (RTO for the data)"
-s3 metric RestoreDrillSeconds "$seconds" Seconds
-s3 metric BackupAgeHours "$age_hours"

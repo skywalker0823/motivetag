@@ -25,11 +25,3 @@ output "github_variables" {
 output "backup_bucket" {
   value = aws_s3_bucket.backups.bucket
 }
-
-output "cloudwatch_agent_associations" {
-  description = "Re-run with: aws ssm start-associations-once --association-ids <id> ..."
-  value = [
-    aws_ssm_association.cloudwatch_agent_install.association_id,
-    aws_ssm_association.cloudwatch_agent_config.association_id,
-  ]
-}

@@ -40,7 +40,7 @@ variable "domain" {
 }
 
 variable "alert_email" {
-  description = "Where alarms are e-mailed (confirm the two SNS subscription e-mails). Null disables e-mail."
+  description = "Where alarms are e-mailed (confirm the SNS subscription e-mail). Null disables e-mail."
   type        = string
   default     = null
 }

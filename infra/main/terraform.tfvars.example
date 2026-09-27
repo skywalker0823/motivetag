@@ -1,5 +1,5 @@
 # Copy to terraform.tfvars and adjust.
 region = "ap-east-2"
 
-# E-mail for CloudWatch alarms (uptime, disk, CPU, backups). Confirm the SNS e-mails.
+# E-mail for CloudWatch alarms (CPU, status checks, backups). Confirm the SNS e-mail.
 # alert_email = "you@example.com"

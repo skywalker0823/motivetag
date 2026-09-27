@@ -36,14 +36,3 @@ provider "aws" {
   }
 }
 
-# Route 53 health check metrics are published only in us-east-1.
-provider "aws" {
-  alias  = "us_east_1"
-  region = "us-east-1"
-  default_tags {
-    tags = {
-      Project   = var.project
-      ManagedBy = "terraform"
-    }
-  }
-}

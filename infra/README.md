@@ -105,23 +105,22 @@ with the new schema, because a rollback does not undo a migration.
 
 ## Backups, monitoring and Sentry (one time)
 
-Apply this before merging the change that adds them to `main` (the deploy works
-either way, but backups only start once the bucket exists).
+Everything here stays within free tiers (see `docs/adr/0006`). **Apply before merging
+this change to `main`**: image uploads need the bucket's new CORS rule.
 
-1. **E-mail for alarms.** Add `alert_email = "you@example.com"` to
+1. **E-mail for alerts.** Add `alert_email = "you@example.com"` to
    `infra/main/terraform.tfvars`.
 2. **Apply.**
 
    ```bash
    cd infra/main
    terraform init
-   terraform plan    # backup bucket, SNS topics, health check, alarms, agent associations, CORS
+   terraform plan    # backup bucket, SNS topic + e-mail, 3 alarms, 2 parameters, images CORS
    terraform apply
    ```
 
-3. **Confirm the two SNS e-mails** (one from `ap-east-2`, one from `us-east-1` for the
-   uptime alarm). Until you click them, alarms go nowhere.
-4. **Sentry (optional).** Create a Flask project in Sentry, copy its DSN, then:
+3. **Confirm the SNS e-mail.** Until you click it, alerts go nowhere.
+4. **Sentry (optional, free tier).** Create a Flask project in Sentry, copy its DSN:
 
    ```bash
    aws ssm put-parameter --name /motivetag/sentry-dsn --type SecureString --value 'https://...@....ingest.sentry.io/...' --region ap-east-2
@@ -137,12 +136,7 @@ either way, but backups only start once the bucket exists).
    journalctl -u motivetag-backup -n 20
    systemctl start motivetag-restore-drill        # prove it restores
    journalctl -u motivetag-restore-drill -n 40
-   /opt/aws/amazon-cloudwatch-agent/bin/amazon-cloudwatch-agent-ctl -a status
    ```
-
-   The `backup-missing` alarm fires once right after the apply, until the first
-   backup has run. If the agent is not `running`, re-run its setup:
-   `aws ssm start-associations-once --association-ids $(terraform output -json cloudwatch_agent_associations | jq -r '.[]') --region ap-east-2`.
 
 ## Backups
 
@@ -151,8 +145,8 @@ either way, but backups only start once the bucket exists).
 - Sundays at 04:30: the restore drill loads the newest dump into a throwaway MySQL
   container, checks it, and logs the backup age and restore time. Production is
   only read.
-- Both publish success metrics; `motivetag-backup-missing` and
-  `motivetag-restore-drill-failed` alarm on them.
+- A failure of either job e-mails its last log lines. The drill also fails when the
+  newest backup is more than 26 hours old (the daily job stopped running).
 - The server can add backups but not delete them. List them from your Mac:
   `aws s3 ls s3://$(terraform output -raw backup_bucket)/mysql/`.
 
@@ -185,24 +179,18 @@ The weekly drill times step 3; expect about the same.
 
 ## Monitoring
 
-| Alarm | Fires when |
+| Alert | When |
 |---|---|
-| `motivetag-site-down` (us-east-1) | `https://motivetag.com/healthz` fails for 2 minutes from Route 53's checkers |
+| GitHub "Uptime" workflow failed (e-mail from GitHub) | `https://motivetag.com/healthz` did not answer; checked every 30 minutes |
 | `motivetag-system-check-failed` | AWS hardware problem; the instance is recovered automatically |
 | `motivetag-instance-check-failed` | The OS stops responding; the instance is rebooted automatically |
 | `motivetag-cpu-high` | CPU > 80 % for 15 minutes |
-| `motivetag-memory-high` | Memory > 90 % for 15 minutes |
-| `motivetag-disk-root` / `-disk-data` | `/` or `/srv/motivetag` > 85 % full, or the agent stops reporting |
-| `motivetag-backup-missing` | No successful backup in 24 hours |
-| `motivetag-restore-drill-failed` | The weekly restore drill failed |
+| "MySQL backup failed" / "Restore drill failed" | The job failed; the e-mail has its last log lines |
+| "… is NN% full" | `/` or `/srv/motivetag` over 85 %, checked daily by the backup job |
 
-Disk and memory come from the CloudWatch agent, which Systems Manager installs and
-configures (config: Parameter Store `AmazonCloudWatch-motivetag`). Application
-errors go to Sentry when `/motivetag/sentry-dsn` is set, tagged with the git SHA.
-
-If `site-down` fires while the site works in a browser, Cloudflare may be
-challenging the health checkers: add a WAF custom rule that skips bot protection
-for user agent `Amazon-Route53-Health-Check-Service`.
+Application errors go to Sentry when `/motivetag/sentry-dsn` is set, tagged with
+the git SHA. GitHub pauses scheduled workflows after 60 days without commits;
+re-enable "Uptime" in the Actions tab if that happens.
 
 ## Notes
 

@@ -28,14 +28,15 @@ Targets for a site this size: **RPO ≤ 24 hours**, **RTO under an hour**.
   dump, loads it into a **throwaway MySQL 8.4 container on tmpfs**, checks there is
   an Alembic version and members, prints row counts next to production's, and
   reports the backup's age (RPO) and the restore time (RTO for the data).
-- **Signals**: both jobs publish `BackupSuccess` / `RestoreDrillSuccess` (1 or 0)
-  to CloudWatch. Alarms fire when a day passes without a successful backup, or when
-  a drill fails ([0006](0006-monitoring-and-alerting.md)).
+- **Signals**: either job e-mails its last log lines through the SNS alerts topic
+  when it fails, and the drill fails if the newest backup is more than 26 hours old
+  ([0006](0006-monitoring-and-alerting.md)).
 - The scripts and timers ship in the app image and are installed by each deploy.
 - The last three dumps also stay on the server for a quick local restore.
 
 ## Consequences
 
+- Costs cents a month: a few MB of dumps in S3.
 - Worst case we lose up to a day of posts. That is a deliberate trade-off against
   running binlog shipping or a replica.
 - The drill proves weekly that the dumps restore on the same MySQL version, and

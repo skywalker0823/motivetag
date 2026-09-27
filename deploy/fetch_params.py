@@ -19,6 +19,7 @@ NAMES = {
 # Written empty when missing, so a deploy works before they are set up.
 OPTIONAL = {
     "backup-bucket": "BACKUP_BUCKET",  # created by infra/main/backup.tf
+    "alert-topic-arn": "ALERT_TOPIC_ARN",  # created by infra/main/monitoring.tf
     "sentry-dsn": "SENTRY_DSN",  # added by hand, see infra/README.md
 }
 

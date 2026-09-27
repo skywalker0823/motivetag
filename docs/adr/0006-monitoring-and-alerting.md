@@ -1,54 +1,51 @@
-# 0006. Monitoring: outside-in uptime, CloudWatch alarms and Sentry
+# 0006. Monitoring that costs nothing: EC2 alarms, script alerts, a GitHub uptime check
 
 - Status: Accepted
-- Date: 2026-09-26
+- Date: 2026-09-27
 
 ## Context
 
 With one server ([0001](0001-single-ec2-with-docker-compose.md)) the questions that
-matter are: is the site reachable for users, is the server about to fall over
-(disk, memory, CPU), did last night's backup happen, and is the code throwing
-errors. Alerts should go to a person without running a monitoring stack of our own.
+matter are: is the site reachable, is the server healthy, is a disk filling up, did
+the backups work, and is the code throwing errors. The project has no budget for
+monitoring, so everything here must stay at **$0 a month**.
 
 ## Decision
 
-All alarms e-mail through SNS (`infra/main/monitoring.tf`, `alert_email`).
+Alerts are e-mailed through one SNS topic (`infra/main/monitoring.tf`,
+`alert_email`); GitHub e-mails workflow failures on its own.
 
-| Signal | Source | Alarm |
+| Signal | Source | Alert |
 |---|---|---|
-| Site reachable | **Route 53 health check** on `https://motivetag.com/healthz` through Cloudflare, from several AWS regions every 30 s | 2 failed minutes |
-| Host health | EC2 status checks | system check → **auto-recover**; instance check → **reboot** |
+| Site reachable | Scheduled GitHub Actions workflow (`.github/workflows/uptime.yml`) curls `https://motivetag.com/healthz` through Cloudflare every 30 min | GitHub's failed-run e-mail |
+| Host health | EC2 status checks (free basic metrics) | system check → **auto-recover**; instance check → **reboot**; e-mail both |
 | CPU | EC2 `CPUUtilization` | > 80 % for 15 min |
-| Disk | CloudWatch agent `disk_used_percent` for `/` and `/srv/motivetag` | > 85 %, or no data |
-| Memory | CloudWatch agent `mem_used_percent` | > 90 % for 15 min |
-| Backups | `BackupSuccess` / `RestoreDrillSuccess` from [0004](0004-mysql-backups-and-restore-drills.md) | no success in 24 h / any failure |
-| App errors | **Sentry** (`sentry-sdk[flask]`), tagged with the git SHA as release | Sentry's own alert rules |
-
-- The CloudWatch agent is installed and configured by **SSM State Manager
-  associations**, from a config in Parameter Store, so no change to the server's
-  bootstrap script and no manual install.
-- The health check checks the path users take (DNS → Cloudflare → nginx → Flask),
-  not just the instance.
-- Sentry is enabled only when `SENTRY_DSN` is set; errors only, no tracing, no PII.
+| Disk | `df` in the daily backup job | e-mail when `/` or `/srv/motivetag` is > 85 % full |
+| Backups | `deploy/backup.sh`, `deploy/restore_drill.sh` ([0004](0004-mysql-backups-and-restore-drills.md)) | e-mail with the job's last log lines on any failure; the weekly drill also fails if the newest backup is > 26 h old |
+| App errors | Sentry free tier, only when `SENTRY_DSN` is set; errors only, no tracing, no PII | Sentry's own alerts |
 
 ## Consequences
 
-- A few dollars a month (health check, custom metrics, alarms); Sentry's free tier.
-- Route 53 health check metrics exist only in `us-east-1`, so that alarm and its
-  SNS topic live there: two SNS subscriptions to confirm.
-- If Cloudflare Bot Fight Mode challenges the health checkers, the check fails
-  while the site is fine; allow their user agent in a WAF skip rule.
-- No log aggregation yet: logs are `docker compose logs` and `journalctl` on the
-  server.
+- Stays inside free tiers: three CloudWatch alarms (10 are free), no custom
+  metrics, SNS e-mail (1,000 free a month), GitHub Actions minutes are free for a
+  public repository.
+- The uptime check is coarse: an outage can go unnoticed for up to ~30 minutes, and
+  GitHub may start scheduled runs late. GitHub also pauses schedules in a public
+  repository after 60 days without commits; re-enable it in the Actions tab.
+- A missed backup (the timer never ran) is only caught by the weekly drill, not
+  within a day.
+- Memory is not watched; an out-of-memory hang shows up as a failed instance check.
+- No log aggregation: logs are `docker compose logs` and `journalctl` on the server.
 
-## Alternatives considered
+## Alternatives considered (all paid)
 
-- **Prometheus + Grafana (Cloud)** — used in the 2022 version; more to run than one
-  server needs.
-- **CloudWatch Synthetics** — a real browser check, but priced per run.
-- **UptimeRobot / Better Stack** — free and good, but outside Terraform.
+- **Route 53 health check** from several regions — a few dollars a month for an
+  HTTPS endpoint outside AWS, and its metrics live only in `us-east-1`.
+- **CloudWatch agent** for disk and memory — each metric is a paid custom metric.
+- **CloudWatch Synthetics** — priced per run.
+- **Prometheus + Grafana (Cloud)** — used in the 2022 version; more to run.
 
 ## Revisit when
 
-We need latency or traffic dashboards, log search (ship container logs to
-CloudWatch Logs), or paging instead of e-mail.
+There is budget or real users: switch uptime to a Route 53 health check, add the
+CloudWatch agent for disk and memory, and ship container logs to CloudWatch Logs.
