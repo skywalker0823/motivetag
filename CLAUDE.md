@@ -24,9 +24,9 @@ uses it as a portfolio project for interviews. Read this first, then `README.md`
   with nginx (TLS with a Cloudflare origin cert), the Flask app (gunicorn + gevent,
   one worker: chat presence is in memory, ADR 0008) and MySQL 8.4 on its own EBS volume.
 - **Edge:** Cloudflare Full (strict). The security group only admits Cloudflare's
-  ranges on 443. **The owner blocks non-Taiwan visitors in Cloudflare**, so checks
-  from GitHub runners or US services get 403; deploy.sh checks the site from the
-  server itself.
+  ranges on 443. **The owner geo-blocks visitors in Cloudflare** (Taiwan only at
+  first; US traffic allowed since 2026-09-27), so checks from other regions may get
+  403; deploy.sh checks the site from the server itself.
 - **Deploy:** push to `main` → CI (ruff, pytest against MySQL, Alembic up/down/up,
   terraform validate, pip-audit, Trivy, JS parse + import check, image smoke test) →
   image to ECR (tag = git SHA) → SSM Run Command runs `deploy/deploy.sh` from that
