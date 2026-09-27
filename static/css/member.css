@@ -1282,3 +1282,8 @@ button.poll__option:hover {
 #feed-status {
   margin-top: var(--space-4);
 }
+
+.chips .empty {
+  padding: var(--space-1) 0;
+  text-align: left;
+}
