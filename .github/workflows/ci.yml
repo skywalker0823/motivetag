@@ -177,3 +177,23 @@ jobs:
             --query '[StandardOutputContent, StandardErrorContent]' --output text
           echo "Deploy finished with status: $status"
           [ "$status" = Success ]
+      - name: Purge the Cloudflare cache
+        # Needs the CLOUDFLARE_API_TOKEN secret (permission Zone > Cache Purge) and the
+        # CLOUDFLARE_ZONE_ID variable (infra/README.md); skipped until both are set.
+        env:
+          CLOUDFLARE_API_TOKEN: ${{ secrets.CLOUDFLARE_API_TOKEN }}
+          CLOUDFLARE_ZONE_ID: ${{ vars.CLOUDFLARE_ZONE_ID }}
+        run: |
+          if [ -z "$CLOUDFLARE_API_TOKEN" ] || [ -z "$CLOUDFLARE_ZONE_ID" ]; then
+            echo "::notice::Cloudflare cache not purged: set the CLOUDFLARE_API_TOKEN secret and the CLOUDFLARE_ZONE_ID variable"
+            exit 0
+          fi
+          response=$(curl -sS -X POST "https://api.cloudflare.com/client/v4/zones/$CLOUDFLARE_ZONE_ID/purge_cache" \
+            -H "Authorization: Bearer $CLOUDFLARE_API_TOKEN" -H "Content-Type: application/json" \
+            --data '{"purge_everything":true}')
+          if ! echo "$response" | jq -e '.success' >/dev/null; then
+            echo "Cloudflare purge failed:"
+            echo "$response" | jq '.errors'
+            exit 1
+          fi
+          echo "Cloudflare cache purged"
