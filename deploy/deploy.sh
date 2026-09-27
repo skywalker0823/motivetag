@@ -71,6 +71,24 @@ install_jobs() {
   systemctl enable --now motivetag-backup.timer motivetag-restore-drill.timer
 }
 
+# The public path (Cloudflare → origin certificate → security group → nginx) checked
+# from this server: CI runners are abroad, and the site may block non-Taiwan visitors.
+check_public() {
+  local code
+  for _ in $(seq 1 10); do
+    code=$(curl -s -o /dev/null -w '%{http_code}' --max-time 10 https://motivetag.com/healthz || true)
+    echo "https://motivetag.com/healthz through Cloudflare: HTTP $code"
+    case $code in
+      200) return 0 ;;
+      403) echo "Cloudflare refused this server's address (a country or WAF rule); the origin itself is healthy" >&2
+           return 0 ;;
+    esac
+    sleep 6
+  done
+  echo "The site is not reachable through Cloudflare, although the containers are healthy" >&2
+  return 1
+}
+
 previous=$(cat current_image 2>/dev/null || true)
 
 write_env "$IMAGE"
@@ -79,6 +97,7 @@ if docker compose up -d --remove-orphans --wait --wait-timeout 300; then
   echo "Deployed $IMAGE"
   install_jobs
   docker image prune -af --filter "until=168h" >/dev/null
+  check_public
   exit 0
 fi
 

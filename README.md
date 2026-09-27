@@ -53,7 +53,7 @@ sequenceDiagram
     GH->>EC2: SSM Run Command → deploy.sh from that image
     EC2->>ECR: pull image
     EC2->>EC2: compose up --wait (roll back to previous image if unhealthy)
-    GH->>GH: curl https://motivetag.com/healthz
+    EC2->>EC2: curl https://motivetag.com/healthz through Cloudflare
 ```
 
 | Concern | How | Where |
