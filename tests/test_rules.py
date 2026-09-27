@@ -199,3 +199,13 @@ def test_mood_and_tag_names_are_validated(member):
     assert alice.patch("/api/member", json={"category": "mood", "content": "開心"}).get_json()["ok"]
     assert alice.patch("/api/member_tags", json={"tag": "有 空白"}).status_code == 400
     assert alice.patch("/api/member_tags", json={"tag": "#" + new_tag()}).get_json()["ok"]
+
+
+def test_emoji_can_be_posted_and_commented(member):
+    alice, _, _ = member()
+    block = post(alice, "今天好開心 😂🎉 #emoji")
+    assert block["content"] == "今天好開心 😂🎉 #emoji"
+    reply = alice.post(
+        "/api/message", json={"block_id": block["block_id"], "message": "👍", "score": 0}
+    )
+    assert reply.get_json()["comment"]["content"] == "👍"
