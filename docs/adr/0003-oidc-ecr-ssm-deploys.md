@@ -26,7 +26,9 @@ GitHub, without SSH, and with a way back when a release is broken.
   healthy within 5 minutes it **rolls back to the previous image** and fails the job.
 - Migrations run on container start; they must be backwards compatible because a
   rollback does not undo them.
-- After the rollout, CI checks `https://motivetag.com/healthz` through Cloudflare.
+- After the rollout, the server itself fetches `https://motivetag.com/healthz`
+  through Cloudflare. It runs there rather than on the CI runner because the runners
+  are abroad and the site may block visitors outside Taiwan.
 
 ## Consequences
 

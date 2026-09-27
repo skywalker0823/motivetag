@@ -173,5 +173,3 @@ jobs:
             --query '[StandardOutputContent, StandardErrorContent]' --output text
           echo "Deploy finished with status: $status"
           [ "$status" = Success ]
-      - name: Check the live site
-        run: curl -fsS --retry 10 --retry-delay 6 --retry-all-errors https://motivetag.com/healthz
