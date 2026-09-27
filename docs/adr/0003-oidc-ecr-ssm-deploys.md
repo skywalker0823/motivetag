@@ -29,6 +29,8 @@ GitHub, without SSH, and with a way back when a release is broken.
 - After the rollout, the server itself fetches `https://motivetag.com/healthz`
   through Cloudflare. It runs there rather than on the CI runner because the runners
   are abroad and the site may block visitors outside Taiwan.
+- Then CI purges the Cloudflare cache with a token that can do nothing but that,
+  so no visitor gets a stale stylesheet or script.
 
 ## Consequences
 

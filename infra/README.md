@@ -90,6 +90,21 @@ Do these in order; the last step (merging to `main`) triggers the first deploy.
    job fails. To redeploy without a code change: Actions → CI → the latest `main`
    run → Re-run all jobs.
 
+## Purging the Cloudflare cache on deploy (one time)
+
+After each deploy CI purges Cloudflare's cache, so visitors never get an old
+stylesheet or script. The step is skipped until these two are set:
+
+1. **API token.** Cloudflare → My Profile → API Tokens → Create Token → **Custom
+   token**. Permissions: `Zone` · `Cache Purge` · `Purge`. Zone Resources:
+   `Include` · `Specific zone` · `motivetag.com`. Create it and copy the token (shown once).
+2. **Zone ID.** Cloudflare → motivetag.com → Overview → right-hand column, **Zone ID**.
+3. **GitHub.** Settings → Secrets and variables → Actions:
+   - **Secrets** tab → New repository secret `CLOUDFLARE_API_TOKEN` = the token.
+   - **Variables** tab → New repository variable `CLOUDFLARE_ZONE_ID` = the zone ID.
+
+The token can only purge this zone's cache; nothing else in the account.
+
 ## Operating the server
 
 ```bash
