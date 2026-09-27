@@ -690,14 +690,6 @@
   text-decoration: underline;
 }
 
-.post__image {
-  width: 100%;
-  max-height: 520px;
-  border-radius: var(--radius);
-  background: var(--surface-2);
-  object-fit: contain;
-}
-
 .post__actions {
   display: flex;
   align-items: center;
@@ -1162,4 +1154,136 @@ button.poll__option:hover {
 
 .member-card__facts dd {
   margin: 0;
+}
+
+/* ---------- Motion and loading states ---------- */
+
+/* Posts far below the fold are not laid out until they get close. */
+.feed > .post {
+  content-visibility: auto;
+  contain-intrinsic-size: auto 320px;
+}
+
+.post {
+  transition:
+    opacity 0.2s,
+    transform 0.2s;
+}
+
+.post.is-leaving {
+  opacity: 0;
+  transform: scale(0.98);
+}
+
+.post--skeleton {
+  gap: var(--space-3);
+}
+
+.post--skeleton .post__header {
+  gap: var(--space-3);
+}
+
+.post__who {
+  min-width: 0;
+}
+
+/* Images keep one frame size while loading, so the feed never jumps. */
+.post__image {
+  display: block;
+  width: 100%;
+  aspect-ratio: 4 / 3;
+  max-height: 480px;
+  overflow: hidden;
+  padding: 0;
+  border: 0;
+  border-radius: var(--radius);
+  background: var(--surface-2);
+  cursor: zoom-in;
+}
+
+.post__image img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  opacity: 0;
+  transition: opacity 0.25s;
+}
+
+.post__image.is-loaded img {
+  opacity: 1;
+}
+
+.action.pop .icon {
+  animation: pop 0.35s ease-out;
+}
+
+@keyframes pop {
+  40% {
+    transform: scale(1.35);
+  }
+}
+
+.action[aria-pressed="true"] {
+  cursor: default;
+}
+
+.comment.is-pending {
+  opacity: 0.55;
+}
+
+.poll__label {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+}
+
+.poll__label .icon {
+  color: var(--accent);
+}
+
+/* ---------- Composer extras ---------- */
+
+.composer {
+  position: relative;
+}
+
+.composer__drop {
+  display: none;
+}
+
+.composer.is-dragging .composer__drop {
+  position: absolute;
+  inset: 0;
+  z-index: 2;
+  display: grid;
+  place-items: center;
+  border: 2px dashed var(--accent);
+  border-radius: inherit;
+  background: rgba(7, 10, 22, 0.85);
+  color: var(--accent);
+  font-weight: 700;
+}
+
+.composer__count {
+  min-width: 2.5em;
+  color: var(--text-faint);
+  font-size: var(--text-xs);
+  text-align: right;
+}
+
+.composer__count--low {
+  color: var(--danger);
+}
+
+#feed-status:empty {
+  display: none;
+}
+
+#feed-status {
+  margin-top: var(--space-4);
+}
+
+.chips .empty {
+  padding: var(--space-1) 0;
+  text-align: left;
 }

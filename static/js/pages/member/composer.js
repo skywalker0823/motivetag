@@ -2,7 +2,6 @@
 import { api, errorMessage } from "../../lib/api.js";
 import { $, busy, h } from "../../lib/dom.js";
 import { icon } from "../../lib/icons.js";
-import { serverNow } from "../../lib/time.js";
 import { toast, toastError } from "../../lib/toast.js";
 import { IMAGE_TYPES, uploadImage } from "../../lib/upload.js";
 import { prependPost } from "./feed.js";
@@ -32,9 +31,16 @@ function setHint(message, error = false) {
   hint.className = `composer__hint${error ? " composer__hint--error" : ""}`;
 }
 
+const LIMIT = Number(text.maxLength);
+const count = $("#composer-count");
+
 function autosize() {
   text.style.height = "auto";
   text.style.height = `${text.scrollHeight}px`;
+  // The counter only appears near the limit.
+  const left = LIMIT - text.value.length;
+  count.textContent = left <= 200 ? String(left) : "";
+  count.classList.toggle("composer__count--low", left <= 20);
 }
 
 // ---------- Image ----------
@@ -46,13 +52,39 @@ function setImage(file) {
   preview.src = file ? URL.createObjectURL(file) : "";
 }
 
-fileInput.addEventListener("change", () => {
-  const file = fileInput.files[0];
-  fileInput.value = "";
+function pickImage(file) {
   if (!file) return;
   if (!IMAGE_TYPES.includes(file.type)) return toastError("file type not allowed");
   if (file.size > 5 * 1024 * 1024) return toastError("圖片不能超過 5 MB");
   setImage(file);
+}
+
+fileInput.addEventListener("change", () => {
+  const file = fileInput.files[0];
+  fileInput.value = "";
+  pickImage(file);
+});
+
+// Paste a screenshot, or drop an image anywhere on the composer.
+text.addEventListener("paste", (event) => {
+  const file = [...event.clipboardData.files].find((f) => f.type.startsWith("image/"));
+  if (file) {
+    event.preventDefault();
+    pickImage(file);
+  }
+});
+form.addEventListener("dragover", (event) => {
+  if (![...event.dataTransfer.types].includes("Files")) return;
+  event.preventDefault();
+  form.classList.add("is-dragging");
+});
+form.addEventListener("dragleave", (event) => {
+  if (!form.contains(event.relatedTarget)) form.classList.remove("is-dragging");
+});
+form.addEventListener("drop", (event) => {
+  event.preventDefault();
+  form.classList.remove("is-dragging");
+  pickImage([...event.dataTransfer.files].find((f) => f.type.startsWith("image/")));
 });
 $("#composer-image-remove").addEventListener("click", () => setImage(null));
 
@@ -140,7 +172,6 @@ form.addEventListener("submit", (event) => {
         body: {
           type,
           content,
-          time: serverNow(),
           tags: type === "Anonymous" ? "Anonymous" : null,
           vote_box: pollEditor.hidden ? [] : options,
         },

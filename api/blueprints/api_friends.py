@@ -1,7 +1,7 @@
 from flask import redirect, request, session
 from flask import render_template as rt
 
-from data.data import Friend
+from data.data import Friend, Member
 from module.auth import login_required
 
 from . import api_friends
@@ -10,7 +10,9 @@ from . import api_friends
 @api_friends.route("/<account>")
 def to_member(account):
     if session.get("account") == account:
-        return rt("member.html")
+        # Who I am comes with the page, saving the browser a round trip before the
+        # feed, tags and friends can load.
+        return rt("member.html", me=Member.get_member(account))
     return redirect("/")
 
 

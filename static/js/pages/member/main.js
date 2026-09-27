@@ -10,7 +10,7 @@ import { initFeed, resetFeed } from "./feed.js";
 import { initFriends } from "./friends.js";
 import { initNotifications } from "./notifications.js";
 import { initProfile, showMember } from "./profile.js";
-import { me, on, showView } from "./state.js";
+import { bootstrap, me, on, showView } from "./state.js";
 import { initTags } from "./tags.js";
 
 hydrateIcons();
@@ -36,7 +36,11 @@ function initTopbar() {
     }
   });
   for (const tab of document.querySelectorAll(".tabbar [data-tab]")) {
-    tab.addEventListener("click", () => showView(tab.dataset.tab));
+    tab.addEventListener("click", () => {
+      // Tapping the tab you are on scrolls back to the top, as in most apps.
+      if (document.body.dataset.view === tab.dataset.tab) window.scrollTo({ top: 0, behavior: "smooth" });
+      else showView(tab.dataset.tab);
+    });
   }
 }
 
@@ -47,9 +51,9 @@ function showFeedFor(tag) {
 }
 
 async function start() {
-  let result;
+  let result = bootstrap.me ? { ok: true, data: bootstrap.me } : null;
   try {
-    result = await api("/api/member");
+    result ??= await api("/api/member");
   } catch (error) {
     toastError(error, "載入失敗，請重新整理");
     return;

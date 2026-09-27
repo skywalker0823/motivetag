@@ -92,7 +92,7 @@ export function initChat() {
       bubble(win, result.ok === "JOINED" ? "已加入聊天" : `等待 ${account} 加入…`, "system");
     } else {
       bubble(win, `${account} 目前不在線上，已通知他`, "system");
-      notify(account, `${me.account} 想找你聊天，但你不在線上`);
+      notify(account, "chat_missed");
     }
   });
 

@@ -1,7 +1,7 @@
 // The bell: polls for new notifications and marks them read when the panel opens.
 import { api } from "../../lib/api.js";
 import { $, h } from "../../lib/dom.js";
-import { serverNow, timeAgo } from "../../lib/time.js";
+import { timeAgo } from "../../lib/time.js";
 
 const POLL_MS = 15000;
 const button = $("#notif-button");
@@ -43,12 +43,12 @@ function setOpen(open) {
   }
 }
 
-/** Sends `account` a notification (friend requests, missed chats…). */
-export function notify(account, content) {
-  return api("/api/notifi", {
-    method: "POST",
-    body: { who: account, content, time: serverNow() },
-  }).catch(() => {});
+/**
+ * Sends `account` a notification. The server writes the text for each `type`:
+ * friend_invite, friend_accept, friend_decline or chat_missed.
+ */
+export function notify(account, type) {
+  return api("/api/notifi", { method: "POST", body: { who: account, type } }).catch(() => {});
 }
 
 export function initNotifications() {

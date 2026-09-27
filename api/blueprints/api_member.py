@@ -4,7 +4,9 @@ from datetime import date
 from flask import request, session
 
 from data.data import Friend, Member, Member_tags
+from module import rules
 from module.auth import login_required
+from module.clock import taipei_now
 
 from . import api_member
 
@@ -32,7 +34,7 @@ MIN_PASSWORD = 8
 
 def signup_error(data):
     """Why this sign-up is invalid, or None."""
-    fields = ("account", "password", "email", "birthday", "first_signup")
+    fields = ("account", "password", "email", "birthday")
     if not all(isinstance(data.get(f), str) for f in fields):
         return "missing fields"
     if not ACCOUNT.match(data["account"]) or data["account"].lower() in RESERVED:
@@ -60,7 +62,7 @@ def sign_up_member():
     password = data["password"]
     email = data["email"]
     birthday = data["birthday"]
-    first_signup = data["first_signup"]
+    first_signup = taipei_now()[:10]
     session["FIRST_TIME"] = "YES"
     result = Member.sign_up(account, password, email, birthday, first_signup)
     if result == "ok":
@@ -73,8 +75,8 @@ def sign_in_member():
     data = request.get_json(silent=True) or {}
     account = data.get("account")
     password = data.get("password")
-    time = data.get("time")
-    if not all(isinstance(v, str) for v in (account, password, time)):
+    time = taipei_now()
+    if not all(isinstance(v, str) for v in (account, password)):
         return {"error": "wrong account or password"}, 400
     result = Member.sign_in(account, password, time)
     if session.get("FIRST_TIME") and session["FIRST_TIME"] == "YES" and result["msg"] == "ok":
@@ -92,11 +94,14 @@ def sign_in_member():
 @api_member.route("/api/member", methods=["PATCH"])
 @login_required
 def modify_member():
-    data = request.get_json()
+    data = request.get_json(silent=True) or {}
     member_id = session.get("member_id")
-    content = data["content"]
-    category = data["category"]
-    result = Member.patch_user_data(member_id, category, content)
+    if data.get("category") != "mood":
+        return {"error": "unknown field"}, 400
+    mood = rules.text(data.get("content"), rules.MOOD_MAX)
+    if mood is None:
+        return {"error": f"心情需為 1–{rules.MOOD_MAX} 個字"}, 400
+    result = Member.patch_user_data(member_id, "mood", mood)
     if result != 1:
         return {"error": "update user data fail"}
     return {"ok": "Update data success"}

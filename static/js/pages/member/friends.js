@@ -1,5 +1,6 @@
 // Friends: invitations both ways, the friend list and who is online right now.
 import { api, errorMessage } from "../../lib/api.js";
+import { confirmDialog } from "../../lib/confirm.js";
 import { $, busy, h, img } from "../../lib/dom.js";
 import { icon } from "../../lib/icons.js";
 import { socket } from "../../lib/socket.js";
@@ -134,7 +135,7 @@ async function invite(account) {
     return;
   }
   toast(`已送出好友邀請給 ${account}`, { type: "success" });
-  notify(account, `${me.account} 想加你為好友`);
+  notify(account, "friend_invite");
   await loadFriends();
 }
 
@@ -143,7 +144,7 @@ async function accept(id, account) {
     const result = await api("/api/friend", { method: "PATCH", body: { friend_ship_id: id } });
     if (!result.data_changed) throw result;
     toast(`你和 ${account} 成為好友了`, { type: "success" });
-    notify(account, `${me.account} 接受了你的好友邀請`);
+    notify(account, "friend_accept");
   } catch (error) {
     toastError(error, "接受邀請失敗");
   }
@@ -154,7 +155,7 @@ async function decline(id, account) {
   try {
     const result = await api("/api/friend", { method: "DELETE", body: { friend_ship_id: id } });
     if (result.error) throw result;
-    notify(account, `${me.account} 婉拒了你的好友邀請`);
+    notify(account, "friend_decline");
   } catch (error) {
     toastError(error, "操作失敗");
   }
@@ -162,7 +163,13 @@ async function decline(id, account) {
 }
 
 async function remove(id, account) {
-  if (!confirm(`確定要刪除好友 ${account} 嗎？`)) return;
+  const ok = await confirmDialog({
+    title: `刪除好友 ${account}？`,
+    message: "之後要再成為好友，需要重新送出邀請。",
+    confirmText: "刪除好友",
+    danger: true,
+  });
+  if (!ok) return;
   try {
     const result = await api("/api/friend", { method: "DELETE", body: { friend_ship_id: id } });
     if (result.error) throw result;

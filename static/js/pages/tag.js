@@ -2,7 +2,7 @@
 import { api, errorMessage } from "../lib/api.js";
 import { $, busy, h } from "../lib/dom.js";
 import { hydrateIcons, icon } from "../lib/icons.js";
-import { serverNow, timeAgo } from "../lib/time.js";
+import { timeAgo } from "../lib/time.js";
 import { toast, toastError } from "../lib/toast.js";
 
 hydrateIcons();
@@ -144,7 +144,7 @@ form.addEventListener("submit", (event) => {
       }
       const result = await api("/api/tag_page", {
         method: "POST",
-        body: { title, content, classifi: form.elements.category.value, tag_name: tag, time: serverNow() },
+        body: { title, content, classifi: form.elements.category.value, tag_name: tag },
       });
       if (!result.ok) throw result;
       dialog.close();

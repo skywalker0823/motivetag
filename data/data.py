@@ -68,6 +68,11 @@ def release_connection(exc=None):
         db.close()  # back to the pool; an unfinished transaction is rolled back
 
 
+def _in(ids):
+    """Placeholders for `IN (...)` with one %s per id."""
+    return ",".join(["%s"] * len(ids))
+
+
 def _is_password_hash(value):
     return isinstance(value, str) and (value.startswith("scrypt:") or value.startswith("pbkdf2:"))
 
@@ -284,6 +289,32 @@ class Block:
             )
             connection.commit()
             return result
+
+    def visible(member_id, block_id):
+        """Whether this member may see the post: it exists and is not someone else's secret."""
+        with connection.cursor() as cursor:
+            got = cursor.execute(
+                "SELECT 1 FROM block WHERE block_id=%s AND (content_type<>'SECRET' OR member_id=%s)",
+                (block_id, member_id),
+            )
+            return got != 0
+
+    def my_reactions(member_id, block_ids):
+        """(ids I liked, ids I disliked) among `block_ids`."""
+        if not block_ids:
+            return set(), set()
+        with connection.cursor() as cursor:
+            cursor.execute(
+                f"SELECT block_id FROM goods WHERE member_id=%s AND block_id IN ({_in(block_ids)})",  # noqa: S608 - placeholders only
+                (member_id, *block_ids),
+            )
+            liked = {row["block_id"] for row in cursor.fetchall()}
+            cursor.execute(
+                f"SELECT block_id FROM bads WHERE member_id=%s AND block_id IN ({_in(block_ids)})",  # noqa: S608 - placeholders only
+                (member_id, *block_ids),
+            )
+            disliked = {row["block_id"] for row in cursor.fetchall()}
+        return liked, disliked
 
     def is_owner(member_id, block_id):
         with connection.cursor() as cursor:
@@ -551,6 +582,27 @@ class Message:
                 return {"ok": id}
             return {"error": "message POST Error"}
 
+    def for_blocks(member_id, block_ids):
+        """Comments of several posts at once, oldest first, each with whether I liked it."""
+        if not block_ids:
+            return {}
+        with connection.cursor() as cursor:
+            cursor.execute(
+                f"""SELECT c.comment_id, c.block_id, c.member_id, m.account, c.content,
+                    c.build_time, c.nice_comment, c.given_score,
+                    EXISTS(SELECT 1 FROM c_goods g
+                           WHERE g.comment_id=c.comment_id AND g.member_id=%s) AS liked
+                FROM block_comment c JOIN member m ON m.member_id=c.member_id
+                WHERE c.block_id IN ({_in(block_ids)}) ORDER BY c.comment_id""",  # noqa: S608 - placeholders only
+                (member_id, *block_ids),
+            )
+            rows = cursor.fetchall()
+        comments = {block_id: [] for block_id in block_ids}
+        for row in rows:
+            row["liked"] = bool(row["liked"])
+            comments[row["block_id"]].append(row)
+        return comments
+
     def nice_message(comment_id):
         with connection.cursor() as cursor:
             result = cursor.execute(
@@ -571,8 +623,17 @@ class Message:
 
 
 class Images:
-    def get_image():
-        return None
+    def has_avatar(member_id):
+        with connection.cursor() as cursor:
+            cursor.execute("SELECT member_img FROM member WHERE member_id=%s", (member_id,))
+            row = cursor.fetchone()
+        return bool(row and row["member_img"])
+
+    def has_block_image(block_id):
+        with connection.cursor() as cursor:
+            cursor.execute("SELECT block_img FROM block WHERE block_id=%s", (block_id,))
+            row = cursor.fetchone()
+        return bool(row and row["block_img"])
 
     def post_image(member_id, filename):
         try:
@@ -655,6 +716,27 @@ class Vote_table:
         except Exception as e:
             print(e)
             return {"msg": "vote create error"}
+
+    def summary(member_id, block_ids):
+        """Poll options of several posts with their vote counts and whether I chose them."""
+        if not block_ids:
+            return {}
+        with connection.cursor() as cursor:
+            cursor.execute(
+                f"""SELECT o.vote_option_id, o.block_id, o.option_name,
+                    COUNT(v.vote_id) AS count, COALESCE(MAX(v.member_id=%s), 0) AS mine
+                FROM vote_options o LEFT JOIN votes v ON v.vote_option_id=o.vote_option_id
+                WHERE o.block_id IN ({_in(block_ids)})
+                GROUP BY o.vote_option_id, o.block_id, o.option_name
+                ORDER BY o.vote_option_id""",  # noqa: S608 - placeholders only
+                (member_id, *block_ids),
+            )
+            rows = cursor.fetchall()
+        polls = {block_id: [] for block_id in block_ids}
+        for row in rows:
+            row["mine"] = bool(row["mine"])
+            polls[row["block_id"]].append(row)
+        return polls
 
 
 class Vote:
@@ -754,7 +836,7 @@ class Level:
     # Exp is awarded by the server for actions it has already verified, never by client-sent amounts.
     EXP_REWARDS = {
         "block_creater": 50,
-        "block_destroy": -150,
+        "block_destroy": -50,  # takes back the creation reward, so posting and deleting earns nothing
         "good_bad": 5,
         "good_message": 5,
         "message": 3,

@@ -2,8 +2,17 @@ from flask import request, session
 
 from data.data import Notification
 from module.auth import login_required
+from module.clock import taipei_now
 
 from . import api_notification
+
+# The server writes the text, so a member can only send these, signed with their name.
+MESSAGES = {
+    "friend_invite": "{me} 想加你為好友",
+    "friend_accept": "{me} 接受了你的好友邀請",
+    "friend_decline": "{me} 婉拒了你的好友邀請",
+    "chat_missed": "{me} 想找你聊天，但你不在線上",
+}
 
 
 @api_notification.route("/api/notifi", methods=["GET"])
@@ -18,13 +27,13 @@ def getting_notifi():
 @api_notification.route("/api/notifi", methods=["POST"])
 @login_required
 def posting_notifi():
-    data = request.get_json()
-    me = session.get("member_id")
-    who = data["who"]
-    time = data["time"]
-    content = data["content"]
-    result = Notification.post_notifi(me, who, content, time)
-    return result
+    data = request.get_json(silent=True) or {}
+    template = MESSAGES.get(data.get("type"))
+    who = data.get("who")
+    if template is None or not isinstance(who, str):
+        return {"error": "unknown notification"}, 400
+    content = template.format(me=session.get("account"))
+    return Notification.post_notifi(session.get("member_id"), who, content, taipei_now())
 
 
 @api_notification.route("/api/notifi", methods=["DELETE"])

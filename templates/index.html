@@ -1,11 +1,9 @@
 <!DOCTYPE html>
 <html lang="zh-TW">
 <head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1">
-    <meta name="description" content="MotiveTag：用 #標籤 找到興趣相同的朋友。訂閱標籤、發文、投票、即時聊天。">
-    <meta name="theme-color" content="#070a16">
+    {% with entry="/js/pages/index.js", stylesheets=['/css/index.css'] %}{% include "_head.html" %}{% endwith %}
     <title>MotiveTag - 用標籤找到志同道合的朋友</title>
+    <meta name="description" content="MotiveTag：用 #標籤 找到興趣相同的朋友。訂閱標籤、發文、投票、即時聊天。">
     <script async src="https://www.googletagmanager.com/gtag/js?id=G-6WGHN61ENK"></script>
     <script>
         window.dataLayer = window.dataLayer || [];
@@ -13,15 +11,11 @@
         gtag('js', new Date());
         gtag('config', 'G-6WGHN61ENK');
     </script>
-    <link rel="icon" href="/img/main.PNG">
-    <link rel="stylesheet" href="/css/base.css">
-    <link rel="stylesheet" href="/css/index.css">
-    <script type="module" src="/js/pages/index.js"></script>
 </head>
 <body>
     <main class="landing">
         <section class="hero" aria-labelledby="hero-title">
-            <img class="hero__logo" src="/img/title.png" alt="MotiveTag" width="1890" height="339">
+            <img class="hero__logo" src="{{ asset('/img/title.webp') }}" alt="MotiveTag" width="720" height="129" fetchpriority="high">
             <h1 id="hero-title" class="hero__title">
                 找到 <span class="hero__typed" id="typed">#任何事</span><span class="hero__caret" aria-hidden="true"></span>
             </h1>
