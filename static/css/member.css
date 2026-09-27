@@ -762,11 +762,11 @@ button.poll__option:hover {
   border-color: var(--accent);
 }
 
-.poll__option span {
+.poll__option > span:not(.poll__fill) {
   position: relative;
 }
 
-.poll__fill {
+.poll__option .poll__fill {
   position: absolute;
   inset: 0 auto 0 0;
   background: var(--accent-soft);
