@@ -10,6 +10,7 @@ import { initFeed, resetFeed } from "./feed.js";
 import { initFriends } from "./friends.js";
 import { initNotifications } from "./notifications.js";
 import { initProfile, showMember } from "./profile.js";
+import { initSettings } from "./settings.js";
 import { bootstrap, me, on, showView } from "./state.js";
 import { initTags } from "./tags.js";
 
@@ -68,6 +69,7 @@ async function start() {
 
   initTopbar();
   initProfile(result.data);
+  initSettings();
   initComposer();
   initFeed();
   initTags();

@@ -174,8 +174,40 @@ class Member:
                 connection.commit()
             return result
 
-    def delete(account):
-        return None
+    def password_matches(member_id, password):
+        with connection.cursor() as cursor:
+            cursor.execute("SELECT password FROM member WHERE member_id=%s", (member_id,))
+            row = cursor.fetchone()
+        if not row or not isinstance(password, str):
+            return False
+        stored = row["password"]
+        return (
+            check_password_hash(stored, password)
+            if _is_password_hash(stored)
+            else stored == password
+        )
+
+    def delete(member_id):
+        """Deletes the member and, through the foreign keys, everything that is theirs.
+
+        Returns the S3 keys of their images (avatar and post images) for the caller to
+        remove, or None if there was no such member.
+        """
+        with connection.cursor() as cursor:
+            cursor.execute("SELECT member_img FROM member WHERE member_id=%s", (member_id,))
+            member = cursor.fetchone()
+            if member is None:
+                return None
+            cursor.execute(
+                "SELECT block_img FROM block WHERE member_id=%s AND block_img IS NOT NULL",
+                (member_id,),
+            )
+            keys = [row["block_img"] for row in cursor.fetchall()]
+            if member["member_img"]:
+                keys.append(member["member_img"])
+            cursor.execute("DELETE FROM member WHERE member_id=%s", (member_id,))
+            connection.commit()
+        return keys
 
     def getting_data_without_private(member_id):
         with connection.cursor() as cursor:

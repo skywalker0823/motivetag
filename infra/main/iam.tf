@@ -48,8 +48,9 @@ data "aws_iam_policy_document" "app" {
     ]
   }
   statement {
-    sid       = "Images"
-    actions   = ["s3:GetObject", "s3:PutObject"]
+    sid = "Images"
+    # Delete: removing a member's images when they delete their account.
+    actions   = ["s3:GetObject", "s3:PutObject", "s3:DeleteObject"]
     resources = ["${aws_s3_bucket.images.arn}/*"]
   }
   # Add and read backups, never delete them (the bucket's lifecycle rule does that).

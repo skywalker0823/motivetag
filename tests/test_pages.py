@@ -52,5 +52,6 @@ def test_assets_are_versioned_and_cached_for_a_year(client):
 def test_member_page_carries_who_i_am(member):
     alice, alice_id, account = member()
     page = alice.get(f"/{account}").get_data(as_text=True)
-    assert f'"member_id": {alice_id}' in page
-    assert "password" not in page
+    bootstrap = page.split('id="bootstrap">', 1)[1].split("</script>", 1)[0]
+    assert f'"member_id": {alice_id}' in bootstrap
+    assert "password" not in bootstrap
