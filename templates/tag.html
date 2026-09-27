@@ -2,55 +2,65 @@
 <html lang="zh-TW">
 <head>
     <meta charset="UTF-8">
-    <meta http-equiv="X-UA-Compatible" content="IE=edge">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <link rel="stylesheet" href="../css/tag.css"/> 
-    <title>Tag</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <meta name="theme-color" content="#070a16">
+    <title>標籤討論區 - MotiveTag</title>
+    <link rel="icon" href="/img/main.PNG">
+    <link rel="stylesheet" href="/css/base.css">
+    <link rel="stylesheet" href="/css/tag.css">
+    <script type="module" src="/js/pages/tag.js"></script>
 </head>
-<body>    
-    <div class="mask" id="mask"></div>
-    <div class="po_sq" id="po_sq">
-        <div class="po_title_holder">
-            <input class="po_title" id="po_title" type="text" placeholder="標題">
-            <img class="close_po" onclick="close_po()" src="/img/x.png">
-        </div>
-        <div class="po_bar">   
-            <input type="radio" id="chats" name="content_type" value="CHATS">
-            <label for="chats">閒聊</label><br>
-            <input type="radio" id="quiz" name="content_type" value="QUIZ">
-            <label for="quiz">問題</label><br>
-            <input type="radio" id="others" name="content_type" value="OTHERS">
-            <label for="others">其他</label>
-        </div>
-        <div>
-            <textarea class="po_content" id="po_content" placeholder="內容"></textarea>
-            <button class="send_po" onclick="send_po()">送出</button>
-        </div>
-    </div>
-    <nav class="tag_nav">
-        <div class="back" onclick="back()">Back to MotiveTag</div>
-    </nav>
-    <header class="tag_title">
-        <div id="the_word"></div>
-        <button class="join_tagger">加入</button>
-        <div></div>
+<body>
+    <header class="page-bar">
+        <a class="btn btn--ghost btn--sm" id="back" href="/" data-icon="arrow-left">回到動態</a>
     </header>
-    <div class="control_list">
-        <button onclick="po_up()" class="po_btn">發文</button>
-    </div>
-    <div class="po_nav">
-        <div class="nav_type">分類</div>
-        <div class="nav_titler">標題</div>
-        <div class="nav_author">作者</div>
-        <div class="nav_popu">人氣/回覆</div>
-        <div class="nav_time">發表時間</div>
-    </div>
-    <section class="tag_page_holder">
-    <div class="Acheron" id="Acheron">
-        <!-- start-here -->
-    </div>
-    </section>
-    <script type="text/javascript" src="../js/tag_page.js"></script>
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/moment.js/2.29.3/moment.min.js"></script>
+    <main class="page">
+        <section class="tag-hero">
+            <div>
+                <p class="tag-hero__kicker">標籤討論區</p>
+                <h1 class="tag-hero__title" id="tag-title"></h1>
+            </div>
+            <div class="tag-hero__actions">
+                <button class="btn btn--secondary" id="subscribe" type="button" data-icon="plus">訂閱</button>
+                <button class="btn" id="new-topic" type="button" data-icon="edit">發起討論</button>
+            </div>
+        </section>
+
+        <div class="topics card" id="topics" aria-live="polite">
+            <div class="spinner" role="status" aria-label="載入中"></div>
+        </div>
+    </main>
+
+    <dialog class="dialog" id="topic-dialog" aria-labelledby="topic-dialog-title">
+        <form id="topic-form" novalidate>
+            <div class="dialog__header">
+                <h2 class="dialog__title" id="topic-dialog-title">發起討論</h2>
+                <button class="icon-btn" type="button" data-close data-icon="x" aria-label="關閉"></button>
+            </div>
+            <div class="dialog__body">
+                <label class="field">
+                    <span class="field__label">標題</span>
+                    <input class="input" name="title" maxlength="100" required>
+                </label>
+                <fieldset class="field category">
+                    <legend class="field__label">分類</legend>
+                    <div class="segmented">
+                        <label><input type="radio" name="category" value="閒聊" checked><span>閒聊</span></label>
+                        <label><input type="radio" name="category" value="問題"><span>問題</span></label>
+                        <label><input type="radio" name="category" value="其他"><span>其他</span></label>
+                    </div>
+                </fieldset>
+                <label class="field">
+                    <span class="field__label">內容</span>
+                    <textarea class="textarea" name="content" rows="6" maxlength="5000" required></textarea>
+                </label>
+                <p class="field__hint field__hint--error" data-error role="alert"></p>
+            </div>
+            <div class="dialog__footer">
+                <button class="btn btn--secondary" type="button" data-close>取消</button>
+                <button class="btn" type="submit">發佈</button>
+            </div>
+        </form>
+    </dialog>
 </body>
 </html>

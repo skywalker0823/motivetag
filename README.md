@@ -129,12 +129,6 @@ Every pull request runs lint, tests, a dependency audit and an image scan
 
 ## PREVIEW
 
-### Testing account
-| Account     | Password|
-| ------------- |:-------------:|
-| guest     | guest | 
-
-
 ### Front page
 <img width="1327" alt="截圖 2022-06-09 下午8 53 59" src="https://user-images.githubusercontent.com/56625237/172851655-beb06ce6-0d45-4943-b34b-886799ac5339.png" style="width:49%;">
 
@@ -196,8 +190,11 @@ This idea comes when the website is almost done. The final goal is to create a �
 
 ## Tech & tool used
 ### Frontend
-* HTML, CSS, JavaScript (AJAX)
-* Moment.js, Chart.js, Socket.IO client
+* Plain HTML, CSS and native ES modules, no build step ([ADR 0009](docs/adr/0009-frontend-es-modules-before-react.md))
+* Design tokens and shared components in `static/css/base.css`
+* Shared modules in `static/js/lib/` (API client, DOM helper, icons, time, toasts, uploads)
+* One module folder per page in `static/js/pages/`
+* Socket.IO client, served from our own origin (`static/vendor/`)
 
 ### Backend
 * Python 3.11, Flask, Flask-SocketIO on gunicorn + gevent

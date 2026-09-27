@@ -2,124 +2,79 @@
 <html lang="zh-TW">
 <head>
     <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <meta name="description" content="MotiveTag：用 #標籤 找到興趣相同的朋友。訂閱標籤、發文、投票、即時聊天。">
+    <meta name="theme-color" content="#070a16">
+    <title>MotiveTag - 用標籤找到志同道合的朋友</title>
     <script async src="https://www.googletagmanager.com/gtag/js?id=G-6WGHN61ENK"></script>
     <script>
-    window.dataLayer = window.dataLayer || [];
-    function gtag(){dataLayer.push(arguments);}
-    gtag('js', new Date());
-    gtag('config', 'G-6WGHN61ENK');
+        window.dataLayer = window.dataLayer || [];
+        function gtag(){dataLayer.push(arguments);}
+        gtag('js', new Date());
+        gtag('config', 'G-6WGHN61ENK');
     </script>
-    <meta http-equiv="X-UA-Compatible" content="IE=edge">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <script src="https://unpkg.com/boxicons@2.1.2/dist/boxicons.js"></script>
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/TypewriterJS/1.0.0/typewriter.min.js"></script>
-    <link rel="stylesheet" href="css/index.css"/>
-    <title>MotiveTag - 尋找共同興趣朋友</title>
+    <link rel="icon" href="/img/main.PNG">
+    <link rel="stylesheet" href="/css/base.css">
+    <link rel="stylesheet" href="/css/index.css">
+    <script type="module" src="/js/pages/index.js"></script>
 </head>
 <body>
-    <div class="holder">
-    <div class="left">
-        <div class="left_title">
-            <p class="demo" id="demo"></p>
-        </div>
-    </div>
-    <div class="right">
-    <section class="login">
-            <img class="title" src="/img/title.png">
-        <div class="login_holder">
-                <div class="input_holder">
-                    <div class="input_inner">
-                        <input type="text" id="account" placeholder="帳號" autocomplete="off">
-                        <box-icon name='x' color='#f7071f' id="account_x" class="account_x"></box-icon>
-                    </div>
-                </div>
-                <div class="input_holder">
-                    <div class="input_inner">
-                        <input type="password" id="password" placeholder="密碼" autocomplete="current-password">
-                        <box-icon name='x' color='#f7071f' id="pass_x" class="pass_x"></box-icon>
-                    </div>
-                </div>
-        </div>
-            <div class="pass_remind"></div>
-            <button id="login_submit" class="login_submit">登入</button>
-    </section>
-    <section class="signup">
-        <div class="signup_holder">
-                <div class="signup_input_holder">
+    <main class="landing">
+        <section class="hero" aria-labelledby="hero-title">
+            <img class="hero__logo" src="/img/title.png" alt="MotiveTag" width="1890" height="339">
+            <h1 id="hero-title" class="hero__title">
+                找到 <span class="hero__typed" id="typed">#任何事</span><span class="hero__caret" aria-hidden="true"></span>
+            </h1>
+            <p class="hero__lead">一個以 #標籤 為核心的社群。訂閱你在意的話題，只看你想看的內容，認識興趣相同的人。</p>
+            <ul class="features">
+                <li><span class="features__icon" data-icon="hash"></span><div><strong>訂閱標籤</strong><span>搜尋任何關鍵字，訂閱後動態只出現相關貼文</span></div></li>
+                <li><span class="features__icon" data-icon="poll"></span><div><strong>發文與投票</strong><span>公開、私密或匿名發文，還能附圖和發起投票</span></div></li>
+                <li><span class="features__icon" data-icon="users"></span><div><strong>交朋友、即時聊天</strong><span>看到好友上線狀態，直接開聊天室</span></div></li>
+            </ul>
+        </section>
 
-
-                    <div class="input_section">
-                        <div class="input_holder">
-                            <input type="text" id="sign_account" placeholder="帳號" autocomplete="off">
-                            <box-icon name='check' color='#0bf707' id="check_ok" class="check_ok"></box-icon>
-                            <box-icon name='x' color='#f7071f' id="x" style="display: none;"></box-icon>
-                            <box-icon name='loader-alt' rotate='90' animation='spin' color='#10fc0c' id="loading" class="loading"></box-icon>
-                        </div>
-                        <span class="url_preview">https://motivetag.xyz/</span><span id="preview_span" class="preview_span"></span>
-                        <div class="error_msg"></div>
-                    </div>
-                    <div class="input_section">
-                        <div class="input_holder">
-                            <input type="password" id="sign_password" placeholder="密碼">
-                        </div>
-                        
-                    </div>
-                    <div class="input_section">
-                        <div class="input_holder">
-                            <input type="email" id="sign_email" placeholder="信箱">
-                        </div>
-                    </div>
-                    <div class="input_section">
-                        <div class="input_holder">
-                            <span class="label">生日</span>
-                            <select name="year" autocomplete="bday-year" id="b_year">
-                                <option value="null">年</option>
-
-                            </select>
-                            <span class="date_sep">/</span>
-                            <select name="year" autocomplete="bday-month" id="b_month">
-                                <option value="null">月</option>
-                            </select>
-                            <span class="date_sep">/</span>
-                            <select name="year" autocomplete="bday-day" id="b_day">
-                                <option value="null">日</option>
-                            </select>
-                        </div>
-                    </div>
-                </div>
-            <div class="signup_btn">
-                <button id="signup_submit" class="signup_submit">註冊</button>
+        <section class="auth card" aria-label="登入或註冊">
+            <div class="tabs" role="tablist">
+                <button class="tabs__tab" role="tab" id="tab-signin" aria-controls="panel-signin" aria-selected="true">登入</button>
+                <button class="tabs__tab" role="tab" id="tab-signup" aria-controls="panel-signup" aria-selected="false" tabindex="-1">註冊</button>
             </div>
-            <div class="outer_check">
-                <box-icon id="signup_check" class="signup_check" name='check-double' color='#0cfc23' ></box-icon>
-            </div>
-        </div>
-    </section>
-    </div>
-        <div class="to_bot">
-            <box-icon   name='chevrons-down' type='solid' animation='fade-down' color='#FFF' ></box-icon>
-        </div>
-    </div>
-    <section class="guide">
-        <div class="g_1">
-            <p class="g_content">Find ,search any Tag you want and subscribe.</p>
-            <img class="g_img" src="/img/g1.png">
-        </div>
-        <div class="g_1">
-            <img class="g_img" src="/img/g2.png">
-            <p class="g_content">Browsing or Sharing with Tags.</p>
-        </div>
-        <div class="g_1">
-            <p class="g_content">Join discussion or activities.</p>
-            <img class="g_img" src="/img/g3.png">
-        </div>
-        <div class="g_1">
-            <img class="g_img" src="/img/g4.png">
-            <p class="g_content">Make friends and chat!</p>
-        </div>
-    </section>
 
-<script type="text/javascript" src="js/index.js"></script>
-<script src="https://cdnjs.cloudflare.com/ajax/libs/moment.js/2.29.3/moment.min.js"></script>
+            <form class="auth__form" id="panel-signin" role="tabpanel" aria-labelledby="tab-signin" novalidate>
+                <label class="field">
+                    <span class="field__label">帳號</span>
+                    <input class="input" name="account" autocomplete="username" required autocapitalize="off" spellcheck="false">
+                </label>
+                <label class="field">
+                    <span class="field__label">密碼</span>
+                    <input class="input" name="password" type="password" autocomplete="current-password" required>
+                </label>
+                <p class="field__hint field__hint--error" data-error role="alert"></p>
+                <button class="btn btn--block" type="submit">登入</button>
+            </form>
+
+            <form class="auth__form" id="panel-signup" role="tabpanel" aria-labelledby="tab-signup" novalidate hidden>
+                <label class="field">
+                    <span class="field__label">帳號</span>
+                    <input class="input" name="account" autocomplete="username" required minlength="3" maxlength="20" autocapitalize="off" spellcheck="false" aria-describedby="account-hint">
+                    <span class="field__hint" id="account-hint">3–20 個字母、數字或底線，也是你的個人頁網址</span>
+                </label>
+                <label class="field">
+                    <span class="field__label">密碼</span>
+                    <input class="input" name="password" type="password" autocomplete="new-password" required minlength="8" aria-describedby="password-hint">
+                    <span class="field__hint" id="password-hint">至少 8 個字元</span>
+                </label>
+                <label class="field">
+                    <span class="field__label">Email</span>
+                    <input class="input" name="email" type="email" autocomplete="email" required>
+                </label>
+                <label class="field">
+                    <span class="field__label">生日</span>
+                    <input class="input" name="birthday" type="date" autocomplete="bday" required min="1900-01-01">
+                </label>
+                <p class="field__hint field__hint--error" data-error role="alert"></p>
+                <button class="btn btn--block" type="submit">建立帳號</button>
+            </form>
+        </section>
+    </main>
 </body>
 </html>
