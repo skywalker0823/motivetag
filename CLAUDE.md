@@ -107,15 +107,14 @@ presigned URL for 30 min; presence, calls and notifications pushed over Socket.I
 (polls are 30 s / 60 s fallbacks); feed pages of 10. Redis reviewed and deliberately
 not added yet (see ADR 0008). CloudFront judged unnecessary behind Cloudflare.
 
+**Done in PR #27:** feed tabs 我的動態 / 探索 (`GET /api/v1/posts/explore`); empty
+feed offers trending tags in one tap; first-visit guided tour (`static/js/lib/tour.js`,
+steps in `static/js/pages/member/tour.js`, "?" button replays it); landing page opens
+on 註冊 for new browsers.
+
 **On branch `claude/sharp-bohr-bhm8n5` (not merged yet)**
-- Feed tabs 我的動態 / 探索 (`GET /api/v1/posts/explore`: everyone's non-secret
-  posts); an empty feed offers trending tags to subscribe in one tap; subscribing
-  or dropping a tag reloads the feed.
-- First-visit guided tour (`static/js/lib/tour.js`, steps in
-  `static/js/pages/member/tour.js`) for members who joined in the last 7 days,
-  remembered per account in localStorage; the "?" button in the top bar replays it.
-- Landing page opens on 註冊 unless this browser has signed in before; on phones
-  the feature list now shows below the form.
+- Secret posts' images are private (`/images/block_<id>` checks `Block.visible`).
+- Search icon centred in the top bar; shorter placeholder on phones.
 
 **Roadmap (ADR 0010, phase 1 next)**
 1. Report content and block members (App Store Guideline 1.2).
