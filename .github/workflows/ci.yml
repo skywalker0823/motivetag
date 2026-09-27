@@ -21,6 +21,8 @@ jobs:
       - run: uv sync --frozen
       - run: uv run ruff check --output-format github
       - run: uv run ruff format --check
+      - name: Browser modules parse
+        run: for f in $(git ls-files 'static/js/*.js'); do node --check "$f"; done
 
   test:
     runs-on: ubuntu-latest

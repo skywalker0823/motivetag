@@ -2,239 +2,167 @@
 <html lang="zh-TW">
 <head>
     <meta charset="UTF-8">
-    <meta http-equiv="X-UA-Compatible" content="IE=edge">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <link rel="shortcut icon" href="#">
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/socket.io/4.0.1/socket.io.js" integrity="sha512-q/dWJ3kcmjBLU4Qc47E4A9kTB4m3wuTY7vkFJDTZKjTs8jhyGQnaUrxa0Ytd0ssMZhbNua9hE+E7Qv1j+DyZwA==" crossorigin="anonymous"></script>
-    <script src="https://unpkg.com/boxicons@2.1.2/dist/boxicons.js"></script>
-    <link rel="stylesheet" href="css/member.css"/>     
+    <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+    <meta name="theme-color" content="#070a16">
     <title>MotiveTag</title>
+    <link rel="icon" href="/img/main.PNG">
+    <link rel="stylesheet" href="/css/base.css">
+    <link rel="stylesheet" href="/css/member.css">
+    <script type="module" src="/js/pages/member/main.js"></script>
 </head>
-<body>
-    <div class="mask" id="mask"></div>
-    <div class="user_info_sq" id="user_info_sq">
-        <div class="popup_header">
-            <div class="popup_header_inner">
-                <img id="popup_avatar" class="block_avatar">
-                <div id="pop_account" class="pop_account"></div>
-            </div>
-                <img class="pop_close" onclick="close_pop()" src="/img/x.png">
-        </div>
-        <div class="popup_body">
-            <div class="pop_items">
-                <p class="pop_title">生日日期 :</p><p id="pop_birthday"></p>
-            </div>
-            <div class="pop_items">
-                <p class="pop_title">首次登入 :</p><p id="pop_first"></p>
-            </div>
-            <div class="pop_items">
-                <p class="pop_title">上次上線 :</p><p id="pop_last"></p>
-            </div>
-            <div class="pop_items">
-                <p class="pop_title">目前等級 :</p><p id="pop_level"></p>
-            </div>
-            <div class="pop_items">
-                <p class="pop_title">今天心情 :</p><p id="pop_mood"></p>
-            </div>
-        </div>
-        <div class="pop_interact">
-            <button id="pop_add" class="pop_friend">加好友</button>
-        </div>
-    </div>
-    <div class="talent_sq" id="talent_sq">
-        <div class="talent_attack">(Passive:Comments get additional exp)
-            <div>
-                <div>你的爛獲得額外經驗，且傷害更高(0/5)</div>
-            </div>
-            <div>所有傷害1.5倍</div>
-        </div>
-        <div class="talent_defence">(Passive:Reduce all damage by 50%)
-            <div>
-                <div>你的讚獲得額外經驗，且給對方加成更高(0/5)</div>
-            </div>
-            <div>你的文章Tag將產生影響力，且對於排行影響+5</div>
-        </div>
-        <div class="talent_support">(Passive:Increase all exp get)
-            <div></div>
-            <div></div>
-        </div>
-        <div onclick="close_talent()">x</div>
-    </div>
-    <nav class="top_bar">
-        <div class="top_left">
-            <div class="top_left_inner">
-                
-                <input onclick="window.location.reload();" type="image" src="/img/title_member.png" class="mark">
-            </div>
-        </div>
-
-        <box-icon class="refresh" name='revision' color='#1cbfff' id="windowed"  onclick="search_build_blocks(this.id)"></box-icon>
-
-        <div class="observer_holder">
-            <input type="text" class="tag_observer" placeholder="Tag of Interest" id="tag_observer"><img src="/img/search-regular-24.png" id="observer_btn" class="observer_btn" onclick="observe()"></img>
-        </div>
-        <div class="top_right">
-            <div id="unread_notifis" class="unread_notifis"></div>
-            <box-icon class="notifi" id="notifi_bell" name='bell' color="#1cbfff" style="cursor:pointer"></box-icon>
-            <!-- <button class="signout_btn" id="signout">SignOut</button> -->
-            <box-icon name='log-out' class="logout" color="#1cbfff" id="signout" style="cursor:pointer"></box-icon>
-        </div>
-        <div class="notifi_list" id="notifi_list"></div>
-    </nav>
-    <section class="main_frame">
-        <div class="member_functions">
-            <div class="m_f_mytags">
-                <div class="my_tags_search">
-                    <input class="tag_searcher" type="text" id="tag_searcher" placeholder="TAG Append">                    
-                </div>
-                <button class="tag_search_btn" id="tag_search_btn">MotiveTag</button>
-                <div class="tag_box" id="tag_box">
-                    <!-- tag put here -->
+<body data-view="feed">
+    <header class="topbar">
+        <a class="topbar__logo" href="/" aria-label="MotiveTag 首頁">
+            <img src="/img/title_member.png" alt="MotiveTag" width="1890" height="339">
+        </a>
+        <form class="topbar__search" id="tag-search" role="search">
+            <label class="visually-hidden" for="tag-search-input">搜尋標籤</label>
+            <input class="input" id="tag-search-input" name="tag" placeholder="搜尋 #標籤" autocomplete="off">
+            <button class="icon-btn icon-btn--sm" type="submit" data-icon="search" aria-label="搜尋"></button>
+        </form>
+        <div class="topbar__actions">
+            <button class="icon-btn" id="refresh" type="button" data-icon="refresh" aria-label="重新整理動態" title="重新整理動態"></button>
+            <div class="notifications">
+                <button class="icon-btn" id="notif-button" type="button" data-icon="bell" aria-label="通知" aria-expanded="false" aria-controls="notif-panel" title="通知">
+                    <span class="badge-dot" id="notif-count" hidden></span>
+                </button>
+                <div class="popover" id="notif-panel" hidden>
+                    <p class="popover__title">通知</p>
+                    <ul class="notif-list" id="notif-list"></ul>
                 </div>
             </div>
-            <div class="m_f_hottags">
-                <div class="hot_holder"><p>Trend</p></div>
-                <div class="hot_box" id="hot_box"></div>
-            </div>
-                <section class="m_f_me">
-        <div class="bottom_inner">
-            <div class="block_creator">
-                <div class="block_user">
-                    <div>
-                        <img class="user_icon" id="user_main_avatar" src="img/user-regular-24.png">
-                    
-                     <div class="image-upload">
-                        <label for="upload_user_avatar">
-                            <img style="width: 15px;cursor: pointer;" src="img/upload-regular-24.png"/>
+            <button class="icon-btn" id="signout" type="button" data-icon="logout" aria-label="登出" title="登出"></button>
+        </div>
+    </header>
+
+    <div class="layout">
+        <aside class="col col--left" data-panel="tags me">
+            <section class="card profile" id="profile" data-panel="me" aria-label="我的資料">
+                <div class="profile__head">
+                    <label class="profile__avatar" title="更換大頭貼">
+                        <img class="avatar avatar--lg" id="my-avatar" src="/img/user-regular-24.png" alt="">
+                        <span class="profile__avatar-edit" data-icon="camera"></span>
+                        <input class="visually-hidden" id="avatar-input" type="file" accept="image/png,image/jpeg,image/gif" aria-label="更換大頭貼">
+                    </label>
+                    <div class="profile__who">
+                        <p class="profile__name" id="my-account"></p>
+                        <p class="profile__meta" id="my-email"></p>
+                        <p class="profile__meta" id="my-joined"></p>
+                    </div>
+                </div>
+                <div class="level">
+                    <div class="level__row"><span class="level__label" id="my-level">Lv 1</span><span class="level__exp" id="my-exp"></span></div>
+                    <div class="level__bar" role="progressbar" aria-label="升級進度" aria-valuemin="0" aria-valuemax="100" id="my-level-bar"><span id="my-level-fill"></span></div>
+                </div>
+                <div class="mood">
+                    <button class="mood__text" id="mood-text" type="button" title="點一下修改心情"></button>
+                    <input class="input mood__input" id="mood-input" maxlength="100" placeholder="今天心情如何？按 Enter 儲存" hidden>
+                </div>
+            </section>
+
+            <section class="card" data-panel="tags" aria-labelledby="my-tags-title">
+                <h2 class="card__title" id="my-tags-title"><span>我訂閱的標籤</span></h2>
+                <form class="input-group" id="tag-add">
+                    <label class="visually-hidden" for="tag-add-input">新增標籤</label>
+                    <input class="input" id="tag-add-input" name="tag" placeholder="例如：咖啡" autocomplete="off" maxlength="30">
+                    <button class="btn" type="submit">訂閱</button>
+                </form>
+                <ul class="chips" id="my-tags"></ul>
+            </section>
+
+            <section class="card" data-panel="tags" aria-labelledby="trend-title">
+                <h2 class="card__title" id="trend-title"><span>熱門標籤</span></h2>
+                <ol class="trend" id="trend"></ol>
+            </section>
+        </aside>
+
+        <main class="col col--center" data-panel="feed">
+            <form class="card composer" id="composer">
+                <label class="visually-hidden" for="composer-text">貼文內容</label>
+                <textarea class="composer__text" id="composer-text" name="content" rows="2" maxlength="2000" placeholder="想分享什麼？加上 #標籤 讓同好找到你"></textarea>
+                <div class="composer__image" id="composer-image" hidden>
+                    <img alt="要上傳的圖片預覽" id="composer-image-preview">
+                    <button class="icon-btn icon-btn--sm composer__image-remove" type="button" id="composer-image-remove" data-icon="x" aria-label="移除圖片"></button>
+                </div>
+                <fieldset class="poll-editor" id="poll-editor" hidden>
+                    <legend>投票選項（2–5 個）</legend>
+                    <div class="poll-editor__options" id="poll-options"></div>
+                    <button class="btn btn--ghost btn--sm" type="button" id="poll-add" data-icon="plus">新增選項</button>
+                </fieldset>
+                <p class="composer__hint" id="composer-hint"></p>
+                <div class="composer__bar">
+                    <div class="segmented" role="radiogroup" aria-label="誰可以看到">
+                        <label><input type="radio" name="visibility" value="PUBLIC" checked><span data-icon="globe">公開</span></label>
+                        <label><input type="radio" name="visibility" value="SECRET"><span data-icon="lock">私密</span></label>
+                        <label class="segmented__anon"><input type="radio" name="visibility" value="Anonymous"><span data-icon="ghost">匿名</span></label>
+                    </div>
+                    <div class="composer__tools">
+                        <label class="icon-btn" title="加入圖片">
+                            <span data-icon="image"></span>
+                            <input class="visually-hidden" id="composer-file" type="file" accept="image/png,image/jpeg,image/gif" aria-label="加入圖片">
                         </label>
-                        <input id="upload_user_avatar" accept="image/png,image/jpeg,image/gif" onchange="upload_user_img()" type="file" style="display:none;" />
+                        <button class="icon-btn" type="button" id="poll-toggle" data-icon="poll" aria-pressed="false" aria-label="發起投票" title="發起投票"></button>
+                        <button class="btn" type="submit">發佈</button>
                     </div>
-                    </div>
-
-
-              
-                    <div class="user_info">
-                        <div id="user_account" class="user_info_in"><box-icon name='game' color='#1cbfff' ></box-icon></div>
-                        <div id="user_mail" class="user_info_in"><box-icon name='envelope' color='#1cbfff' ></box-icon></div>
-                        <div id="user_firstday" class="user_info_in"><box-icon name='calendar-star' color='#1cbfff' ></box-icon></div>
-                        <!-- <box-icon type='logo' name='steam' color='#1cbfff'></box-icon> -->
-                    </div>
-                    <div class="leveler">
-                        <span>Level</span><span id="level_display" class="level_display"></span>
-                        <div class="level">
-                            <div class="level_bar" id="progress_display"></div>
-                        </div>
-                    </div>
-                    <div class="user_control">
-                        <!-- <div class="skill" onclick="open_skill()">技能</div>
-                        <div class="talent" onclick="open_talent()">天賦</div> -->
-                        <div id="user_mood" onclick="change_mood()">
-                            <p id="mood_text"></p>
-                            <input class="mood_input" type="text" id="mood_input">
-                        </div>
-                    </div>
-                    
                 </div>
+            </form>
 
+            <div class="feed-filter" id="feed-filter" hidden>
+                <span>正在看 <strong id="feed-filter-tag"></strong> 的貼文</span>
+                <button class="btn btn--secondary btn--sm" type="button" id="feed-filter-clear">顯示全部動態</button>
             </div>
+            <div class="feed" id="feed" aria-live="polite"></div>
+            <div class="spinner" id="feed-spinner" role="status" aria-label="載入中"></div>
+            <p class="empty" id="feed-end" hidden></p>
+            <div id="feed-sentinel" aria-hidden="true"></div>
+        </main>
+
+        <aside class="col col--right" data-panel="friends">
+            <section class="card" aria-labelledby="friends-title">
+                <h2 class="card__title" id="friends-title"><span>好友</span></h2>
+                <form class="input-group" id="friend-invite">
+                    <label class="visually-hidden" for="friend-invite-input">要加的帳號</label>
+                    <input class="input" id="friend-invite-input" name="account" placeholder="輸入帳號加好友" autocomplete="off">
+                    <button class="btn" type="submit">邀請</button>
+                </form>
+                <div class="friend-group">
+                    <h3 class="friend-group__title">收到的邀請</h3>
+                    <ul class="people" id="friends-incoming"></ul>
+                </div>
+                <div class="friend-group">
+                    <h3 class="friend-group__title">我的好友</h3>
+                    <ul class="people" id="friends-list"></ul>
+                </div>
+                <div class="friend-group">
+                    <h3 class="friend-group__title">等待對方回覆</h3>
+                    <ul class="people" id="friends-outgoing"></ul>
+                </div>
+            </section>
+        </aside>
+    </div>
+
+    <nav class="tabbar" aria-label="主要功能">
+        <button type="button" data-tab="feed" aria-current="page"><span data-icon="home"></span>動態</button>
+        <button type="button" data-tab="tags"><span data-icon="hash"></span>標籤</button>
+        <button type="button" data-tab="friends"><span data-icon="users"></span>好友<span class="badge-dot" id="tab-friends-badge" hidden></span></button>
+        <button type="button" data-tab="me"><span data-icon="user"></span>我</button>
+    </nav>
+
+    <div class="chats" id="chats" aria-live="polite"></div>
+
+    <dialog class="dialog" id="member-dialog" aria-labelledby="member-dialog-name">
+        <div class="dialog__header">
+            <div class="member-card__who">
+                <img class="avatar avatar--lg" id="member-dialog-avatar" alt="">
+                <div>
+                    <p class="dialog__title" id="member-dialog-name"></p>
+                    <p class="profile__meta" id="member-dialog-mood"></p>
+                </div>
+            </div>
+            <form method="dialog"><button class="icon-btn" data-icon="x" aria-label="關閉"></button></form>
         </div>
-    </section>
-        </div>
-
-
-
-
-        <div class="member_blocks" id="member_blocks">
-                        <div class="blockor">
-
-                <div class="blockor_inner" id="blockor_inner">
-                    <div class="block_title">
-                        <select class="block_submit_btn" id="blockor_type" placeholder="Type">
-                            <option>PUBLIC</option>                      
-                            <option>SECRET</option>
-                        </select>
-                    </div>
-                    <textarea class="blockor_content" id="blockor_content" type="text" placeholder="Any thoughts?"></textarea>
-                    <div class="block_submit">
-                        <button class="block_submit_btn" id="block_submit_btn">Build</button>
-                    </div>
-                </div>
-                <div class="block_guard" id="block_guard" onclick="bye_guard(this.id)"></div>
-                <div class="voter" id="voter">
-                    <div class="vote_header"><p>投票設定(至多五項)</p><img id="del_vote" class="del_vote" src="/img/x.png"></div>
-                        <div class="vote_holder" id="vote_holder">
-                            <div class="a_option"><input class="option_input" type="text" placeholder="選項"></div>
-                            <div class="a_option"><input class="option_input" type="text" placeholder="選項"></div>
-                        </div>
-                        <div><img class="more_option" onclick="more_options()" src="/img/plus.png"></div>
-                </div>
-                <div class="img_pre_box" id="img_pre_box">
-                    <img src="#" id="upload_preview" class="upload_img_preview">
-                    <p onclick="cancel_upload()">取消</p>
-                </div>
-                <div class="block_tools">
-                    <div class="block_tools_inner">
-                        <box-icon name='mask' id="mask" color='#e20cfc' onclick="anonymous_mode()"></box-icon>
-                        <div>
-                            <label for="upload_block_img">
-                                <box-icon name='image-alt' color="#09ed5b" for="upload_user_avatar"></box-icon>
-                            </label>
-                            <input id="upload_block_img" accept="image/png,image/jpeg,image/gif" onchange="upload_block_img_preview()" type="file" style="display: none;"/>
-                        </div>
-                        <box-icon name='poll' color="#ed096d" onclick="start_poll()"></box-icon>
-                        <!-- <box-icon name='face' type='solid' color='#e9ed09' ></box-icon>
-                        <box-icon name='location-plus' color='#fcb00c' ></box-icon> -->
-                    </div>
-                </div>
-            </div>
-            <div class="block_box" id="block_box">
-                <!-- <div class="a_block">我是一個block!</div>
-                <div class="a_block">我是一個block!</div>
-                <div class="a_block">我是一個block!</div> -->
-            </div>
-            <box-icon name='loader-alt' rotate='90' id="loading" animation='spin' color='#1cbfff' style="margin: 0 auto;" ></box-icon>
-        </div>
-        <div class="member_chats">
-            <div class="m_f_mytags">
-                <div class="my_tags_search">
-                    <input class="tag_searcher" id="friend_searcher" type="text" placeholder="Who to find?">                    
-                </div>
-                <button class="tag_search_btn" id="friend_search_btn">Request a friend</button>
-            </div>
-            <div class="member_list">
-                <div  class="friend_list" id="friend_list">
-                    <p class="friend_in">Friends</p>
-                </div>
-                <div class="request_list" id="request_list">
-                    <p class="friend_in">Request</p>
-
-                </div>
-                <div class="waiting_list" id="waiting_list">
-                    <p class="friend_in">Waiting</p>
-
-                </div>
-            </div>
-            <!-- <div class="chat_holder" id="chat_holder">
-
-            </div> -->
-        </div>         
-    </section>
-    <!-- <div class="chat_holder" id="chat_holder"></div> -->
-
-
-    <footer class="footer">
-        <div class="chat_holder" id="chat_holder"></div>
-    </footer>
-
-<script type="text/javascript" src="js/member.js"></script>
-<script type="text/javascript" src="js/block.js"></script>
-<script type="text/javascript" src="js/tag.js"></script>
-<script type="text/javascript" src="js/friend.js"></script>
-<script type="text/javascript" src="js/notifi.js"></script>
-<script type="text/javascript" src="js/chat.js"></script>
-<script src="https://cdnjs.cloudflare.com/ajax/libs/moment.js/2.29.3/moment.min.js"></script>
-<script type="text/javascript" src="js/vote.js"></script>
-<script type="text/javascript" src="js/level.js"></script>
-<script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/2.5.0/Chart.min.js"></script>
+        <dl class="dialog__body member-card__facts" id="member-dialog-facts"></dl>
+        <div class="dialog__footer" id="member-dialog-actions"></div>
+    </dialog>
 </body>
 </html>

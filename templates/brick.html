@@ -2,34 +2,32 @@
 <html lang="zh-TW">
 <head>
     <meta charset="UTF-8">
-    <meta http-equiv="X-UA-Compatible" content="IE=edge">
-    <link rel="stylesheet" href="../../css/brick.css"/> 
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>A brick</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <meta name="theme-color" content="#070a16">
+    <title>討論 - MotiveTag</title>
+    <link rel="icon" href="/img/main.PNG">
+    <link rel="stylesheet" href="/css/base.css">
+    <link rel="stylesheet" href="/css/tag.css">
+    <script type="module" src="/js/pages/brick.js"></script>
 </head>
 <body>
-    <nav class="tag_nav">
-        <div class="back" onclick="history.back()">Back to Tag</div>
-    </nav>
-    <header class="tag_title">
-        <div id="the_word"></div>
-        <span>By.</span><span id="by_who"></span>
+    <header class="page-bar">
+        <a class="btn btn--ghost btn--sm" id="back" href="/" data-icon="arrow-left">回到討論區</a>
     </header>
-    <section class="content_holder">
-        <div class="content" id="content"></div>
-    </section>
-    <section class="feedback_holder">
-        <div class="feedback">
-            <input class="feedback_input" id="feedback_input" type="text" placeholder="回覆">
-            <button class="feedback_btn" id="feedback_btn" onclick="discuss_sender()">回覆</button>
-        </div>
-    </section>
-    <section class="discuss_holder">
-        <div class="brick_discuss" id="brick_discuss">
-            <!-- Start here -->
-        </div>
-    </section>
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/moment.js/2.29.3/moment.min.js"></script>
-    <script type="text/javascript" src="../../js/brick.js"></script>
+    <main class="page">
+        <article class="card topic" id="topic" aria-live="polite">
+            <div class="spinner" role="status" aria-label="載入中"></div>
+        </article>
+
+        <section class="replies" aria-labelledby="replies-title">
+            <h2 class="replies__title" id="replies-title">回覆</h2>
+            <form class="card reply-form" id="reply-form">
+                <label class="visually-hidden" for="reply-input">回覆內容</label>
+                <textarea class="textarea" id="reply-input" name="content" rows="3" maxlength="2000" placeholder="說說你的想法…"></textarea>
+                <button class="btn" type="submit">回覆</button>
+            </form>
+            <ol class="reply-list" id="replies"></ol>
+        </section>
+    </main>
 </body>
 </html>

@@ -196,8 +196,11 @@ This idea comes when the website is almost done. The final goal is to create a ã
 
 ## Tech & tool used
 ### Frontend
-* HTML, CSS, JavaScript (AJAX)
-* Moment.js, Chart.js, Socket.IO client
+* Plain HTML, CSS and native ES modules, no build step ([ADR 0009](docs/adr/0009-frontend-es-modules-before-react.md))
+* Design tokens and shared components in `static/css/base.css`
+* Shared modules in `static/js/lib/` (API client, DOM helper, icons, time, toasts, uploads)
+* One module folder per page in `static/js/pages/`
+* Socket.IO client, served from our own origin (`static/vendor/`)
 
 ### Backend
 * Python 3.11, Flask, Flask-SocketIO on gunicorn + gevent
