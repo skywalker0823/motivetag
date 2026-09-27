@@ -602,6 +602,69 @@
   font-size: var(--text-sm);
 }
 
+.feed-tabs {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: var(--space-1);
+  padding: var(--space-1);
+  border-radius: var(--radius-pill);
+  background: var(--surface-2);
+}
+
+.feed-tabs button {
+  min-height: 36px;
+  border: 0;
+  border-radius: var(--radius-pill);
+  background: transparent;
+  color: var(--text-muted);
+  font: inherit;
+  font-size: var(--text-sm);
+  font-weight: 600;
+  cursor: pointer;
+}
+
+.feed-tabs button[aria-pressed="true"] {
+  background: var(--surface-3);
+  color: var(--text);
+}
+
+.empty-feed {
+  display: grid;
+  justify-items: center;
+  gap: var(--space-3);
+  padding: var(--space-6) var(--space-4);
+  text-align: center;
+}
+
+.empty-feed__title {
+  margin: 0;
+  font-size: var(--text-lg);
+  font-weight: 700;
+}
+
+.empty-feed__text {
+  max-width: 420px;
+  margin: 0;
+  color: var(--text-muted);
+  font-size: var(--text-sm);
+}
+
+.chips--center {
+  justify-content: center;
+  margin: 0;
+}
+
+.chip--add {
+  font: inherit;
+  font-size: var(--text-sm);
+  cursor: pointer;
+}
+
+.chip--add:hover {
+  border-color: var(--accent);
+  color: var(--accent);
+}
+
 #feed-sentinel {
   height: 1px;
 }

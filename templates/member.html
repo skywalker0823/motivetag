@@ -16,6 +16,7 @@
             <button class="icon-btn icon-btn--sm" type="submit" data-icon="search" aria-label="搜尋"></button>
         </form>
         <div class="topbar__actions">
+            <button class="icon-btn" id="help-button" type="button" data-icon="help" aria-label="使用教學" title="使用教學"></button>
             <button class="icon-btn" id="refresh" type="button" data-icon="refresh" aria-label="重新整理動態" title="重新整理動態"></button>
             <div class="notifications">
                 <button class="icon-btn" id="notif-button" type="button" data-icon="bell" aria-label="通知" aria-expanded="false" aria-controls="notif-panel" title="通知">
@@ -105,6 +106,10 @@
                 </div>
             </form>
 
+            <div class="feed-tabs" id="feed-tabs" role="group" aria-label="要看的動態">
+                <button type="button" data-mode="mine" aria-pressed="true">我的動態</button>
+                <button type="button" data-mode="explore" aria-pressed="false">探索</button>
+            </div>
             <div class="feed-filter" id="feed-filter" hidden>
                 <span>正在看 <strong id="feed-filter-tag"></strong> 的貼文</span>
                 <button class="btn btn--secondary btn--sm" type="button" id="feed-filter-clear">顯示全部動態</button>

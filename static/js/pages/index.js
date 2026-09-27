@@ -44,14 +44,14 @@ for (const input of document.querySelectorAll('input[type="password"]')) {
 
 const tabs = [$("#tab-signin"), $("#tab-signup")];
 
-function selectTab(tab) {
+function selectTab(tab, { focus = true } = {}) {
   for (const t of tabs) {
     const selected = t === tab;
     t.setAttribute("aria-selected", String(selected));
     t.tabIndex = selected ? 0 : -1;
     document.getElementById(t.getAttribute("aria-controls")).hidden = !selected;
   }
-  document.getElementById(tab.getAttribute("aria-controls")).querySelector("input").focus();
+  if (focus) document.getElementById(tab.getAttribute("aria-controls")).querySelector("input").focus();
 }
 
 for (const tab of tabs) {
@@ -65,6 +65,16 @@ for (const tab of tabs) {
   });
 }
 
+// People who have signed in on this browser before land on 登入; everyone else on 註冊.
+const RETURNING = "motivetag:returning";
+try {
+  if (!localStorage.getItem(RETURNING)) {
+    selectTab($("#tab-signup"), { focus: false });
+  }
+} catch {
+  // Storage blocked: keep the sign-in tab.
+}
+
 // ---------- Sign in ----------
 
 const signinForm = $("#panel-signin");
@@ -75,6 +85,11 @@ async function signIn(account, password) {
     body: { account, password },
   });
   if (!result.ok) throw new Error(errorMessage(result.error, "帳號或密碼錯誤"));
+  try {
+    localStorage.setItem(RETURNING, "1");
+  } catch {
+    // Storage blocked: they will see 註冊 first next time, which is harmless.
+  }
   location.assign(`/${encodeURIComponent(result.data.account)}`);
 }
 

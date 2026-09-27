@@ -262,6 +262,19 @@ class Block:
                 return {"msg": "No blocks found"}
             return {"msg": "ok", "datas": result}
 
+    def explore(offset):
+        """Everyone's newest posts except secret ones; anonymous authors are hidden later."""
+        with connection.cursor() as cursor:
+            cursor.execute(
+                """SELECT account, block_id, block.member_id, content_type, content, build_time,
+                          good, bad, block_img
+                   FROM block JOIN member ON member.member_id=block.member_id
+                   WHERE content_type <> 'SECRET'
+                   ORDER BY build_time DESC, block_id DESC LIMIT %s,%s""",
+                (offset, FEED_PAGE),
+            )
+            return cursor.fetchall()
+
     def create_my_block(member_id, block):
         try:
             type = block["type"]

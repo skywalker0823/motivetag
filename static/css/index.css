@@ -152,8 +152,23 @@ body {
     font-size: var(--text-md);
   }
 
+  /* The form comes right after the headline; the feature list moves below it. */
+  .hero {
+    display: contents;
+  }
+
+  .hero > * {
+    margin-top: 0;
+    margin-bottom: 0;
+  }
+
+  .auth {
+    order: 1;
+  }
+
   .features {
-    display: none;
+    order: 2;
+    margin-top: 0;
   }
 
   .auth {
