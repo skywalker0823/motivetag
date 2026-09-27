@@ -102,6 +102,12 @@ Everything above is merged and deployed except where noted.
   Until then deletion works but leaves image files in S3.
 - Run the **Demo data** workflow (`seed`) once, if they want the site to look active.
 
+**On branch `claude/sharp-bohr-bhm8n5` (not merged yet)**
+- Photos shrunk to WebP in the browser before upload; `/images/<key>` reuses its
+  presigned URL for 30 min so browsers cache images; presence, calls and
+  notifications pushed over Socket.IO (polls now 30 s / 60 s fallbacks); feed pages
+  of 10. Redis was reviewed and deliberately not added yet (see ADR 0008).
+
 **Roadmap (ADR 0010, phase 1 next)**
 1. Report content and block members (App Store Guideline 1.2).
 2. Privacy policy and terms pages (mention backups keep deleted data up to 35 days).

@@ -5,6 +5,7 @@ from module.auth import login_required
 from module.clock import taipei_now
 
 from . import api_notification
+from .api_chat import push_to
 
 # The server writes the text, so a member can only send these, signed with their name.
 MESSAGES = {
@@ -33,7 +34,10 @@ def posting_notifi():
     if template is None or not isinstance(who, str):
         return {"error": "unknown notification"}, 400
     content = template.format(me=session.get("account"))
-    return Notification.post_notifi(session.get("member_id"), who, content, taipei_now())
+    result = Notification.post_notifi(session.get("member_id"), who, content, taipei_now())
+    if "ok" in result:
+        push_to(who, "notification", {})  # their open tabs fetch it now, not at the next poll
+    return result
 
 
 @api_notification.route("/api/notifi", methods=["DELETE"])

@@ -1,5 +1,6 @@
 import os
 import re
+import time
 
 import boto3
 from botocore.config import Config
@@ -14,7 +15,7 @@ from . import api_images
 # Browsers upload straight to S3 with a presigned POST (docs/adr/0007); the app only
 # signs the upload and records the key afterwards, so image bytes never pass through
 # nginx or gunicorn.
-ALLOWED_TYPES = {"image/png", "image/jpeg", "image/gif"}
+ALLOWED_TYPES = {"image/png", "image/jpeg", "image/gif", "image/webp"}
 MAX_IMAGE_BYTES = 5 * 1024 * 1024
 UPLOAD_EXPIRES = 300
 
@@ -53,28 +54,62 @@ DEFAULT_AVATAR = "/img/avatar.svg"
 # ask again on every page. Shorter than the presigned URL's hour so it never goes stale.
 REDIRECT_CACHE = "private, max-age=600"
 
+# A presigned URL is handed out again for half its lifetime. Browsers cache images by
+# URL, and a fresh signature on every request would make each one a new download; it
+# also saves a database lookup per image. In memory is fine: one worker (ADR 0008).
+SIGNED_LIFETIME = 3600
+SIGNED_REUSE = SIGNED_LIFETIME // 2
+_signed = {}  # {key: (url, signed_at)}
+
+
+def _recently_signed(key):
+    cached = _signed.get(key)
+    return cached is not None and time.monotonic() - cached[1] < SIGNED_REUSE
+
+
+def signed_image_url(key):
+    """A presigned GET for `key`, the same one while it has at least half its life left."""
+    if _recently_signed(key):
+        return _signed[key][0]
+    now = time.monotonic()
+    url = s3.generate_presigned_url(
+        "get_object",
+        Params={
+            "Bucket": BUCKET_NAME,
+            "Key": key,
+            # S3 sends this header back, so the browser caches the image itself too;
+            # never longer than the URL stays valid.
+            "ResponseCacheControl": f"private, max-age={SIGNED_REUSE}",
+        },
+        ExpiresIn=SIGNED_LIFETIME,
+    )
+    if len(_signed) > 10_000:  # drop expired entries now and then
+        for stale in [k for k, (_, at) in _signed.items() if now - at >= SIGNED_REUSE]:
+            del _signed[stale]
+    _signed[key] = (url, now)
+    return url
+
+
+def forget_signed(key):
+    """A new image was uploaded under `key`: the next request signs a new URL."""
+    _signed.pop(key, None)
+
 
 @api_images.route("/images/<key>")
 def show_img(key):
     if not IMAGE_KEY.match(key):
         abort(404)
     kind, _, ident = key.partition("_")
-    if kind == "avatar" and (not BUCKET_NAME or not Images.has_avatar(int(ident))):
+    if _recently_signed(key):  # so it existed a moment ago; skip the lookup
+        url = signed_image_url(key)
+    elif kind == "avatar" and (not BUCKET_NAME or not Images.has_avatar(int(ident))):
         response = redirect(DEFAULT_AVATAR)
         response.headers["Cache-Control"] = REDIRECT_CACHE
         return response
-    if kind == "block" and (not BUCKET_NAME or not Images.has_block_image(int(ident))):
+    elif kind == "block" and (not BUCKET_NAME or not Images.has_block_image(int(ident))):
         abort(404)
-    url = s3.generate_presigned_url(
-        "get_object",
-        Params={
-            "Bucket": BUCKET_NAME,
-            "Key": key,
-            # S3 sends this header back, so the browser caches the image itself too.
-            "ResponseCacheControl": "private, max-age=3600",
-        },
-        ExpiresIn=3600,
-    )
+    else:
+        url = signed_image_url(key)
     response = redirect(url)
     response.headers["Cache-Control"] = REDIRECT_CACHE
     return response
@@ -121,6 +156,7 @@ def finish_upload():
         return {"error": "upload not found"}, 400
     if head.get("ContentType") not in ALLOWED_TYPES:
         return {"error": "file type not allowed"}, 400
+    forget_signed(key)
     if key.startswith("avatar_"):
         result = Images.post_image(member_id, key)
     else:

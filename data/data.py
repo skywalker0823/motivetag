@@ -219,6 +219,9 @@ class Member:
             return data
 
 
+FEED_PAGE = 10  # posts per /api/blocks page; PAGE in static/js/pages/member/feed.js
+
+
 class Block:
     def get_block(member_id, page, obseve_key=None, order_by=None):
         page = int(page)
@@ -248,11 +251,11 @@ class Block:
             if obseve_key is None:
                 got = cursor.execute(
                     sql_all,
-                    (member_id, member_id, member_id, member_id, member_id, member_id, page, 5),
+                    (*[member_id] * 6, page, FEED_PAGE),
                 )
                 # got = cursor.execute(sql_all_altered, (member_id, member_id, member_id, member_id, member_id,member_id,page,5))
             else:
-                got = cursor.execute(sql_observe_key, (obseve_key, member_id, page, 5))
+                got = cursor.execute(sql_observe_key, (obseve_key, member_id, page, FEED_PAGE))
             result = cursor.fetchall()
             connection.commit()
             if got == 0:

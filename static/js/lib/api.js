@@ -26,7 +26,7 @@ const MESSAGES = {
   "you pressed this good before": "你已經按過讚了",
   "you pressed this boo before": "你已經按過爛了",
   "you pressed this good message before": "你已經按過讚了",
-  "file type not allowed": "只能上傳 PNG、JPEG 或 GIF 圖片",
+  "file type not allowed": "只能上傳 PNG、JPEG、GIF 或 WebP 圖片",
   "block not found or not yours": "找不到這篇貼文，或它不是你的",
 };
 

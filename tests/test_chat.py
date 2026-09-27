@@ -43,3 +43,39 @@ def test_cannot_log_out_someone_else(member, socket_client, chat_state):
     socket_client(alice).emit("awake", {"check_who_is_awake_too": []})
     socket_client(carol).emit("logout", {"account": alice_account})
     assert alice_account in chat_state.online
+
+
+def presence_updates(client):
+    return [payload(m) for m in client.get_received() if m["name"] == "awake_result"]
+
+
+def test_friends_hear_when_someone_comes_and_goes(member, socket_client):
+    alice, _, alice_account = member()
+    bob, _, bob_account = member()
+    sa = socket_client(alice)
+    sa.emit("awake", {"check_who_is_awake_too": {bob_account: "off"}})
+    assert presence_updates(sa)[-1] == {bob_account: "off"}
+
+    sb = socket_client(bob)
+    assert {bob_account: "on"} in presence_updates(sa)
+
+    sb.emit("logout", {})
+    assert {bob_account: "off"} in presence_updates(sa)
+
+
+def test_a_call_is_pushed_to_the_one_called(member, socket_client):
+    alice, _, alice_account = member()
+    bob, _, bob_account = member()
+    sa, sb = socket_client(alice), socket_client(bob)
+    sb.get_received()
+    sa.emit("init_room", {"account": bob_account})
+    assert {alice_account: "on_calling"} in presence_updates(sb)
+
+
+def test_notifications_are_pushed(member, socket_client):
+    alice, _, _ = member()
+    bob, _, bob_account = member()
+    sb = socket_client(bob)
+    sb.get_received()
+    alice.post("/api/notifi", json={"who": bob_account, "type": "friend_invite"})
+    assert [m for m in sb.get_received() if m["name"] == "notification"]
