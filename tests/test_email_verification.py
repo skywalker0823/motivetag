@@ -133,13 +133,12 @@ def test_nothing_is_required_while_email_is_off(member):
     assert post(client).get_json()["ok"]
 
 
-def test_unverified_member_cannot_start_a_chat(app, member, outbox, socket_client):
+def test_unverified_member_cannot_chat(app, member, outbox):
     client, _ = sign_up(app)
     _, _, friend = member()
-    socket = socket_client(client)
-    socket.emit("init_room", {"account": friend})
-    result = [m for m in socket.get_received() if m["name"] == "init_result"][-1]["args"][0]
-    assert result["code"] == "email_not_verified"
+    result = client.post(f"/api/v1/chats/{friend}/messages", json={"content": "hi"})
+    assert result.status_code == 403
+    assert result.get_json()["error"]["code"] == "email_not_verified"
 
 
 # ---------- Throwaway addresses ----------

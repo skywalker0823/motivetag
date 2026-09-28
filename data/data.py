@@ -90,6 +90,13 @@ class Member:
             connection.commit()
             return result
 
+    def id_for(account):
+        """The member_id of `account`, or None."""
+        with connection.cursor() as cursor:
+            cursor.execute("SELECT member_id FROM member WHERE account=%s", (account,))
+            row = cursor.fetchone()
+        return row["member_id"] if row else None
+
     def is_verified(member_id):
         with connection.cursor() as cursor:
             cursor.execute(
@@ -709,6 +716,15 @@ class Friend:
                 return {"error": "Delete friend fail"}
             return {"ok": "Delete Frind success", "result": result}
 
+    def are_friends(member_a, member_b):
+        with connection.cursor() as cursor:
+            got = cursor.execute(
+                """SELECT 1 FROM friendship WHERE status='0'
+                   AND ((request_from=%s AND request_to=%s) OR (request_from=%s AND request_to=%s))""",
+                (member_a, member_b, member_b, member_a),
+            )
+        return got != 0
+
     def friend_ship_checker(member_id, target_id):
         with connection.cursor() as cursor:
             cursor.execute(
@@ -797,6 +813,105 @@ class Message:
             )
             connection.commit()
             return result
+
+
+DM_COLUMNS = "message_id, sender_id, recipient_id, content, sent_at, read_at"
+
+
+class DirectMessage:
+    """One-to-one chat messages (api/v1/chats.py). A conversation is a pair of members."""
+
+    def send(sender_id, recipient_id, content, now):
+        with connection.cursor() as cursor:
+            cursor.execute(
+                "INSERT INTO direct_message (sender_id, recipient_id, content, sent_at)"
+                " VALUES (%s, %s, %s, %s)",
+                (sender_id, recipient_id, content, now),
+            )
+            message_id = cursor.lastrowid
+            connection.commit()
+            cursor.execute(
+                f"SELECT {DM_COLUMNS} FROM direct_message WHERE message_id=%s",  # noqa: S608 - constant columns
+                (message_id,),
+            )
+            return cursor.fetchone()
+
+    def history(me, other, before=None, limit=30):
+        """Up to `limit` messages between two members older than message `before`
+        (the newest when None), oldest first."""
+        before_sql = "AND message_id < %s" if before else ""
+        extra = (before,) if before else ()
+        args = (me, other, *extra, other, me, *extra)
+        with connection.cursor() as cursor:
+            # Two index range scans (one per direction) instead of an OR over both.
+            cursor.execute(
+                f"""(SELECT {DM_COLUMNS} FROM direct_message
+                     WHERE sender_id=%s AND recipient_id=%s {before_sql}
+                     ORDER BY message_id DESC LIMIT {int(limit)})
+                   UNION ALL
+                   (SELECT {DM_COLUMNS} FROM direct_message
+                     WHERE sender_id=%s AND recipient_id=%s {before_sql}
+                     ORDER BY message_id DESC LIMIT {int(limit)})
+                   ORDER BY message_id DESC LIMIT {int(limit)}""",  # noqa: S608 - no user input
+                args,
+            )
+            rows = list(cursor.fetchall())  # an empty result is a tuple
+        rows.reverse()
+        return rows
+
+    def conversations(me, limit=50):
+        """My conversations, newest first: the partner, the last message and how many
+        of theirs I have not read."""
+        with connection.cursor() as cursor:
+            cursor.execute(
+                f"""SELECT m.message_id, m.sender_id, m.recipient_id, m.content, m.sent_at,
+                          m.read_at, p.member_id AS partner_id, p.account AS partner,
+                          (SELECT COUNT(*) FROM direct_message u
+                           WHERE u.recipient_id=%s AND u.sender_id=p.member_id
+                             AND u.read_at IS NULL) AS unread
+                   FROM (
+                     SELECT partner_id, MAX(message_id) AS last_id FROM (
+                       SELECT recipient_id AS partner_id, message_id FROM direct_message
+                        WHERE sender_id=%s
+                       UNION ALL
+                       SELECT sender_id AS partner_id, message_id FROM direct_message
+                        WHERE recipient_id=%s
+                     ) mine GROUP BY partner_id
+                   ) last
+                   JOIN direct_message m ON m.message_id = last.last_id
+                   JOIN member p ON p.member_id = last.partner_id
+                   ORDER BY m.message_id DESC LIMIT {int(limit)}""",  # noqa: S608 - no user input
+                (me, me, me),
+            )
+            return cursor.fetchall()
+
+    def mark_read(me, sender_id, up_to, now):
+        """Marks what `sender_id` sent me, up to message `up_to`, as read; returns how many."""
+        with connection.cursor() as cursor:
+            count = cursor.execute(
+                """UPDATE direct_message SET read_at=%s
+                   WHERE recipient_id=%s AND sender_id=%s AND read_at IS NULL
+                     AND message_id <= %s""",
+                (now, me, sender_id, up_to),
+            )
+        connection.commit()
+        return count
+
+    def unread_count(me):
+        with connection.cursor() as cursor:
+            cursor.execute(
+                "SELECT COUNT(*) AS n FROM direct_message WHERE recipient_id=%s AND read_at IS NULL",
+                (me,),
+            )
+            return cursor.fetchone()["n"]
+
+    def sent_since(sender_id, since):
+        with connection.cursor() as cursor:
+            cursor.execute(
+                "SELECT COUNT(*) AS n FROM direct_message WHERE sender_id=%s AND sent_at >= %s",
+                (sender_id, since),
+            )
+            return cursor.fetchone()["n"]
 
 
 class Images:

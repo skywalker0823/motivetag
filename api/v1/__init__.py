@@ -28,6 +28,7 @@ def login_required(view):
 
 from . import (  # noqa: E402,F401 - registers the routes on v1
     account,
+    chats,
     email,
     invites,
     members,

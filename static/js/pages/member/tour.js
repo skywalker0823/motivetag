@@ -54,8 +54,14 @@ const STEPS = [
   {
     target: "#friend-invite",
     title: "交朋友、聊天",
-    text: "也可以直接輸入帳號送出邀請。好友上線時頭像旁會亮綠點，點一下就能開聊天室。",
+    text: "也可以直接輸入帳號送出邀請。好友上線時頭像旁會亮綠點，按好友旁的對話圖示就能傳訊息。",
     before: () => open("friends", "friends"),
+  },
+  {
+    target: "#chats-button",
+    title: "聊天",
+    text: "所有對話都在這裡。對方不在線上也能傳，他上線就會看到；有新訊息時這裡會出現數字，還看得到「已讀」和「正在輸入」。",
+    before: () => showView("feed"),
   },
   {
     target: "#help-button",

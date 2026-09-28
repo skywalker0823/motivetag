@@ -6,7 +6,8 @@ import { icon } from "./icons.js";
 const ICONS = { success: "check", error: "x", info: "bell" };
 let region;
 
-export function toast(message, { type = "info", timeout = 3500 } = {}) {
+/** `action` ({ label, onClick }) adds a button, for example "回覆" on a chat message. */
+export function toast(message, { type = "info", timeout = 3500, action } = {}) {
   if (!region) {
     region = h("div", { class: "toasts", role: "status", "aria-live": "polite" });
     document.body.append(region);
@@ -20,6 +21,19 @@ export function toast(message, { type = "info", timeout = 3500 } = {}) {
     { class: `toast toast--${type}` },
     h("span", { class: "toast__icon" }, icon(ICONS[type] ?? "bell", { size: "sm" })),
     h("span", { class: "toast__text" }, message),
+    action &&
+      h(
+        "button",
+        {
+          class: "btn btn--ghost btn--sm toast__action",
+          type: "button",
+          onClick: () => {
+            close();
+            action.onClick();
+          },
+        },
+        action.label,
+      ),
     h("button", { class: "toast__close", type: "button", "aria-label": "關閉訊息", onClick: close }, icon("x", { size: "sm" })),
   );
   region.append(el);

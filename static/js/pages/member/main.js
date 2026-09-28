@@ -62,7 +62,7 @@ function autoHideTopbar() {
     "scroll",
     () => {
       const y = window.scrollY;
-      const busy = topbar.contains(document.activeElement) || !$("#notif-panel").hidden;
+      const busy = topbar.contains(document.activeElement) || !$("#notif-panel").hidden || !$("#chats-panel").hidden;
       if (!phone.matches || busy || y < 80) topbar.classList.remove("topbar--hidden");
       else if (y > lastY + 8) topbar.classList.add("topbar--hidden");
       else if (y < lastY - 8) topbar.classList.remove("topbar--hidden");

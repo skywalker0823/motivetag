@@ -18,6 +18,16 @@
         <div class="topbar__actions">
             <button class="icon-btn" id="help-button" type="button" data-icon="help" aria-label="使用教學" title="使用教學"></button>
             <button class="icon-btn" id="refresh" type="button" data-icon="refresh" aria-label="重新整理動態" title="重新整理動態"></button>
+            <div class="chats-menu">
+                <button class="icon-btn" id="chats-button" type="button" data-icon="comment" aria-label="聊天" aria-expanded="false" aria-controls="chats-panel" title="聊天">
+                    <span class="badge-dot" id="chats-count" hidden></span>
+                </button>
+                <div class="popover chats-panel" id="chats-panel" hidden>
+                    <p class="popover__title">聊天</p>
+                    <div class="chats-active" id="chats-active" aria-label="上線中的好友" hidden></div>
+                    <ul class="chat-list" id="chats-list"></ul>
+                </div>
+            </div>
             <div class="notifications">
                 <button class="icon-btn" id="notif-button" type="button" data-icon="bell" aria-label="通知" aria-expanded="false" aria-controls="notif-panel" title="通知">
                     <span class="badge-dot" id="notif-count" hidden></span>
@@ -179,6 +189,7 @@
             <ul class="danger-zone__list">
                 <li>你的貼文、留言、投票和按讚</li>
                 <li>好友關係、通知和訂閱的標籤</li>
+                <li>你傳出和收到的聊天訊息</li>
                 <li>大頭貼和貼文圖片</li>
             </ul>
             <p class="dialog__message">你在標籤討論區發起的討論和回覆會保留，但會顯示為「已刪除的帳號」。</p>

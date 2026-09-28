@@ -9,6 +9,8 @@ MOOD_MAX = 100
 POLL_MIN, POLL_MAX, POLL_OPTION_MAX = 2, 5, 40
 SCORE_MIN, SCORE_MAX = -5, 5
 TOPIC_TITLE_MAX, TOPIC_MAX, REPLY_MAX = 100, 5000, 2000
+CHAT_MESSAGE_MAX = 1000
+CHAT_PER_MINUTE = 30  # messages one member may send in a minute, to everyone together
 TAG_NAME = re.compile(r"^\w{1,30}$")
 
 
