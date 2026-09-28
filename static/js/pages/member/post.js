@@ -26,6 +26,7 @@ export function renderPost(post) {
   const score = h("span", { class: "post__score", title: "留言評分總和", hidden: true });
 
   const article = h("article", { class: "card post", dataset: { id: post.block_id } });
+  const actions = renderActions(post);
   // Native append() would print a skipped part (null) as text, so go through h()'s rules.
   const parts = [
     h(
@@ -71,9 +72,9 @@ export function renderPost(post) {
         ),
     ),
     h("p", { class: "post__content" }, withHashtags(post.content)),
-    post.block_img && renderImage(post),
+    post.block_img && renderImage(post, () => like(actions)),
     post.votes?.length ? renderPoll(post) : null,
-    renderActions(post),
+    actions,
     renderComments(post, score),
   ];
   article.append(...parts.filter((part) => part instanceof Node));
@@ -96,14 +97,35 @@ function withHashtags(text) {
   return parts;
 }
 
-function renderImage(post) {
+/** Double-tapping the image likes the post, as in most photo apps. */
+function like(actions) {
+  const button = actions.querySelector(".action");
+  if (button.getAttribute("aria-pressed") !== "true") button.click();
+}
+
+const DOUBLE_TAP_MS = 250;
+
+function renderImage(post, onDoubleTap) {
   const src = `/images/${post.block_img}`;
   const image = h("img", { src, alt: "貼文圖片", loading: "lazy", decoding: "async" });
-  const frame = h(
-    "button",
-    { class: "post__image", type: "button", "aria-label": "放大圖片", onClick: () => openLightbox(src, "貼文圖片") },
-    image,
-  );
+  const frame = h("button", { class: "post__image", type: "button", "aria-label": "放大圖片（點兩下按讚）" }, image);
+  let pending = null;
+  frame.addEventListener("click", (event) => {
+    if (event.detail === 0) return openLightbox(src, "貼文圖片"); // keyboard: no double tap
+    if (pending) {
+      clearTimeout(pending);
+      pending = null;
+      const heart = h("span", { class: "post__burst", "aria-hidden": "true" }, icon("like"));
+      heart.addEventListener("animationend", () => heart.remove());
+      frame.append(heart);
+      onDoubleTap();
+      return;
+    }
+    pending = setTimeout(() => {
+      pending = null;
+      openLightbox(src, "貼文圖片");
+    }, DOUBLE_TAP_MS);
+  });
   // The frame keeps its size while loading, so the feed does not jump.
   image.addEventListener("load", () => frame.classList.add("is-loaded"), { once: true });
   image.addEventListener("error", () => frame.remove(), { once: true });

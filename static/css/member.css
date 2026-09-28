@@ -17,6 +17,19 @@
   backdrop-filter: blur(10px);
 }
 
+/* The page handles pull-to-refresh itself (static/js/lib/pull-refresh.js). */
+html {
+  overscroll-behavior-y: contain;
+}
+
+.topbar {
+  transition: transform 0.2s ease;
+}
+
+.topbar--hidden {
+  transform: translateY(-100%);
+}
+
 .topbar__logo img {
   width: 150px;
   height: auto;
@@ -167,6 +180,15 @@
 
   .topbar__logo img {
     width: 104px;
+  }
+
+  .composer:not(.is-open) :is(.composer__bar, .composer__hint) {
+    display: none;
+  }
+
+  .composer:not(.is-open) .composer__text {
+    min-height: 24px;
+    height: 24px !important; /* over autosize's inline height while folded */
   }
 
   .topbar__search .input {
@@ -677,6 +699,81 @@
 .chip--add:hover {
   border-color: var(--accent);
   color: var(--accent);
+}
+
+.feed-new {
+  position: sticky;
+  z-index: 40;
+  top: calc(var(--topbar-h) + var(--space-2));
+  display: inline-flex;
+  align-items: center;
+  gap: var(--space-1);
+  justify-self: center;
+  min-height: 36px;
+  padding: 0 var(--space-4);
+  border: 0;
+  border-radius: var(--radius-pill);
+  background: var(--accent);
+  box-shadow: var(--shadow);
+  color: var(--accent-ink);
+  font: inherit;
+  font-size: var(--text-sm);
+  font-weight: 700;
+  cursor: pointer;
+}
+
+.feed-new[hidden] {
+  display: none;
+}
+
+.feed-new .icon {
+  width: 16px;
+  height: 16px;
+}
+
+.ptr {
+  position: fixed;
+  z-index: 45;
+  top: var(--topbar-h);
+  left: 50%;
+  display: grid;
+  place-items: center;
+  width: 40px;
+  height: 40px;
+  margin-left: -20px;
+  border: 1px solid var(--border-strong);
+  border-radius: 50%;
+  background: var(--surface);
+  box-shadow: var(--shadow);
+  color: var(--text-muted);
+  opacity: 0;
+  pointer-events: none;
+  transform: translateY(calc(var(--pull, 0px) - 48px)) rotate(var(--turn, 0deg));
+}
+
+.ptr.is-pulling,
+.ptr.is-running {
+  opacity: 1;
+}
+
+.ptr.is-ready {
+  color: var(--accent);
+}
+
+.ptr.is-running .icon {
+  animation: ptr-spin 0.8s linear infinite;
+}
+
+@keyframes ptr-spin {
+  to {
+    transform: rotate(360deg);
+  }
+}
+
+.ptr:not(.is-pulling) {
+  transition:
+    transform 0.2s ease,
+    opacity 0.2s ease;
 }
 
 #feed-sentinel {
@@ -1266,6 +1363,7 @@ button.poll__option:hover {
 
 /* Images keep one frame size while loading, so the feed never jumps. */
 .post__image {
+  position: relative;
   display: block;
   width: 100%;
   aspect-ratio: 4 / 3;
@@ -1276,6 +1374,42 @@ button.poll__option:hover {
   border-radius: var(--radius);
   background: var(--surface-2);
   cursor: zoom-in;
+}
+
+.post__burst {
+  position: absolute;
+  inset: 0;
+  display: grid;
+  place-items: center;
+  color: #fff;
+  pointer-events: none;
+  animation: burst 0.7s ease-out forwards;
+}
+
+.post__burst .icon {
+  width: 96px;
+  height: 96px;
+  fill: var(--accent);
+  filter: drop-shadow(0 4px 16px rgba(0, 0, 0, 0.5));
+}
+
+@keyframes burst {
+  0% {
+    opacity: 0;
+    transform: scale(0.4);
+  }
+  30% {
+    opacity: 1;
+    transform: scale(1.1);
+  }
+  70% {
+    opacity: 1;
+    transform: scale(1);
+  }
+  100% {
+    opacity: 0;
+    transform: scale(1);
+  }
 }
 
 .post__image img {

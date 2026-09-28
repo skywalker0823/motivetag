@@ -2,11 +2,12 @@
 import { api } from "../../lib/api.js";
 import { $ } from "../../lib/dom.js";
 import { hydrateIcons } from "../../lib/icons.js";
+import { pullToRefresh } from "../../lib/pull-refresh.js";
 import { socket } from "../../lib/socket.js";
 import { toastError } from "../../lib/toast.js";
 import { initChat, openChat } from "./chat.js";
 import { initComposer } from "./composer.js";
-import { initFeed, resetFeed } from "./feed.js";
+import { initFeed, refreshFeed, resetFeed } from "./feed.js";
 import { initFriends } from "./friends.js";
 import { initNotifications } from "./notifications.js";
 import { initProfile, showMember } from "./profile.js";
@@ -46,6 +47,26 @@ function initTopbar() {
   }
 }
 
+const phone = matchMedia("(max-width: 899px)");
+
+/** On phones the top bar slides away while scrolling down and returns on the way up. */
+function autoHideTopbar() {
+  const topbar = $(".topbar");
+  let lastY = window.scrollY;
+  window.addEventListener(
+    "scroll",
+    () => {
+      const y = window.scrollY;
+      const busy = topbar.contains(document.activeElement) || !$("#notif-panel").hidden;
+      if (!phone.matches || busy || y < 80) topbar.classList.remove("topbar--hidden");
+      else if (y > lastY + 8) topbar.classList.add("topbar--hidden");
+      else if (y < lastY - 8) topbar.classList.remove("topbar--hidden");
+      if (Math.abs(y - lastY) > 8) lastY = y;
+    },
+    { passive: true },
+  );
+}
+
 function showFeedFor(tag) {
   $("#tag-search-input").value = tag;
   showView("feed");
@@ -78,6 +99,11 @@ async function start() {
   initChat();
   initNotifications();
   initTour(result.data.first_signup);
+  autoHideTopbar();
+  pullToRefresh({
+    onRefresh: refreshFeed,
+    enabled: () => document.body.dataset.view === "feed" && !document.querySelector("dialog[open]"),
+  });
 
   on("feed:tag", showFeedFor);
   on("member:show", (id) => id && showMember(id));

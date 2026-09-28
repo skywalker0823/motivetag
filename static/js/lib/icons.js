@@ -2,6 +2,7 @@
 // component that loaded from unpkg. Styled by `.icon` in base.css.
 
 const PATHS = {
+  "arrow-up": '<path d="m5 12 7-7 7 7"/><path d="M12 19V5"/>',
   help: '<circle cx="12" cy="12" r="10"/><path d="M9.09 9a3 3 0 0 1 5.83 1c0 2-3 3-3 3"/><path d="M12 17h.01"/>',
   search: '<circle cx="11" cy="11" r="8"/><path d="m21 21-4.3-4.3"/>',
   refresh:
