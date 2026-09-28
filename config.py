@@ -40,6 +40,14 @@ class Config_dev(object):
     SESSION_COOKIE_SECURE = False
     MAX_CONTENT_LENGTH = 5 * 1024 * 1024
     DB = os.getenv("AWS_motivetag_DB")
+    # E-mail verification (module/email_verification.py): off unless EMAIL_FROM is set.
+    EMAIL_FROM = os.getenv("EMAIL_FROM")
+    # Local development: log e-mails (with their links) instead of sending them.
+    MAIL_SUPPRESS = os.getenv("MAIL_SUPPRESS") == "1"
+    SES_REGION = os.getenv("SES_REGION") or os.getenv("AWS_REGION")
+    # Cloudflare Turnstile on sign-up (module/turnstile.py): off unless both are set.
+    TURNSTILE_SITE_KEY = os.getenv("TURNSTILE_SITE_KEY")
+    TURNSTILE_SECRET = os.getenv("TURNSTILE_SECRET")
 
 
 class Config_prodution(Config_dev):

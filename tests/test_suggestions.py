@@ -1,6 +1,12 @@
+import uuid
+
+RUN = uuid.uuid4().hex[:6]  # tag names unique to this run, so earlier runs' members do not count
+
+
 def subscribe(client, *tags):
     for tag in tags:
-        assert client.patch("/api/member_tags", json={"tag": tag}).get_json().get("ok")
+        result = client.patch("/api/member_tags", json={"tag": tag + RUN})
+        assert result.get_json().get("ok")
 
 
 def suggested(client):
@@ -21,8 +27,8 @@ def test_suggests_people_with_shared_tags_best_match_first(member):
 
     people = suggested(alice)
     assert people[bob_account]["shared_count"] == 2
-    assert sorted(people[bob_account]["shared"]) == ["sgcoffee", "sghiking"]
-    assert people[carol_account]["shared"] == ["sgcats"]
+    assert sorted(people[bob_account]["shared"]) == ["sgcoffee" + RUN, "sghiking" + RUN]
+    assert people[carol_account]["shared"] == ["sgcats" + RUN]
     assert dave_account not in people
     order = [a for a in people if a in (bob_account, carol_account)]
     assert order == [bob_account, carol_account]
@@ -49,7 +55,7 @@ def test_member_card_shows_age_and_shared_tags_not_birthday(member):
     card = alice.get(f"/api/get_user_sp?member_id={bob_id}").get_json()
     assert "birthday" not in card["data"]
     assert card["data"]["age"] >= 18
-    assert card["shared_tags"] == ["sgjazz"]
+    assert card["shared_tags"] == ["sgjazz" + RUN]
 
 
 def test_suggestions_need_sign_in(client):

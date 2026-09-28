@@ -2,7 +2,7 @@ from flask import request, session
 
 from data.data import Block, Level, Message
 from module import rules
-from module.auth import login_required
+from module.auth import login_required, verified_required
 from module.clock import taipei_now
 
 from . import api_message
@@ -19,7 +19,7 @@ def getting_message():
 
 
 @api_message.route("/api/message", methods=["POST"])
-@login_required
+@verified_required
 def posting_message():
     data = request.get_json(silent=True) or {}
     member_id = session.get("member_id")

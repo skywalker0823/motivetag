@@ -21,6 +21,10 @@ OPTIONAL = {
     "backup-bucket": "BACKUP_BUCKET",  # created by infra/main/backup.tf
     "alert-topic-arn": "ALERT_TOPIC_ARN",  # created by infra/main/monitoring.tf
     "sentry-dsn": "SENTRY_DSN",  # added by hand, see infra/README.md
+    "email-from": "EMAIL_FROM",  # created by infra/main/ses.tf
+    "ses-region": "SES_REGION",  # created by infra/main/ses.tf
+    "turnstile-site-key": "TURNSTILE_SITE_KEY",  # added by hand, see infra/README.md
+    "turnstile-secret": "TURNSTILE_SECRET",  # added by hand, see infra/README.md
 }
 
 

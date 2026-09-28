@@ -74,6 +74,11 @@
         </aside>
 
         <main class="col col--center" data-panel="feed">
+            <div class="card verify-banner" id="verify-banner" role="status" hidden>
+                <span class="verify-banner__icon" data-icon="mail"></span>
+                <p class="verify-banner__text">驗證信已寄到 <strong id="verify-email"></strong>，點信中的連結後就能發文、留言和交朋友。</p>
+                <button class="btn btn--secondary btn--sm" id="verify-resend" type="button">重寄</button>
+            </div>
             <form class="card composer" id="composer">
                 <label class="visually-hidden" for="composer-text">貼文內容</label>
                 <textarea class="composer__text" id="composer-text" name="content" rows="2" maxlength="2000" placeholder="想分享什麼？加上 #標籤 讓同好找到你"></textarea>

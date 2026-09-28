@@ -74,6 +74,17 @@ data "aws_iam_policy_document" "app" {
     actions   = ["sns:Publish"]
     resources = [aws_sns_topic.alerts.arn]
   }
+  # Verification e-mails, only from the site's own no-reply address.
+  statement {
+    sid       = "SendEmail"
+    actions   = ["ses:SendEmail"]
+    resources = [aws_sesv2_email_identity.domain.arn]
+    condition {
+      test     = "StringEquals"
+      variable = "ses:FromAddress"
+      values   = [local.email_from]
+    }
+  }
 }
 
 resource "aws_iam_role_policy" "app" {

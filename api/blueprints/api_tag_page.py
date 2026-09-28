@@ -2,7 +2,7 @@ from flask import request, session
 
 from data.data import Tag_info
 from module import rules
-from module.auth import login_required
+from module.auth import login_required, verified_required
 from module.clock import taipei_now
 
 from . import api_tag_page
@@ -17,7 +17,7 @@ def get_tag_datas():
 
 
 @api_tag_page.route("/api/tag_page", methods=["POST"])
-@login_required
+@verified_required
 def post_discuss():
     data = request.get_json(silent=True) or {}
     title = rules.text(data.get("title"), rules.TOPIC_TITLE_MAX)

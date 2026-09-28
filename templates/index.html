@@ -11,6 +11,9 @@
         gtag('js', new Date());
         gtag('config', 'G-6WGHN61ENK');
     </script>
+    {% if turnstile_site_key %}
+    <script src="https://challenges.cloudflare.com/turnstile/v0/api.js" async defer></script>
+    {% endif %}
 </head>
 <body>
     <main class="landing">
@@ -66,6 +69,9 @@
                     <input class="input" name="birthday" type="date" autocomplete="bday" required min="1900-01-01" aria-describedby="birthday-hint">
                     <span class="field__hint" id="birthday-hint">需年滿 18 歲；其他人只會看到你的年齡，不會看到生日</span>
                 </label>
+                {% if turnstile_site_key %}
+                <div class="cf-turnstile" data-sitekey="{{ turnstile_site_key }}" data-theme="dark" data-language="zh-tw" data-size="flexible"></div>
+                {% endif %}
                 <p class="field__hint field__hint--error" data-error role="alert"></p>
                 <button class="btn btn--block" type="submit">建立帳號</button>
             </form>

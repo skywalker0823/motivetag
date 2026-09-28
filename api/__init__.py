@@ -89,7 +89,10 @@ def create_app(config_name):
         if session.get("account"):
             return redirect("/" + session["account"])
         else:
-            return rt("index.html")
+            from module import turnstile
+
+            site_key = app.config["TURNSTILE_SITE_KEY"] if turnstile.enabled() else None
+            return rt("index.html", turnstile_site_key=site_key)
 
     @app.route("/tag/<tag_name>")
     def tag(tag_name):

@@ -4,7 +4,7 @@ from flask import request, session
 
 from data.data import Block, Block_tags, Level, Message, Vote_table
 from module import rules, tag_filter
-from module.auth import login_required
+from module.auth import login_required, verified_required
 from module.clock import taipei_now
 
 from . import api_blocks
@@ -63,7 +63,7 @@ def post_error(block):
 
 
 @api_blocks.route("/api/blocks", methods=["POST"])
-@login_required
+@verified_required
 def build_blocks():
     block = request.get_json(silent=True) or {}
     error = post_error(block)

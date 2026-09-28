@@ -83,12 +83,27 @@ class Member:
             # Every column except the password hash.
             cursor.execute(
                 """SELECT member_id, account, email, birthday, first_signup, last_signin,
-                member_img, follower, mood, exp FROM member WHERE account=%s""",
+                member_img, follower, mood, exp, email_verified_at FROM member WHERE account=%s""",
                 (account,),
             )
             result = cursor.fetchone()
             connection.commit()
             return result
+
+    def is_verified(member_id):
+        with connection.cursor() as cursor:
+            cursor.execute(
+                "SELECT 1 FROM member WHERE member_id=%s AND email_verified_at IS NOT NULL",
+                (member_id,),
+            )
+            return cursor.fetchone() is not None
+
+    def mark_verified(member_id, time):
+        with connection.cursor() as cursor:
+            cursor.execute(
+                "UPDATE member SET email_verified_at=%s WHERE member_id=%s", (time, member_id)
+            )
+        connection.commit()
 
     def ping():
         with connection.cursor() as cursor:
@@ -264,6 +279,56 @@ class Member:
                 (member_id, other_id, *NEUTRAL_TAGS),
             )
             return [row["name"] for row in cursor.fetchall()]
+
+
+class EmailToken:
+    """One-time links for confirming an e-mail address; only token hashes are kept."""
+
+    def create(member_id, token_hash, now, expires_at):
+        with connection.cursor() as cursor:
+            cursor.execute(
+                "INSERT INTO email_token (token_hash, member_id, created_at, expires_at)"
+                " VALUES (%s, %s, %s, %s)",
+                (token_hash, member_id, now, expires_at),
+            )
+        connection.commit()
+
+    def member_for(token_hash, now):
+        """The member a still-valid token belongs to, or None."""
+        with connection.cursor() as cursor:
+            cursor.execute(
+                "SELECT member_id FROM email_token WHERE token_hash=%s AND expires_at > %s",
+                (token_hash, now),
+            )
+            row = cursor.fetchone()
+            return row["member_id"] if row else None
+
+    def last_sent(member_id):
+        with connection.cursor() as cursor:
+            cursor.execute(
+                "SELECT MAX(created_at) AS at FROM email_token WHERE member_id=%s", (member_id,)
+            )
+            return cursor.fetchone()["at"]
+
+    def sent_since(since, member_id=None):
+        """How many links were sent since `since`, by everyone or to one member."""
+        with connection.cursor() as cursor:
+            if member_id is None:
+                cursor.execute(
+                    "SELECT COUNT(*) AS n FROM email_token WHERE created_at >= %s", (since,)
+                )
+            else:
+                cursor.execute(
+                    "SELECT COUNT(*) AS n FROM email_token WHERE member_id=%s AND created_at >= %s",
+                    (member_id, since),
+                )
+            return cursor.fetchone()["n"]
+
+    def purge(before):
+        """Expired links are useless; they only counted towards the daily limits."""
+        with connection.cursor() as cursor:
+            cursor.execute("DELETE FROM email_token WHERE expires_at < %s", (before,))
+        connection.commit()
 
 
 # Tags that do not describe a person: every new member starts with the first, and the
