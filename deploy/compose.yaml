@@ -65,3 +65,26 @@ services:
     volumes:
       - ./nginx.conf:/etc/nginx/conf.d/default.conf:ro
       - ./certs:/etc/nginx/certs:ro
+
+  # Server and app metrics to Grafana Cloud (deploy/alloy.alloy). Only started when
+  # the Grafana settings are in Parameter Store: deploy.sh then sets
+  # COMPOSE_PROFILES=monitoring. No Docker socket, no privileges, host paths read-only.
+  alloy:
+    image: grafana/alloy:v1.20.0
+    profiles: [monitoring]
+    restart: unless-stopped
+    command:
+      - run
+      - --server.http.listen-addr=127.0.0.1:12345
+      - --storage.path=/var/lib/alloy/data
+      - /etc/alloy/config.alloy
+    environment:
+      GRAFANA_PROM_URL: ${GRAFANA_PROM_URL:-}
+      GRAFANA_PROM_USER: ${GRAFANA_PROM_USER:-}
+      GRAFANA_CLOUD_TOKEN: ${GRAFANA_CLOUD_TOKEN:-}
+    volumes:
+      - ./alloy.alloy:/etc/alloy/config.alloy:ro
+      - /proc:/host/proc:ro
+      - /sys:/host/sys:ro
+      - /:/host/root:ro
+    mem_limit: 256m

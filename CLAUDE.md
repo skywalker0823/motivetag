@@ -39,7 +39,11 @@ uses it as a portfolio project for interviews. Read this first, then `README.md`
 - **Backups:** daily mysqldump to S3 + weekly automated restore drill (systemd timers
   installed by deploy.sh, ADR 0004). Failures e-mail through SNS.
 - **Monitoring ($0):** EC2 status/CPU alarms, script alerts, Sentry (only if a DSN is
-  set). There is no outside uptime check (ADR 0006).
+  set). There is no outside uptime check (ADR 0006). Dashboard on Grafana Cloud's
+  free tier (ADR 0012): Grafana Alloy (`deploy/alloy.alloy`, compose profile
+  `monitoring`, on only with the three `/motivetag/grafana-*` parameters) ships host
+  metrics and the app's `/metrics` (`api/metrics.py`); dashboard JSON in
+  `deploy/grafana/`.
 - **Secrets:** SSM Parameter Store under `/motivetag/`, read at deploy time.
 
 ## Code map
@@ -106,11 +110,17 @@ Everything above is merged and deployed except where noted.
 
 **Waiting on the owner**
 - Run the **Demo data** workflow (`seed`) once, if they want the site to look active.
+- Grafana Cloud dashboard setup (`infra/README.md`, "Dashboard on Grafana Cloud"):
+  sign up, three parameters, Run workflow, import the dashboard JSON.
+- SES production access: the owner replied to AWS's request for details
+  (case 179058323800303); after approval, `email_enabled = true` + apply + Run
+  workflow.
 - Sign-up protection setup (`infra/README.md`, "Sign-up protection"). Done
   2026-09-28: SES `terraform apply` (identity in ap-northeast-1; this also applied
   PR #23's `s3:DeleteObject`). Still to do: the 3 DKIM CNAMEs + `_dmarc` TXT in
-  Cloudflare, SES production access, then `email_enabled = true` + apply; Turnstile
-  keys into Parameter Store. Each part is off until done.
+  Cloudflare (done; identity verified), SES production access (pending), then
+  `email_enabled = true` + apply; Turnstile keys into Parameter Store. Each part is
+  off until done.
 
 **Done in PR #26:** photos shrunk to WebP in the browser; `/images/<key>` reuses its
 presigned URL for 30 min; presence, calls and notifications pushed over Socket.IO
@@ -150,9 +160,19 @@ accounts were recommended first.
 **Done in PR #32:** a re-run on `main` deploys the commit's existing ECR image
 instead of failing on the immutable tag.
 
-**On branch `claude/sharp-bohr-bhm8n5` (not merged yet)**
-- Fix: PR #31's deploy failed (production still ran PR #30) because
-  `fetch_params.py` asked SSM for 12 parameters in one call; now batched by 10.
+**Done in PR #33:** `fetch_params.py` reads SSM in batches of 10 (PR #31's deploy
+had failed on 12 names; production stayed on PR #30 until then).
+
+**On branch `claude/sharp-bohr-bhm8n5` (not merged yet)** (ADR 0012)
+- `/metrics` (prometheus-client): requests by route pattern/method/status, latency
+  histogram, auth events, online members; nginx and the app refuse it from outside.
+- Grafana Alloy container + `deploy/alloy.alloy`; deploy.sh sets
+  `COMPOSE_PROFILES=monitoring` when the Grafana settings exist.
+- Dashboard `deploy/grafana/motivetag-overview.json` (26 panels), verified locally
+  with Alloy → Prometheus → Grafana 12.1 (images via `mirror.gcr.io`, Docker Hub
+  rate-limits this sandbox; Playwright needs `locale: "zh-TW"` for Grafana).
+- Owner asked next for security monitoring: audit log of sign-ins, lockout after
+  failed logins, "recent logins" for members, admin page, maybe logs to Loki.
 
 **Roadmap (ADR 0010, phase 1 next)**
 1. Report content and block members (App Store Guideline 1.2).

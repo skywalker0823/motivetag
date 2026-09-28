@@ -32,7 +32,9 @@ Alerts are e-mailed through one SNS topic (`infra/main/monitoring.tf`,
   (which also queries the database) is ready for an external monitor.
 - A missed backup (the timer never ran) is only caught by the weekly drill, not
   within a day.
-- Memory is not watched; an out-of-memory hang shows up as a failed instance check.
+- Memory is not watched by an alarm; an out-of-memory hang shows up as a failed
+  instance check. (The Grafana dashboard in [0012](0012-metrics-dashboard-on-grafana-cloud.md)
+  shows it.)
 - No log aggregation: logs are `docker compose logs` and `journalctl` on the server.
 
 ## Alternatives considered

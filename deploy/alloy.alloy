@@ -1,0 +1,66 @@
+// Grafana Alloy: sends this server's CPU, memory, disk and network figures and the
+// app's request metrics to Grafana Cloud's free tier (infra/README.md, "Monitoring").
+//
+// deploy.sh starts it only when the Grafana Cloud settings are in Parameter Store.
+// It has no Docker socket and no privileges: the host's /proc, /sys and / are
+// mounted read-only. One sample a minute keeps well inside the free tier.
+
+// ---------- The server ----------
+
+prometheus.exporter.unix "host" {
+	procfs_path = "/host/proc"
+	sysfs_path  = "/host/sys"
+	rootfs_path = "/host/root"
+	// The host's udev data, so disk devices carry their names.
+	udev_data_path = "/host/root/run/udev/data"
+
+	set_collectors = ["cpu", "diskstats", "filesystem", "loadavg", "meminfo", "netdev", "pressure", "uname"]
+
+	filesystem {
+		fs_types_exclude     = "^(autofs|binfmt_misc|bpf|cgroup2?|configfs|debugfs|devpts|devtmpfs|fusectl|hugetlbfs|mqueue|nsfs|overlay|proc|procfs|pstore|rpc_pipefs|securityfs|selinuxfs|squashfs|sysfs|tracefs|tmpfs)$"
+		mount_points_exclude = "^/(dev|proc|run|sys|snap|boot/efi|var/lib/docker/.+)($|/)"
+	}
+
+	netdev {
+		device_exclude = "^(lo|veth.*|br-.*|docker.*)$"
+	}
+}
+
+prometheus.scrape "host" {
+	targets         = prometheus.exporter.unix.host.targets
+	scrape_interval = "60s"
+	forward_to      = [prometheus.relabel.common.receiver]
+}
+
+// ---------- The app ----------
+
+prometheus.scrape "app" {
+	targets         = [{"__address__" = "app:3000"}]
+	metrics_path    = "/metrics"
+	scrape_interval = "60s"
+	job_name        = "motivetag-app"
+	forward_to      = [prometheus.relabel.common.receiver]
+}
+
+// ---------- To Grafana Cloud ----------
+
+prometheus.relabel "common" {
+	forward_to = [prometheus.remote_write.cloud.receiver]
+
+	// One server: a fixed name reads better on the dashboard than an address.
+	rule {
+		target_label = "instance"
+		replacement  = "motivetag"
+	}
+}
+
+prometheus.remote_write "cloud" {
+	endpoint {
+		url = sys.env("GRAFANA_PROM_URL")
+
+		basic_auth {
+			username = sys.env("GRAFANA_PROM_USER")
+			password = sys.env("GRAFANA_CLOUD_TOKEN")
+		}
+	}
+}

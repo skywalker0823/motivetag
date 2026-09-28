@@ -4,12 +4,14 @@ from flask import request, session
 from flask_socketio import emit, join_room, leave_room
 from flask_socketio import rooms as joined_rooms
 
+from api.metrics import ONLINE
 from module import email_verification
 
 from .. import socketio
 from . import api_chat  # noqa: F401 - re-exported for api/__init__.py
 
 online = {}  # {account:socketid}
+ONLINE.set_function(lambda: len(online))
 
 rooms = {}  # {socket_id : {who?:room,who2:room2...}}
 
