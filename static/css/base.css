@@ -371,6 +371,86 @@ textarea {
   letter-spacing: 0.04em;
 }
 
+/* Collapsible cards (static/js/lib/collapsible.js): the title is the toggle. */
+.card__toggle {
+  display: flex;
+  flex: 1;
+  align-items: center;
+  gap: var(--space-2);
+  min-height: 32px;
+  margin: calc(var(--space-1) * -1) 0;
+  padding: 0;
+  border: 0;
+  background: none;
+  color: inherit;
+  font: inherit;
+  letter-spacing: inherit;
+  text-align: left;
+  cursor: pointer;
+}
+
+.card__toggle > span:first-child {
+  flex: 1;
+}
+
+.card__toggle .icon {
+  flex: none;
+  color: var(--text-faint);
+  transition: transform 0.2s ease;
+}
+
+.card.is-collapsed .card__toggle .icon {
+  transform: rotate(-90deg);
+}
+
+.card.is-collapsed .card__body {
+  display: none;
+}
+
+.card.is-collapsed > .card__title {
+  margin-bottom: 0;
+}
+
+.card__note {
+  color: var(--text-faint);
+  font-size: var(--text-xs);
+  font-weight: 600;
+  letter-spacing: 0;
+}
+
+.card__note:empty {
+  display: none;
+}
+
+.card__note--live::before {
+  content: "";
+  display: inline-block;
+  width: 7px;
+  height: 7px;
+  margin-right: 5px;
+  border-radius: 50%;
+  background: var(--success);
+  vertical-align: 1px;
+}
+
+.card__badge {
+  min-width: 20px;
+  height: 20px;
+  padding: 0 6px;
+  border-radius: var(--radius-pill);
+  background: var(--danger);
+  color: #fff;
+  font-size: 11px;
+  font-weight: 700;
+  line-height: 20px;
+  letter-spacing: 0;
+  text-align: center;
+}
+
+.card__badge[hidden] {
+  display: none;
+}
+
 .chip {
   display: inline-flex;
   align-items: center;

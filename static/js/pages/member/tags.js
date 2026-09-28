@@ -1,6 +1,7 @@
 // My subscribed tags and the trending list.
 import { api } from "../../lib/api.js";
 import { $, busy, h } from "../../lib/dom.js";
+import { setCardNote } from "../../lib/collapsible.js";
 import { icon } from "../../lib/icons.js";
 import { toast, toastError } from "../../lib/toast.js";
 import { emit } from "./state.js";
@@ -13,6 +14,7 @@ let hotTags = null; // the last trending list from /api/tag
 const tagUrl = (name) => `/tag/${encodeURIComponent(name)}`;
 
 function renderChips() {
+  setCardNote("tags", subscribed.size ? `${subscribed.size} 個` : "");
   if (!subscribed.size) {
     list.replaceChildren(h("li", { class: "empty" }, "還沒有訂閱任何標籤"));
     return;

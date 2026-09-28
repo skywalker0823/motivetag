@@ -1,6 +1,7 @@
 // Member page entry point: loads who I am, then starts every panel.
 import { api } from "../../lib/api.js";
 import { $ } from "../../lib/dom.js";
+import { initCollapsibles } from "../../lib/collapsible.js";
 import { hydrateIcons } from "../../lib/icons.js";
 import { pullToRefresh } from "../../lib/pull-refresh.js";
 import { socket } from "../../lib/socket.js";
@@ -20,6 +21,7 @@ import { initTour } from "./tour.js";
 import { initVerify } from "./verify.js";
 
 hydrateIcons();
+initCollapsibles();
 
 function initTopbar() {
   const search = $("#tag-search");

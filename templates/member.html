@@ -57,7 +57,7 @@
                 </div>
             </section>
 
-            <section class="card" data-panel="tags" aria-labelledby="my-tags-title">
+            <section class="card" data-panel="tags" data-collapse-key="tags" aria-labelledby="my-tags-title">
                 <h2 class="card__title" id="my-tags-title"><span>我訂閱的標籤</span></h2>
                 <form class="input-group" id="tag-add">
                     <label class="visually-hidden" for="tag-add-input">新增標籤</label>
@@ -67,7 +67,7 @@
                 <ul class="chips" id="my-tags"></ul>
             </section>
 
-            <section class="card" data-panel="tags" aria-labelledby="trend-title">
+            <section class="card" data-panel="tags" data-collapse-key="trend" aria-labelledby="trend-title">
                 <h2 class="card__title" id="trend-title"><span>熱門標籤</span></h2>
                 <ol class="trend" id="trend"></ol>
             </section>
@@ -126,17 +126,17 @@
         </main>
 
         <aside class="col col--right" data-panel="friends">
-            <section class="card invite-card" aria-labelledby="invite-title">
+            <section class="card invite-card" data-collapse-key="invite" aria-labelledby="invite-title">
                 <h2 class="card__title" id="invite-title"><span>邀請朋友</span></h2>
                 <p class="card__hint">朋友用你的連結註冊，會自動和你成為好友</p>
                 <button class="btn btn--block" id="invite-share" type="button" data-icon="send">分享邀請連結</button>
             </section>
-            <section class="card" id="suggested-card" aria-labelledby="suggested-title">
+            <section class="card" id="suggested-card" data-collapse-key="suggested" aria-labelledby="suggested-title">
                 <h2 class="card__title" id="suggested-title"><span>可能合得來的人</span></h2>
                 <p class="card__hint">訂閱相同標籤的人，依共同標籤數排序</p>
                 <ul class="people" id="suggested"></ul>
             </section>
-            <section class="card" aria-labelledby="friends-title">
+            <section class="card" data-collapse-key="friends" aria-labelledby="friends-title">
                 <h2 class="card__title" id="friends-title"><span>好友</span></h2>
                 <form class="input-group" id="friend-invite">
                     <label class="visually-hidden" for="friend-invite-input">要加的帳號</label>
