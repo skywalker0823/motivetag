@@ -685,6 +685,19 @@ class Friend:
             connection.commit()
             return {"ok": "friendship updated", "result": result, "data": data}
 
+    def connect(member_a, member_b):
+        """Makes two members friends at once, unless they already have a friendship row."""
+        with connection.cursor() as cursor:
+            cursor.execute(
+                """INSERT INTO friendship (request_from, request_to, status)
+                   SELECT %s, %s, '0' FROM DUAL WHERE NOT EXISTS (
+                     SELECT 1 FROM friendship
+                     WHERE (request_from=%s AND request_to=%s)
+                        OR (request_from=%s AND request_to=%s))""",
+                (member_a, member_b, member_a, member_b, member_b, member_a),
+            )
+        connection.commit()
+
     def delete_relation(me, target):
         with connection.cursor() as cursor:
             result = cursor.execute(

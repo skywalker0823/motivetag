@@ -62,7 +62,8 @@ uses it as a portfolio project for interviews. Read this first, then `README.md`
   `static/css/base.css` tokens and components; `static/js/lib/` framework-free helpers
   (api, dom `h()`, icons, time, toast, upload, confirm, lightbox, socket, tour,
   pull-refresh);
-  `static/js/pages/` one folder per page. Socket.IO client is vendored in `static/vendor/`.
+  `static/js/pages/` one folder per page. `module/urls.py` `public_base_url()` for
+  absolute links (e-mail, invites, og tags). Socket.IO client is vendored in `static/vendor/`.
 - `migrations/versions/` Alembic, applied on container start. Migrations must keep the
   previous release working (a rollback does not undo them).
 - `scripts/demo_data.py` demo members and activity (`seed` / `remove`), run in
@@ -178,9 +179,23 @@ had failed on 12 names; production stayed on PR #30 until then).
 - Owner asked next for security monitoring: audit log of sign-ins, lockout after
   failed logins, "recent logins" for members, admin page, maybe logs to Loki.
 
-**On branch `claude/sharp-bohr-bhm8n5` (not merged yet)**
-- Fix: deploy.sh reloads nginx after `compose up` (PR #34's deploy left nginx on the
-  app's old address → Cloudflare 502 until nginx was reloaded by hand).
+**Done in PR #35:** deploy.sh reloads nginx after `compose up` (see Gotchas).
+
+**Cloudflare (set by hand, 2026-09-28):** custom rules `deny !tw&US` (country not TW/US →
+block) and `Block scanners` (`/wp-`, `.php`, `/.env`, `/.git`, `/phpmyadmin`);
+rate-limiting rule `API flood guard` (`/api/`, 60 requests / 10 s per IP → block 10 s).
+
+**On branch `claude/sharp-bohr-bhm8n5` (not merged yet)** (promotion)
+- Open Graph / Twitter tags on the landing page, preview image `static/img/og.png`
+  (1200×630, rendered from HTML with Playwright).
+- Invite links (`module/invites.py`: member id signed with SECRET_KEY, salt
+  "invite"): `/?invite=<token>`; the landing page names the inviter (also in
+  og:title); signing up with it makes both friends (`Friend.connect`) and notifies
+  the inviter; metric event `signup_invited`. "邀請朋友" card uses the Web Share API
+  or copies the link (`static/js/pages/member/invite.js`).
+- The country rule blocks link-preview crawlers outside TW/US (LINE's are in Japan);
+  the owner was given an exception expression for `/` and `/img/og.png`.
+- Next agreed: report/block, and a "示範" badge or removal for demo accounts.
 
 **Roadmap (ADR 0010, phase 1 next)**
 1. Report content and block members (App Store Guideline 1.2).

@@ -72,10 +72,12 @@ for (const tab of tabs) {
   });
 }
 
-// People who have signed in on this browser before land on 登入; everyone else on 註冊.
+// People who have signed in on this browser before land on 登入; everyone else, and
+// anyone arriving through an invite link, on 註冊.
 const RETURNING = "motivetag:returning";
+const INVITE = new URLSearchParams(location.search).get("invite");
 try {
-  if (!localStorage.getItem(RETURNING)) {
+  if (INVITE || !localStorage.getItem(RETURNING)) {
     selectTab($("#tab-signup"), { focus: false });
   }
 } catch {
@@ -191,6 +193,8 @@ signupForm.addEventListener("submit", (event) => {
           birthday: birthday.value,
           // Filled in by the Cloudflare Turnstile widget when the site uses it.
           turnstile_token: signupForm.elements["cf-turnstile-response"]?.value,
+          // From someone's invite link: the server makes the two of you friends.
+          invite: INVITE ?? undefined,
         },
       });
       if (!result.ok) throw new Error(errorMessage(result.error, "註冊失敗，請稍後再試"));

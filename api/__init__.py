@@ -1,7 +1,7 @@
 import os
 
 from dotenv import load_dotenv
-from flask import Flask, redirect, session
+from flask import Flask, redirect, request, session
 from flask import render_template as rt
 from flask_socketio import SocketIO
 
@@ -91,10 +91,17 @@ def create_app(config_name):
         if session.get("account"):
             return redirect("/" + session["account"])
         else:
-            from module import turnstile
+            from module import invites, turnstile
+            from module.urls import public_base_url
 
             site_key = app.config["TURNSTILE_SITE_KEY"] if turnstile.enabled() else None
-            return rt("index.html", turnstile_site_key=site_key)
+            inviter = invites.inviter(request.args.get("invite"))
+            return rt(
+                "index.html",
+                turnstile_site_key=site_key,
+                inviter=inviter["account"] if inviter else None,
+                base_url=public_base_url(),
+            )
 
     @app.route("/tag/<tag_name>")
     def tag(tag_name):

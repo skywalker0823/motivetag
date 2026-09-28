@@ -9,6 +9,7 @@ import { initChat, openChat } from "./chat.js";
 import { initComposer } from "./composer.js";
 import { initFeed, refreshFeed, resetFeed } from "./feed.js";
 import { initFriends } from "./friends.js";
+import { initInvite } from "./invite.js";
 import { initNotifications } from "./notifications.js";
 import { initProfile, showMember } from "./profile.js";
 import { initSettings } from "./settings.js";
@@ -100,6 +101,7 @@ async function start() {
   initTags();
   const friends = initFriends();
   initSuggestions(friends.invite);
+  initInvite();
   initChat();
   initNotifications();
   initTour(result.data.first_signup);
