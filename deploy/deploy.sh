@@ -106,10 +106,19 @@ check_public() {
   return 1
 }
 
+# nginx looks up the app container's address once, at start, and compose leaves a
+# running nginx alone. A recreated app can come back on another address (another
+# container may take the old one), which made nginx answer 502, and a changed
+# nginx.conf was never read. A reload re-reads both without dropping connections.
+reload_nginx() {
+  docker compose exec -T nginx sh -c 'nginx -t -q && nginx -s reload'
+  sleep 2
+}
+
 previous=$(cat current_image 2>/dev/null || true)
 
 write_env "$IMAGE"
-if docker compose up -d --remove-orphans --wait --wait-timeout 300; then
+if docker compose up -d --remove-orphans --wait --wait-timeout 300 && reload_nginx; then
   echo "$IMAGE" > current_image
   echo "Deployed $IMAGE"
   install_jobs
@@ -123,6 +132,6 @@ docker compose logs --tail 100 app >&2 || true
 if [ -n "$previous" ]; then
   echo "Rolling back to $previous" >&2
   write_env "$previous"
-  docker compose up -d --remove-orphans --wait --wait-timeout 300 || true
+  docker compose up -d --remove-orphans --wait --wait-timeout 300 && reload_nginx || true
 fi
 exit 1
