@@ -15,11 +15,12 @@ import math
 import secrets
 from datetime import timedelta
 
-from flask import current_app, request
+from flask import current_app
 
 from data.data import EmailToken, Member
 from module import mailer
 from module.clock import taipei_datetime
+from module.urls import public_base_url
 
 LINK_VALID = timedelta(hours=24)
 RESEND_AFTER = timedelta(seconds=60)
@@ -50,12 +51,6 @@ def _hash(token):
     return hashlib.sha256(token.encode()).hexdigest()
 
 
-def _base_url():
-    # nginx talks plain HTTP to the app and says the visitor used HTTPS in this header.
-    scheme = request.headers.get("X-Forwarded-Proto", request.scheme)
-    return f"{scheme}://{request.host}"
-
-
 def send_link(member_id, account, email):
     """Creates a link and e-mails it; raises TooSoon or LimitReached instead."""
     now = taipei_datetime()
@@ -72,7 +67,7 @@ def send_link(member_id, account, email):
 
     token = secrets.token_urlsafe(32)
     EmailToken.create(member_id, _hash(token), now, now + LINK_VALID)
-    link = f"{_base_url()}{VERIFY_PATH}?token={token}"
+    link = f"{public_base_url()}{VERIFY_PATH}?token={token}"
     mailer.send(email, "請確認你的 MotiveTag Email", _text(account, link), _html(account, link))
     return link
 

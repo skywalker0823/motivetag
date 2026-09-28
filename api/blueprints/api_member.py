@@ -4,13 +4,14 @@ from datetime import date
 from flask import current_app, request, session
 
 from api.metrics import auth_event
-from data.data import Friend, Member, Member_tags
-from module import email_verification, rules, turnstile
+from data.data import Friend, Member, Member_tags, Notification
+from module import email_verification, invites, rules, turnstile
 from module.auth import login_required
 from module.clock import taipei_now
 from module.disposable import is_disposable
 
 from . import api_member
+from .api_chat import push_to
 
 
 def with_verification(member):
@@ -98,13 +99,30 @@ def sign_up_member():
         auth_event("signup_refused")
         return {"error": result}
     auth_event("signup_ok")
+    member = Member.get_member(account)
+    join_inviter(member, data.get("invite"))
     if email_verification.required():
-        member = Member.get_member(account)
         try:
             email_verification.send_link(member["member_id"], account, email)
         except Exception as exc:  # noqa: BLE001 - the account exists; they can resend
             current_app.logger.warning("verification e-mail to %s failed: %s", email, exc)
     return {"ok": True}
+
+
+def join_inviter(member, token):
+    """Signed up through someone's invite link: friends at once, and they are told."""
+    inviter = invites.inviter(token)
+    if inviter is None or inviter["member_id"] == member["member_id"]:
+        return
+    Friend.connect(inviter["member_id"], member["member_id"])
+    Notification.post_notifi(
+        member["member_id"],
+        inviter["account"],
+        f"{member['account']} 透過你的邀請連結加入了，你們已經是好友",
+        taipei_now(),
+    )
+    push_to(inviter["account"], "notification", {})
+    auth_event("signup_invited")
 
 
 @api_member.route("/api/member", methods=["PUT"])

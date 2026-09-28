@@ -34,7 +34,7 @@ LATENCY = Histogram(
 )
 AUTH = Counter(
     "motivetag_auth_events_total",
-    "Sign-ins and sign-ups: login_ok, login_failed, signup_ok, signup_refused.",
+    "Sign-ins and sign-ups: login_ok, login_failed, signup_ok, signup_refused, signup_invited.",
     ["event"],
 )
 ONLINE = Gauge("motivetag_online_members", "Members with an open chat connection.")

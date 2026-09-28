@@ -2,8 +2,23 @@
 <html lang="zh-TW">
 <head>
     {% with entry="/js/pages/index.js", stylesheets=['/css/index.css'] %}{% include "_head.html" %}{% endwith %}
-    <title>MotiveTag - 用標籤找到志同道合的朋友</title>
-    <meta name="description" content="MotiveTag：用 #標籤 找到興趣相同的朋友。訂閱標籤、發文、投票、即時聊天。">
+    {% set share_title = (inviter ~ " 邀請你加入 MotiveTag") if inviter else "MotiveTag - 用標籤找到志同道合的朋友" %}
+    {% set share_text = "用 #標籤 找到興趣相同的朋友。訂閱標籤、發文、投票、即時聊天。" %}
+    <title>{{ share_title }}</title>
+    <meta name="description" content="MotiveTag：{{ share_text }}">
+    {# Link previews in LINE, Threads, Facebook, Discord and X. #}
+    <meta property="og:type" content="website">
+    <meta property="og:site_name" content="MotiveTag">
+    <meta property="og:locale" content="zh_TW">
+    <meta property="og:title" content="{{ share_title }}">
+    <meta property="og:description" content="{{ share_text }}">
+    <meta property="og:url" content="{{ base_url }}/">
+    <meta property="og:image" content="{{ base_url }}{{ asset('/img/og.png') }}">
+    <meta property="og:image:width" content="1200">
+    <meta property="og:image:height" content="630">
+    <meta property="og:image:alt" content="MotiveTag：用標籤找到志同道合的朋友">
+    <meta name="twitter:card" content="summary_large_image">
+    <link rel="canonical" href="{{ base_url }}/">
     <script async src="https://www.googletagmanager.com/gtag/js?id=G-6WGHN61ENK"></script>
     <script>
         window.dataLayer = window.dataLayer || [];
@@ -31,6 +46,9 @@
         </section>
 
         <section class="auth card" aria-label="登入或註冊">
+            {% if inviter %}
+            <p class="notice notice--invite" role="status"><strong>{{ inviter }}</strong> 邀請你加入 MotiveTag，註冊後你們會自動成為好友。</p>
+            {% endif %}
             <div class="tabs" role="tablist">
                 <button class="tabs__tab" role="tab" id="tab-signin" aria-controls="panel-signin" aria-selected="true">登入</button>
                 <button class="tabs__tab" role="tab" id="tab-signup" aria-controls="panel-signup" aria-selected="false" tabindex="-1">註冊</button>

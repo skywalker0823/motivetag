@@ -193,3 +193,8 @@ body {
 .cf-turnstile {
   min-height: 65px; /* the widget's height, so the form does not jump when it appears */
 }
+
+.notice--invite {
+  border-color: rgba(28, 191, 255, 0.4);
+  background: var(--accent-soft);
+}
