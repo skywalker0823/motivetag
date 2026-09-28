@@ -192,6 +192,8 @@ form.addEventListener("submit", (event) => {
       setImage(null);
       setPoll(false);
       setHint(HINTS[type]);
+      text.blur();
+      setOpen(false);
       toast("已發佈", { type: "success" });
     } catch (submitError) {
       setHint(errorMessage(submitError, "發佈失敗，請稍後再試"), true);
@@ -199,6 +201,20 @@ form.addEventListener("submit", (event) => {
   });
 });
 
+// ---------- Collapsed on phones ----------
+
+// On phones the composer is one line until tapped (CSS hides the tools while it is
+// not .is-open), and folds back when you tap elsewhere with nothing written.
+function setOpen(open) {
+  form.classList.toggle("is-open", open);
+}
+
+const untouched = () => !text.value.trim() && !image && pollEditor.hidden;
+
 export function initComposer() {
   form.dataset.visibility = visibility();
+  form.addEventListener("focusin", () => setOpen(true));
+  document.addEventListener("pointerdown", (event) => {
+    if (!form.contains(event.target) && untouched()) setOpen(false);
+  });
 }

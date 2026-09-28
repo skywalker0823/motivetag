@@ -82,26 +82,40 @@ function finish() {
   setStatus(h("p", { class: "empty" }, text));
 }
 
-function fetchPage() {
-  if (tag) return api("/api/blocks", { query: { page: offset, key: tag } });
-  if (mode === "explore") return api("/api/v1/posts/explore", { query: { offset } });
-  return api("/api/blocks", { query: { page: offset } });
+function fetchPage(at = offset) {
+  if (tag) return api("/api/blocks", { query: { page: at, key: tag } });
+  if (mode === "explore") return api("/api/v1/posts/explore", { query: { offset: at } });
+  return api("/api/blocks", { query: { page: at } });
 }
 
 function nearBottom() {
   return sentinel.getBoundingClientRect().top < window.innerHeight + 800;
 }
 
-export async function loadMore() {
-  if (loading || done) return;
+/**
+ * The next page. With `replace`, the first page again, swapped in only once it has
+ * arrived, so a refresh keeps the old posts on screen instead of flashing skeletons.
+ */
+export async function loadMore({ replace = false } = {}) {
+  if (!replace && (loading || done)) return;
+  if (replace) {
+    generation += 1;
+    offset = 0;
+    done = false;
+  }
   loading = true;
+  newPill.hidden = true;
   const current = generation;
-  setStatus(...(feed.children.length ? [skeleton()] : [skeleton(), skeleton(), skeleton()]));
+  if (!replace) setStatus(...(feed.children.length ? [skeleton()] : [skeleton(), skeleton(), skeleton()]));
   try {
     const result = await fetchPage();
     if (current !== generation) return;
     const posts = Array.isArray(result.data) ? result.data : [];
     offset += PAGE;
+    if (replace) {
+      shown.clear();
+      feed.replaceChildren();
+    }
     const fresh = posts.filter((post) => !shown.has(post.block_id));
     for (const post of fresh) shown.add(post.block_id);
     feed.append(...fresh.map(renderPost));
@@ -109,6 +123,7 @@ export async function loadMore() {
     if (posts.length < PAGE) finish();
   } catch (error) {
     if (current !== generation) return;
+    if (replace) return toastError(error, "重新整理失敗");
     setStatus(
       h(
         "div",
@@ -137,7 +152,31 @@ export function resetFeed(newTag = null) {
   $("#feed-filter").hidden = !tag;
   $("#feed-filter-tag").textContent = tag ? `#${tag}` : "";
   $("#feed-tabs").hidden = Boolean(tag);
-  loadMore();
+  return loadMore();
+}
+
+/** The same feed (and tag filter) from the top: pull-to-refresh and the refresh button. */
+export function refreshFeed() {
+  return loadMore({ replace: true });
+}
+
+// ---------- "New posts" ----------
+
+const newPill = $("#feed-new");
+const CHECK_MS = 60000;
+
+/** Shows the pill when the first page holds a post that is not on screen yet. */
+async function checkForNew() {
+  if (loading || !newPill.hidden || !feed.children.length) return;
+  if (document.visibilityState !== "visible" || document.body.dataset.view !== "feed") return;
+  const current = generation;
+  try {
+    const result = await fetchPage(0);
+    const first = Array.isArray(result.data) ? result.data[0] : null;
+    if (current === generation && first && !shown.has(first.block_id)) newPill.hidden = false;
+  } catch {
+    // Only a hint; the next check tries again.
+  }
 }
 
 /** Switch between my feed and explore (and leave a tag filter). */
@@ -157,6 +196,12 @@ export function prependPost(post) {
 }
 
 export function initFeed() {
+  newPill.addEventListener("click", () => {
+    window.scrollTo({ top: 0, behavior: "smooth" });
+    refreshFeed();
+  });
+  setInterval(checkForNew, CHECK_MS);
+  document.addEventListener("visibilitychange", checkForNew);
   new IntersectionObserver((entries) => entries[0].isIntersecting && loadMore(), {
     rootMargin: "800px 0px",
   }).observe(sentinel);

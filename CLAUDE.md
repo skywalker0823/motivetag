@@ -56,7 +56,8 @@ uses it as a portfolio project for interviews. Read this first, then `README.md`
   `modulepreload`; templates include `templates/_head.html`.
 - Frontend: plain HTML/CSS + native ES modules, no build step (ADR 0009).
   `static/css/base.css` tokens and components; `static/js/lib/` framework-free helpers
-  (api, dom `h()`, icons, time, toast, upload, confirm, lightbox, socket, tour);
+  (api, dom `h()`, icons, time, toast, upload, confirm, lightbox, socket, tour,
+  pull-refresh);
   `static/js/pages/` one folder per page. Socket.IO client is vendored in `static/vendor/`.
 - `migrations/versions/` Alembic, applied on container start. Migrations must keep the
   previous release working (a rollback does not undo them).
@@ -112,9 +113,17 @@ feed offers trending tags in one tap; first-visit guided tour (`static/js/lib/to
 steps in `static/js/pages/member/tour.js`, "?" button replays it); landing page opens
 on 註冊 for new browsers.
 
+**Done in PR #28:** secret posts' images are private (`/images/block_<id>` checks
+`Block.visible`); search icon centred.
+
 **On branch `claude/sharp-bohr-bhm8n5` (not merged yet)**
-- Secret posts' images are private (`/images/block_<id>` checks `Block.visible`).
-- Search icon centred in the top bar; shorter placeholder on phones.
+- Pull-to-refresh on phones (`static/js/lib/pull-refresh.js`; the browser's own
+  pull-to-reload is off via `overscroll-behavior-y`); a refresh keeps the old posts
+  until the new page arrives.
+- "有新貼文" pill: the feed checks its first page every minute and on returning to
+  the tab.
+- Phones: the top bar hides while scrolling down; the composer is one line until
+  tapped. Double-tapping a post image likes it (single tap still opens it).
 
 **Roadmap (ADR 0010, phase 1 next)**
 1. Report content and block members (App Store Guideline 1.2).
