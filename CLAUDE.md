@@ -61,7 +61,7 @@ uses it as a portfolio project for interviews. Read this first, then `README.md`
 - Frontend: plain HTML/CSS + native ES modules, no build step (ADR 0009).
   `static/css/base.css` tokens and components; `static/js/lib/` framework-free helpers
   (api, dom `h()`, icons, time, toast, upload, confirm, lightbox, socket, tour,
-  pull-refresh);
+  pull-refresh, collapsible);
   `static/js/pages/` one folder per page. `module/urls.py` `public_base_url()` for
   absolute links (e-mail, invites, og tags). Socket.IO client is vendored in `static/vendor/`.
 - `migrations/versions/` Alembic, applied on container start. Migrations must keep the
@@ -185,7 +185,7 @@ had failed on 12 names; production stayed on PR #30 until then).
 block) and `Block scanners` (`/wp-`, `.php`, `/.env`, `/.git`, `/phpmyadmin`);
 rate-limiting rule `API flood guard` (`/api/`, 60 requests / 10 s per IP → block 10 s).
 
-**On branch `claude/sharp-bohr-bhm8n5` (not merged yet)** (promotion)
+**Done in PR #36** (promotion):
 - Open Graph / Twitter tags on the landing page, preview image `static/img/og.png`
   (1200×630, rendered from HTML with Playwright).
 - Invite links (`module/invites.py`: member id signed with SECRET_KEY, salt
@@ -195,6 +195,14 @@ rate-limiting rule `API flood guard` (`/api/`, 60 requests / 10 s per IP → blo
   or copies the link (`static/js/pages/member/invite.js`).
 - The country rule blocks link-preview crawlers outside TW/US (LINE's are in Japan);
   the owner was given an exception expression for `/` and `/img/og.png`.
+
+**On branch `claude/sharp-bohr-bhm8n5` (not merged yet)**
+- Collapsible side cards (`static/js/lib/collapsible.js`, `data-collapse-key` on
+  tags, trend, invite, suggested, friends; remembered in localStorage). Folded cards
+  still show `setCardBadge` (friends: requests + callers) and `setCardNote`
+  (online friends, suggestion and tag counts). The tour unfolds cards it points at.
+- The friends list reloads on a pushed "notification" (new requests appeared only
+  after a refresh before).
 - Next agreed: report/block, and a "示範" badge or removal for demo accounts.
 
 **Roadmap (ADR 0010, phase 1 next)**

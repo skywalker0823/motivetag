@@ -1,6 +1,7 @@
 // "可能合得來的人": members who subscribe to the same tags, one tap from an invitation.
 import { api } from "../../lib/api.js";
 import { $, busy, h, img } from "../../lib/dom.js";
+import { setCardNote } from "../../lib/collapsible.js";
 import { icon } from "../../lib/icons.js";
 import { toastError } from "../../lib/toast.js";
 import { avatarUrl, DEFAULT_AVATAR, emit, on } from "./state.js";
@@ -54,6 +55,7 @@ async function load(invite) {
   try {
     const result = await api("/api/v1/members/suggested");
     const people = result.data ?? [];
+    setCardNote("suggested", people.length ? `${people.length} 人` : "");
     list.replaceChildren(
       ...(people.length
         ? people.map((person) => row(person, invite))

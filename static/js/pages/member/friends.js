@@ -1,5 +1,6 @@
 // Friends: invitations both ways, the friend list and who is online right now.
 import { api, errorMessage } from "../../lib/api.js";
+import { setCardBadge, setCardNote } from "../../lib/collapsible.js";
 import { confirmDialog } from "../../lib/confirm.js";
 import { $, busy, h, img } from "../../lib/dom.js";
 import { icon } from "../../lib/icons.js";
@@ -110,6 +111,11 @@ function render() {
   lists.outgoing.replaceChildren(...outgoing.map((r) => h("li", null, person(other(r), "等待中"))));
 
   const calling = friends.some((r) => presence.get(other(r).account) === "on_calling");
+  // Seen on the folded card too: requests and calls want an answer.
+  const callers = friends.filter((r) => presence.get(other(r).account) === "on_calling").length;
+  setCardBadge("friends", incoming.length + callers, `${incoming.length} 個好友邀請、${callers} 位想聊天`);
+  const online = friends.filter((r) => presence.get(other(r).account)?.startsWith("on")).length;
+  setCardNote("friends", online ? `${online} 位上線` : "", { live: true });
   $("#tab-friends-badge").hidden = incoming.length === 0 && !calling;
   $("#tab-friends-badge").textContent = incoming.length ? String(incoming.length) : "";
 }
@@ -206,6 +212,9 @@ export function initFriends() {
       }
     });
   });
+
+  // A pushed notification may be a new request or an accepted one: show it now.
+  socket.on("notification", () => loadFriends());
 
   socket.on("awake_result", (states) => {
     let changed = false;

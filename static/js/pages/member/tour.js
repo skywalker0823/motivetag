@@ -1,4 +1,5 @@
 // The first-visit tour of the member page, and the help button that replays it.
+import { expandCard } from "../../lib/collapsible.js";
 import { $ } from "../../lib/dom.js";
 import { fromServer } from "../../lib/time.js";
 import { startTour } from "../../lib/tour.js";
@@ -7,7 +8,13 @@ import { me, showView } from "./state.js";
 const NEW_FOR_DAYS = 7; // members who joined this recently get the tour once
 const doneKey = () => `motivetag:tour-done:${me.account}`;
 
-// On phones only one panel shows at a time, so each step opens the one it talks about.
+// On phones only one panel shows at a time, so each step opens the one it talks about,
+// and unfolds the card it points into.
+function open(view, card) {
+  showView(view);
+  expandCard(card);
+}
+
 const STEPS = [
   {
     title: "歡迎來到 MotiveTag",
@@ -18,13 +25,13 @@ const STEPS = [
     target: "#tag-add",
     title: "1. 訂閱標籤",
     text: "輸入你有興趣的主題，例如「咖啡」或「登山」。訂閱後，帶有這個標籤的貼文都會出現在你的動態。",
-    before: () => showView("tags"),
+    before: () => open("tags", "tags"),
   },
   {
     target: "#trend",
     title: "不知道訂閱什麼？",
     text: "看看熱門標籤：點名稱可以先看看貼文，按「+」直接訂閱。",
-    before: () => showView("tags"),
+    before: () => open("tags", "trend"),
   },
   {
     target: "#composer",
@@ -42,13 +49,13 @@ const STEPS = [
     target: "#suggested-card",
     title: "3. 找到合得來的人",
     text: "這裡會推薦和你訂閱相同標籤的人，按「加好友」就送出邀請。也可以在貼文上點頭像看對方的共同標籤。",
-    before: () => showView("friends"),
+    before: () => open("friends", "suggested"),
   },
   {
     target: "#friend-invite",
     title: "交朋友、聊天",
     text: "也可以直接輸入帳號送出邀請。好友上線時頭像旁會亮綠點，點一下就能開聊天室。",
-    before: () => showView("friends"),
+    before: () => open("friends", "friends"),
   },
   {
     target: "#help-button",
