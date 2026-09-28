@@ -87,11 +87,15 @@ uv run pytest
 for f in $(git ls-files 'static/js/*.js'); do node --check "$f"; done && node .github/scripts/check-js-imports.mjs
 FLASK_CONFIG=dev uv run python app.py            # http://localhost:3000
 FLASK_CONFIG=dev uv run python scripts/demo_data.py seed   # demo content locally
+# Try e-mail verification locally: the e-mail (with its link) goes to the log.
+EMAIL_FROM=no-reply@motivetag.com MAIL_SUPPRESS=1 FLASK_CONFIG=dev uv run python app.py
 ```
 
 In the Claude Code cloud sandbox: start `dockerd` yourself; the Terraform registry is
 blocked (install providers from releases.hashicorp.com into a filesystem mirror);
-Docker Hub may rate-limit image builds; cdnjs is blocked for browsers.
+Docker Hub may rate-limit image builds; cdnjs and challenges.cloudflare.com
+(Turnstile) are blocked, so stub Turnstile's script with Playwright `route()`.
+`dockerd` does not survive between turns: restart it and `docker start motivetag-mysql`.
 
 ## Status and next steps (as of 2026-09-27)
 
@@ -102,6 +106,9 @@ Everything above is merged and deployed except where noted.
   role so account deletion also removes images (plan: 0 add, 1 change, 0 destroy).
   Until then deletion works but leaves image files in S3.
 - Run the **Demo data** workflow (`seed`) once, if they want the site to look active.
+- Sign-up protection setup (`infra/README.md`, "Sign-up protection"): Turnstile keys
+  into Parameter Store; `terraform apply` for SES, DNS records in Cloudflare, SES
+  production access, then `email_enabled = true` + apply. Each part is off until done.
 
 **Done in PR #26:** photos shrunk to WebP in the browser; `/images/<key>` reuses its
 presigned URL for 30 min; presence, calls and notifications pushed over Socket.IO
@@ -120,15 +127,23 @@ on 註冊 for new browsers.
 pill, phone top bar hides on scroll, one-line composer on phones, double-tap image
 to like.
 
-**On branch `claude/sharp-bohr-bhm8n5` (not merged yet)**
-- "可能合得來的人" (`GET /api/v1/members/suggested`, `static/js/pages/member/suggest.js`):
-  members sharing the most tags, excluding existing friendships; `新手引導` and
-  `Anonymous` never count (`NEUTRAL_TAGS` in `data/data.py`).
-- Member cards show shared tags and **age instead of the birthday** (decided: the
-  full birthday is no longer sent to other members).
-- Sign-up requires age 18+ (`MIN_AGE`, server and page). The owner is considering an
-  adults-only dating direction; safety features (report/block, removing or labelling
-  demo accounts, terms) were recommended before anything dating-specific.
+**Done in PR #30:** "可能合得來的人" suggestions (`GET /api/v1/members/suggested`), shared
+tags and age (never the birthday) on member cards, 18+ sign-up. The owner is
+considering an adults-only dating direction; report/block and dealing with the demo
+accounts were recommended first.
+
+**On branch `claude/sharp-bohr-bhm8n5` (not merged yet)** (ADR 0011)
+- E-mail verification: link e-mailed at sign-up (`module/email_verification.py`,
+  `email_token` table, migration 0003; existing members count as verified).
+  Unverified members can read but not post, comment, invite, open topics or chat
+  (`verified_required`). Limits: 1/minute and 5/day per member, 500/day site-wide.
+- SES via `infra/main/ses.tf` (Tokyo, `ses_region`); `/motivetag/email-from` only
+  exists when `email_enabled = true`, and it switches verification on.
+- Cloudflare Turnstile on sign-up (`module/turnstile.py`, fails closed; on only with
+  both `/motivetag/turnstile-site-key` and `-secret`); disposable domains refused
+  (`module/disposable.py`, CC0 list in `module/disposable_domains.txt`).
+- CI gained **Run workflow** (workflow_dispatch) on `main` to redeploy after a
+  Parameter Store change.
 
 **Roadmap (ADR 0010, phase 1 next)**
 1. Report content and block members (App Store Guideline 1.2).

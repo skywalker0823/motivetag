@@ -50,3 +50,15 @@ variable "backup_retention_days" {
   type        = number
   default     = 35
 }
+
+variable "ses_region" {
+  description = "Region for Amazon SES (sign-up e-mails). Tokyo by default: SES is not in every region."
+  type        = string
+  default     = "ap-northeast-1"
+}
+
+variable "email_enabled" {
+  description = "Require e-mail verification (creates /motivetag/email-from). Set true only once SES production access is granted."
+  type        = bool
+  default     = false
+}

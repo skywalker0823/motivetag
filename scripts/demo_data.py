@@ -21,7 +21,8 @@ sys.path.insert(0, os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 from demo_content import ANONYMOUS_POSTS, COMMENTS, POSTS, TOPICS, USERS  # noqa: E402
 
 from api import create_app  # noqa: E402
-from module.clock import TAIPEI  # noqa: E402
+from data.data import Member  # noqa: E402
+from module.clock import TAIPEI, taipei_now  # noqa: E402
 
 DEMO_DOMAIN = "demo.motivetag.com"
 DAYS = 14
@@ -82,6 +83,8 @@ class Demo:
             signin = client.put("/api/member", json={"account": account, "password": password})
             self.clients[account] = client
             self.ids[account] = signin.get_json()["data"]["member_id"]
+            # Demo addresses cannot receive mail, so they are verified directly.
+            Member.mark_verified(self.ids[account], taipei_now())
             self.call(account, "patch", "/api/member", {"category": "mood", "content": mood})
             # Most people drop the beginner tag new members start with.
             if self.rng.random() < 0.75:
@@ -245,6 +248,17 @@ def sql(app):
 
 
 def seed(app, seed_value=2026):
+    # Demo members sign up through the app: no mail to their made-up addresses, and no
+    # Turnstile widget to solve. The settings are put back afterwards.
+    saved = {key: app.config.get(key) for key in ("MAIL_SUPPRESS", "TURNSTILE_SECRET")}
+    app.config.update(MAIL_SUPPRESS=True, TURNSTILE_SECRET=None)
+    try:
+        return _seed(app, seed_value)
+    finally:
+        app.config.update(saved)
+
+
+def _seed(app, seed_value):
     with app.app_context():
         query = sql(app)
         if members(query):

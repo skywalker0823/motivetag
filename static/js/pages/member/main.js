@@ -16,6 +16,7 @@ import { initSuggestions } from "./suggest.js";
 import { bootstrap, me, on, showView } from "./state.js";
 import { initTags } from "./tags.js";
 import { initTour } from "./tour.js";
+import { initVerify } from "./verify.js";
 
 hydrateIcons();
 
@@ -92,6 +93,7 @@ async function start() {
 
   initTopbar();
   initProfile(result.data);
+  initVerify(result.data);
   initSettings();
   initComposer();
   initFeed();

@@ -638,6 +638,37 @@ html {
   font-size: var(--text-sm);
 }
 
+.verify-banner {
+  display: flex;
+  align-items: center;
+  gap: var(--space-3);
+  border-color: rgba(255, 201, 64, 0.45);
+  background: rgba(255, 201, 64, 0.08);
+}
+
+.verify-banner[hidden] {
+  display: none;
+}
+
+.verify-banner__icon {
+  flex: none;
+  color: var(--warning);
+}
+
+.verify-banner__text {
+  flex: 1;
+  margin: 0;
+  font-size: var(--text-sm);
+}
+
+.verify-banner__text strong {
+  word-break: break-all;
+}
+
+.verify-banner .btn {
+  flex: none;
+}
+
 .feed-tabs {
   display: grid;
   grid-template-columns: 1fr 1fr;

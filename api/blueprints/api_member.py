@@ -1,21 +1,36 @@
 import re
 from datetime import date
 
-from flask import request, session
+from flask import current_app, request, session
 
 from data.data import Friend, Member, Member_tags
-from module import rules
+from module import email_verification, rules, turnstile
 from module.auth import login_required
 from module.clock import taipei_now
+from module.disposable import is_disposable
 
 from . import api_member
+
+
+def with_verification(member):
+    """Replaces the raw timestamp with the flag the page needs."""
+    if member:
+        verified_at = member.pop("email_verified_at", None)
+        member["email_verified"] = verified_at is not None or not email_verification.required()
+    return member
+
+
+def client_ip():
+    # nginx appends the visitor's address (from CF-Connecting-IP) last.
+    forwarded = request.headers.get("X-Forwarded-For", "")
+    return forwarded.rsplit(",", 1)[-1].strip() or request.remote_addr
 
 
 @api_member.route("/api/member", methods=["GET"])
 def check_member():
     if session.get("account"):
         account = session.get("account")
-        data = Member.get_member(account)
+        data = with_verification(Member.get_member(account))
         return {"ok": True, "data": data}
     elif request.args.get("account_check"):
         account = request.args.get("account_check")
@@ -48,6 +63,8 @@ def signup_error(data):
         return f"密碼至少 {MIN_PASSWORD} 個字元"
     if len(data["email"]) > 254 or not EMAIL.match(data["email"]):
         return "Email 格式不正確"
+    if is_disposable(data["email"]):
+        return "請使用常用的 Email，不接受拋棄式信箱"
     try:
         birthday = date(*map(int, data["birthday"].split("-")))
     except (TypeError, ValueError):
@@ -65,6 +82,8 @@ def sign_up_member():
     error = signup_error(data)
     if error:
         return {"error": error}, 400
+    if not turnstile.passed(data.get("turnstile_token"), client_ip()):
+        return {"error": "人機驗證沒有通過，請再試一次"}, 400
     account = data["account"]
     password = data["password"]
     email = data["email"]
@@ -72,9 +91,15 @@ def sign_up_member():
     first_signup = taipei_now()[:10]
     session["FIRST_TIME"] = "YES"
     result = Member.sign_up(account, password, email, birthday, first_signup)
-    if result == "ok":
-        return {"ok": True}
-    return {"error": result}
+    if result != "ok":
+        return {"error": result}
+    if email_verification.required():
+        member = Member.get_member(account)
+        try:
+            email_verification.send_link(member["member_id"], account, email)
+        except Exception as exc:  # noqa: BLE001 - the account exists; they can resend
+            current_app.logger.warning("verification e-mail to %s failed: %s", email, exc)
+    return {"ok": True}
 
 
 @api_member.route("/api/member", methods=["PUT"])

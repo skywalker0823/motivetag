@@ -2,9 +2,10 @@ from flask import redirect, request, session
 from flask import render_template as rt
 
 from data.data import Friend, Member
-from module.auth import login_required
+from module.auth import login_required, verified_required
 
 from . import api_friends
+from .api_member import with_verification
 
 
 @api_friends.route("/<account>")
@@ -12,7 +13,7 @@ def to_member(account):
     if session.get("account") == account:
         # Who I am comes with the page, saving the browser a round trip before the
         # feed, tags and friends can load.
-        return rt("member.html", me=Member.get_member(account))
+        return rt("member.html", me=with_verification(Member.get_member(account)))
     return redirect("/")
 
 
@@ -36,7 +37,7 @@ def checking_relationship():
 
 
 @api_friends.route("/api/friend", methods=["POST"])
-@login_required
+@verified_required
 def waiting_relationship():
     data = request.get_json()
     someone_else = data["who"]

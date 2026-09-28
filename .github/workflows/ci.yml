@@ -4,6 +4,9 @@ on:
   pull_request:
   push:
     branches: [main]
+  # "Run workflow" on main redeploys it, e.g. after changing a setting in Parameter
+  # Store (works from the GitHub app too).
+  workflow_dispatch:
 
 permissions:
   contents: read
@@ -117,7 +120,7 @@ jobs:
   deploy:
     # Runs after every check passes on main, once the AWS side is set up
     # (repository variables from `terraform output github_variables`).
-    if: github.event_name == 'push' && github.ref == 'refs/heads/main' && vars.AWS_DEPLOY_ROLE_ARN != ''
+    if: github.event_name != 'pull_request' && github.ref == 'refs/heads/main' && vars.AWS_DEPLOY_ROLE_ARN != ''
     needs: [lint, test, terraform, audit, image]
     runs-on: ubuntu-latest
     permissions:

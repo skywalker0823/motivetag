@@ -184,3 +184,12 @@ body {
   background: rgba(46, 229, 157, 0.1);
   font-size: var(--text-sm);
 }
+
+.notice--warn {
+  border-color: rgba(255, 201, 64, 0.4);
+  background: rgba(255, 201, 64, 0.1);
+}
+
+.cf-turnstile {
+  min-height: 65px; /* the widget's height, so the form does not jump when it appears */
+}

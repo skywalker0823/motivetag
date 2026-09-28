@@ -28,6 +28,7 @@ const MESSAGES = {
   "you pressed this good message before": "你已經按過讚了",
   "file type not allowed": "只能上傳 PNG、JPEG、GIF 或 WebP 圖片",
   "block not found or not yours": "找不到這篇貼文，或它不是你的",
+  "email not verified": "請先到信箱完成 Email 驗證",
 };
 
 export function errorMessage(error, fallback = "發生錯誤，請稍後再試") {
@@ -57,7 +58,11 @@ export async function api(path, { method = "GET", body, query } = {}) {
   } catch {
     // Not JSON (for example an nginx error page); handled below.
   }
-  if (response.status === 429) throw new ApiError("嘗試次數太多，請稍候一分鐘再試", 429, data);
+  if (response.status === 429) {
+    // nginx's rate limit answers with a page; the app's own limits say why in JSON.
+    const message = data?.error ? errorMessage(data.error) : "嘗試次數太多，請稍候一分鐘再試";
+    throw new ApiError(message, 429, data);
+  }
   if (response.status >= 500 || data === null) {
     throw new ApiError("伺服器暫時無法回應，請稍後再試", response.status, data);
   }

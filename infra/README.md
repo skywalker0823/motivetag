@@ -165,6 +165,76 @@ this change to `main`**: image uploads need the bucket's new CORS rule.
    journalctl -u motivetag-restore-drill -n 40
    ```
 
+## Sign-up protection: Turnstile and e-mail verification (one time)
+
+Both are off until set up, and each can be done on its own (`docs/adr/0011`).
+Commands use the `motivetag` profile from the Mac; in CloudShell leave out
+`--profile motivetag`.
+
+### Cloudflare Turnstile (free, about 5 minutes)
+
+1. Cloudflare dashboard → **Turnstile** → **Add widget**: name `MotiveTag`, hostname
+   `motivetag.com`, mode **Managed**. Copy the **Site Key** and the **Secret Key**.
+2. Store both (the page shows the widget and the server checks it only when both
+   exist):
+
+   ```bash
+   aws ssm put-parameter --name /motivetag/turnstile-site-key --type String --value 'SITE_KEY' --region ap-east-2 --profile motivetag
+   aws ssm put-parameter --name /motivetag/turnstile-secret --type SecureString --value 'SECRET_KEY' --region ap-east-2 --profile motivetag
+   ```
+
+   Each prints `{"Version": 1, "Tier": "Standard"}`.
+3. Redeploy: GitHub → **Actions** → **CI** → **Run workflow** (branch `main`); the
+   GitHub app can do this too. The 註冊 form then shows the Cloudflare check.
+
+### E-mail verification with Amazon SES
+
+Costs US$0.10 per 1,000 e-mails after the first year's free 3,000 a month; the app
+sends at most 500 a day (about US$1.50 a month at the very most).
+
+1. **Create the sending identity.**
+
+   ```bash
+   cd infra/main
+   terraform plan    # 3 to add (SES identity, bounce suppression, /motivetag/ses-region), 1 to change (app role may send e-mail)
+   terraform apply
+   terraform output ses_dns_records
+   ```
+
+2. **Add the DNS records** it lists in Cloudflare → DNS: three `CNAME`
+   (`…._domainkey`) and one `TXT` (`_dmarc`), all **DNS only** (grey cloud). If a
+   `_dmarc` record already exists, keep yours. Then check (can take up to an hour):
+
+   ```bash
+   aws sesv2 get-email-identity --email-identity motivetag.com --region ap-northeast-1 --profile motivetag --query VerifiedForSendingStatus
+   ```
+
+   It prints `true` when SES sees the records.
+3. **Ask AWS for production access** (new accounts can only mail addresses they
+   verified themselves):
+
+   ```bash
+   aws sesv2 put-account-details --region ap-northeast-1 --profile motivetag \
+     --production-access-enabled --mail-type TRANSACTIONAL --contact-language EN \
+     --website-url https://motivetag.com \
+     --use-case-description "MotiveTag (https://motivetag.com) is a small social network. We only send one transactional e-mail: a link to confirm the address a person entered when signing up. Sending is limited to one message per minute and five per day per member, and 500 per day in total. Sign-up is protected by Cloudflare Turnstile and refuses disposable addresses. Bounces and complaints are handled by the SES account-level suppression list. No marketing e-mail is sent."
+   ```
+
+   AWS answers by e-mail, usually within a day. Check with
+   `aws sesv2 get-account --region ap-northeast-1 --profile motivetag --query ProductionAccessEnabled`.
+4. **Turn verification on** once approved: add `email_enabled = true` to
+   `terraform.tfvars`, then
+
+   ```bash
+   terraform apply   # 1 to add: /motivetag/email-from
+   ```
+
+   and redeploy (**Run workflow** as above). New members now get the e-mail;
+   existing members count as verified.
+5. **Try it:** sign up a test account with your own address, find the mail (also in
+   the spam folder the first time), click the link: the yellow banner disappears and
+   posting works.
+
 ## Backups
 
 - Daily at 03:00 Taipei time: `mysqldump` → gzip → `s3://<backup_bucket>/mysql/`

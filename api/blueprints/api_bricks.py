@@ -2,7 +2,7 @@ from flask import request, session
 
 from data.data import Bricks
 from module import rules
-from module.auth import login_required
+from module.auth import login_required, verified_required
 from module.clock import taipei_now
 
 from . import api_bricks
@@ -25,7 +25,7 @@ def get_discuss():
 
 
 @api_bricks.route("/api/bricks", methods=["POST"])
-@login_required
+@verified_required
 def post_brick_discuss():
     data = request.get_json(silent=True) or {}
     content = rules.text(data.get("content"), rules.REPLY_MAX)

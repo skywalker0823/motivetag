@@ -8,3 +8,8 @@ TAIPEI = timezone(timedelta(hours=8))
 
 def taipei_now():
     return datetime.now(TAIPEI).strftime("%Y-%m-%d %H:%M:%S")
+
+
+def taipei_datetime():
+    """Now as a naive Taiwan wall-clock datetime, the form DATETIME columns hold."""
+    return datetime.now(TAIPEI).replace(tzinfo=None, microsecond=0)

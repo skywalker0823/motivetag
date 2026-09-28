@@ -4,6 +4,8 @@ from flask import request, session
 from flask_socketio import emit, join_room, leave_room
 from flask_socketio import rooms as joined_rooms
 
+from module import email_verification
+
 from .. import socketio
 from . import api_chat  # noqa: F401 - re-exported for api/__init__.py
 
@@ -95,6 +97,12 @@ def logout(data):
 def init_room(data):
     who_to_chat = data["account"]
     me = current_account()
+    if not email_verification.verified(session.get("member_id")):
+        emit(
+            "init_result",
+            {"error": "請先到信箱完成 Email 驗證，才能開始聊天", "code": "email_not_verified"},
+        )
+        return
     if who_to_chat not in online:
         emit("init_result", {"error": who_to_chat + " is not online"})
         return
@@ -129,7 +137,7 @@ def init_room(data):
 @socketio.on("send")
 def send_mess(data):
     room = data["room"]
-    if room not in joined_rooms():
+    if room not in joined_rooms() or not email_verification.verified(session.get("member_id")):
         return
     data["from"] = current_account()
     emit("message", data, room=room)

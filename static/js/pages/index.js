@@ -14,10 +14,17 @@ api("/api/member")
 
 hydrateIcons();
 
-if (new URLSearchParams(location.search).has("deleted")) {
+// One-off messages the server sends people here with (?deleted, ?verified, ?verify=invalid).
+const NOTICES = {
+  deleted: ["你的帳號和資料已經刪除。謝謝你曾經使用 MotiveTag。"],
+  verified: ["Email 驗證完成！登入後就能發文、留言和交朋友。"],
+  verify: ["驗證連結無效或已過期。登入後可以在頁面上方重寄驗證信。", "notice--warn"],
+};
+for (const [param, [text, modifier]] of Object.entries(NOTICES)) {
+  if (!new URLSearchParams(location.search).has(param)) continue;
   history.replaceState(null, "", "/");
-  const notice = h("p", { class: "notice", role: "status" }, "你的帳號和資料已經刪除。謝謝你曾經使用 MotiveTag。");
-  $(".auth").prepend(notice);
+  $(".auth").prepend(h("p", { class: `notice${modifier ? ` ${modifier}` : ""}`, role: "status" }, text));
+  break;
 }
 
 // Show / hide password buttons.
@@ -182,12 +189,15 @@ signupForm.addEventListener("submit", (event) => {
           password: password.value,
           email: email.value.trim(),
           birthday: birthday.value,
+          // Filled in by the Cloudflare Turnstile widget when the site uses it.
+          turnstile_token: signupForm.elements["cf-turnstile-response"]?.value,
         },
       });
       if (!result.ok) throw new Error(errorMessage(result.error, "註冊失敗，請稍後再試"));
       await signIn(name, password.value);
     } catch (error) {
       showError(signupForm, errorMessage(error, error.message));
+      window.turnstile?.reset(); // a token works once; get a fresh one for the next try
     }
   });
 });
