@@ -102,13 +102,12 @@ Docker Hub may rate-limit image builds; cdnjs and challenges.cloudflare.com
 Everything above is merged and deployed except where noted.
 
 **Waiting on the owner**
-- `terraform apply` in `infra/main` for PR #23: adds `s3:DeleteObject` to the app
-  role so account deletion also removes images (plan: 0 add, 1 change, 0 destroy).
-  Until then deletion works but leaves image files in S3.
 - Run the **Demo data** workflow (`seed`) once, if they want the site to look active.
-- Sign-up protection setup (`infra/README.md`, "Sign-up protection"): Turnstile keys
-  into Parameter Store; `terraform apply` for SES, DNS records in Cloudflare, SES
-  production access, then `email_enabled = true` + apply. Each part is off until done.
+- Sign-up protection setup (`infra/README.md`, "Sign-up protection"). Done
+  2026-09-28: SES `terraform apply` (identity in ap-northeast-1; this also applied
+  PR #23's `s3:DeleteObject`). Still to do: the 3 DKIM CNAMEs + `_dmarc` TXT in
+  Cloudflare, SES production access, then `email_enabled = true` + apply; Turnstile
+  keys into Parameter Store. Each part is off until done.
 
 **Done in PR #26:** photos shrunk to WebP in the browser; `/images/<key>` reuses its
 presigned URL for 30 min; presence, calls and notifications pushed over Socket.IO
@@ -132,7 +131,7 @@ tags and age (never the birthday) on member cards, 18+ sign-up. The owner is
 considering an adults-only dating direction; report/block and dealing with the demo
 accounts were recommended first.
 
-**On branch `claude/sharp-bohr-bhm8n5` (not merged yet)** (ADR 0011)
+**Done in PR #31** (ADR 0011):
 - E-mail verification: link e-mailed at sign-up (`module/email_verification.py`,
   `email_token` table, migration 0003; existing members count as verified).
   Unverified members can read but not post, comment, invite, open topics or chat
@@ -144,6 +143,10 @@ accounts were recommended first.
   (`module/disposable.py`, CC0 list in `module/disposable_domains.txt`).
 - CI gained **Run workflow** (workflow_dispatch) on `main` to redeploy after a
   Parameter Store change.
+
+**On branch `claude/sharp-bohr-bhm8n5` (not merged yet)**
+- Fix: a re-run on `main` failed because ECR tags are immutable; the deploy job now
+  skips the build when the commit's image is already in ECR.
 
 **Roadmap (ADR 0010, phase 1 next)**
 1. Report content and block members (App Store Guideline 1.2).

@@ -140,8 +140,22 @@ jobs:
           role-to-assume: ${{ vars.AWS_DEPLOY_ROLE_ARN }}
           aws-region: ${{ vars.AWS_REGION }}
       - uses: aws-actions/amazon-ecr-login@03f1aad4c6c7ffd436567f42f9384779290529bd # v2.1.7
+      # Tags are immutable, so a re-run ("Run workflow") deploys the image this commit
+      # already has instead of pushing it again.
+      - name: Check whether this commit's image exists
+        id: existing
+        run: |
+          repository=${IMAGE#*/}
+          repository=${repository%%:*}
+          if aws ecr describe-images --repository-name "$repository" \
+              --image-ids imageTag="$GITHUB_SHA" >/dev/null 2>&1; then
+            echo "found=true" >> "$GITHUB_OUTPUT"
+            echo "::notice::$IMAGE is already in ECR; deploying it without a rebuild"
+          fi
       - uses: docker/setup-buildx-action@f87e5991a6d7451dcb8d9637bfbc97413f497069 # v4.4.1
+        if: steps.existing.outputs.found != 'true'
       - uses: docker/build-push-action@c3c9e263c25d99ce0380d002d59b67737d91b0dc # v7.4.0
+        if: steps.existing.outputs.found != 'true'
         with:
           context: .
           push: true
