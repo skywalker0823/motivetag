@@ -12,6 +12,7 @@ import { initFriends } from "./friends.js";
 import { initNotifications } from "./notifications.js";
 import { initProfile, showMember } from "./profile.js";
 import { initSettings } from "./settings.js";
+import { initSuggestions } from "./suggest.js";
 import { bootstrap, me, on, showView } from "./state.js";
 import { initTags } from "./tags.js";
 import { initTour } from "./tour.js";
@@ -96,6 +97,7 @@ async function start() {
   initFeed();
   initTags();
   const friends = initFriends();
+  initSuggestions(friends.invite);
   initChat();
   initNotifications();
   initTour(result.data.first_signup);

@@ -1,6 +1,7 @@
 """Privacy and game rules the server enforces, whatever the browser sends."""
 
 import uuid
+from datetime import date, timedelta
 
 from conftest import NOW
 
@@ -107,6 +108,17 @@ def test_signup_validates_input(client):
     assert signup(client, email="not-an-email").status_code == 400
     assert signup(client, birthday="2000-13-40").status_code == 400
     assert client.post("/api/member", json={}).status_code == 400
+
+
+def test_signup_needs_age_18(client):
+    today = date.today()
+    day = 28 if (today.month, today.day) == (2, 29) else today.day
+    turns_18_today = today.replace(year=today.year - 18, day=day)
+    turns_18_tomorrow = turns_18_today + timedelta(days=1)
+    assert signup(client, birthday=turns_18_today.isoformat()).get_json() == {"ok": True}
+    too_young = signup(client, birthday=turns_18_tomorrow.isoformat())
+    assert too_young.status_code == 400
+    assert "18" in too_young.get_json()["error"]
 
 
 def test_sign_in_rejects_missing_fields(client):

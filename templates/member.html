@@ -121,6 +121,11 @@
         </main>
 
         <aside class="col col--right" data-panel="friends">
+            <section class="card" id="suggested-card" aria-labelledby="suggested-title">
+                <h2 class="card__title" id="suggested-title"><span>可能合得來的人</span></h2>
+                <p class="card__hint">訂閱相同標籤的人，依共同標籤數排序</p>
+                <ul class="people" id="suggested"></ul>
+            </section>
             <section class="card" aria-labelledby="friends-title">
                 <h2 class="card__title" id="friends-title"><span>好友</span></h2>
                 <form class="input-group" id="friend-invite">
@@ -188,6 +193,7 @@
             <form method="dialog"><button class="icon-btn" data-icon="x" aria-label="關閉"></button></form>
         </div>
         <dl class="dialog__body member-card__facts" id="member-dialog-facts"></dl>
+        <div class="member-card__tags" id="member-dialog-tags" hidden></div>
         <div class="dialog__footer" id="member-dialog-actions"></div>
     </dialog>
 </body>

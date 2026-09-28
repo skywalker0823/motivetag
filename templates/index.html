@@ -63,7 +63,8 @@
                 </label>
                 <label class="field">
                     <span class="field__label">生日</span>
-                    <input class="input" name="birthday" type="date" autocomplete="bday" required min="1900-01-01">
+                    <input class="input" name="birthday" type="date" autocomplete="bday" required min="1900-01-01" aria-describedby="birthday-hint">
+                    <span class="field__hint" id="birthday-hint">需年滿 18 歲；其他人只會看到你的年齡，不會看到生日</span>
                 </label>
                 <p class="field__hint field__hint--error" data-error role="alert"></p>
                 <button class="btn btn--block" type="submit">建立帳號</button>

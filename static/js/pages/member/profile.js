@@ -108,6 +108,7 @@ export async function showMember(memberId) {
   $("#member-dialog-name").textContent = "載入中…";
   $("#member-dialog-mood").textContent = "";
   $("#member-dialog-facts").replaceChildren();
+  $("#member-dialog-tags").hidden = true;
   $("#member-dialog-actions").replaceChildren();
   dialog.showModal();
 
@@ -130,10 +131,31 @@ export async function showMember(memberId) {
     ["等級", `Lv ${level}（${user.exp ?? 0} exp）`],
     ["加入", dateOnly(user.first_signup)],
     ["上次上線", user.last_signin ? relative(fromServer(user.last_signin)) : "—"],
-    ["生日", user.birthday ? dateOnly(user.birthday) : "—"],
+    ["年齡", user.age != null ? `${user.age} 歲` : "—"],
   ];
   $("#member-dialog-facts").replaceChildren(
     ...facts.flatMap(([term, value]) => [h("dt", null, term), h("dd", null, value)]),
+  );
+  const shared = result.shared_tags ?? [];
+  const tags = $("#member-dialog-tags");
+  tags.hidden = user.account === me.account || shared.length === 0;
+  tags.replaceChildren(
+    h("span", { class: "member-card__tags-label" }, "共同標籤"),
+    ...shared.map((name) =>
+      h(
+        "button",
+        {
+          class: "chip chip--add",
+          type: "button",
+          title: `看 #${name} 的貼文`,
+          onClick: () => {
+            dialog.close();
+            emit("feed:tag", name);
+          },
+        },
+        `#${name}`,
+      ),
+    ),
   );
   $("#member-dialog-actions").replaceChildren(...friendActions(user.account, result.is_friend));
 }

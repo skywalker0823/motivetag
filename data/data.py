@@ -210,14 +210,65 @@ class Member:
         return keys
 
     def getting_data_without_private(member_id):
+        """What any member may see about another: age, never the full birthday."""
         with connection.cursor() as cursor:
             cursor.execute(
-                "SELECT account,birthday,first_signup,last_signin,mood,exp FROM member WHERE member_id=%s",
+                """SELECT account, TIMESTAMPDIFF(YEAR, birthday, CURDATE()) AS age,
+                          first_signup, last_signin, mood, exp
+                   FROM member WHERE member_id=%s""",
                 (member_id,),
             )
             data = cursor.fetchone()
             return data
 
+    def suggested(member_id, limit=10):
+        """Members who share the most tags with me, excluding anyone I already have a
+        friendship row with (friends, invitations either way). The starter tag and
+        the anonymous board say nothing about someone, so they do not count."""
+        with connection.cursor() as cursor:
+            cursor.execute(
+                f"""SELECT m.member_id, m.account, m.mood, m.last_signin,
+                          COUNT(DISTINCT t.tag_id) AS shared_count,
+                          GROUP_CONCAT(DISTINCT t.name ORDER BY t.popularity DESC
+                                       SEPARATOR '\n') AS shared
+                   FROM member_tags mine
+                   JOIN member_tags theirs
+                     ON theirs.tag_id = mine.tag_id AND theirs.member_id <> mine.member_id
+                   JOIN tag t ON t.tag_id = mine.tag_id
+                   JOIN member m ON m.member_id = theirs.member_id
+                   WHERE mine.member_id = %s AND t.name NOT IN ({_in(NEUTRAL_TAGS)})
+                     AND NOT EXISTS (
+                       SELECT 1 FROM friendship f
+                       WHERE (f.request_from = %s AND f.request_to = m.member_id)
+                          OR (f.request_to = %s AND f.request_from = m.member_id))
+                   GROUP BY m.member_id, m.account, m.mood, m.last_signin
+                   ORDER BY shared_count DESC, m.last_signin DESC
+                   LIMIT %s""",  # noqa: S608 - placeholders only
+                (member_id, *NEUTRAL_TAGS, member_id, member_id, limit),
+            )
+            rows = cursor.fetchall()
+        for row in rows:
+            row["shared"] = row["shared"].split("\n")
+        return rows
+
+    def shared_tags(member_id, other_id):
+        """Tag names both members subscribe to, most popular first."""
+        with connection.cursor() as cursor:
+            cursor.execute(
+                f"""SELECT DISTINCT t.name, t.popularity FROM member_tags a
+                   JOIN member_tags b ON b.tag_id = a.tag_id
+                   JOIN tag t ON t.tag_id = a.tag_id
+                   WHERE a.member_id = %s AND b.member_id = %s
+                     AND t.name NOT IN ({_in(NEUTRAL_TAGS)})
+                   ORDER BY t.popularity DESC""",  # noqa: S608 - placeholders only
+                (member_id, other_id, *NEUTRAL_TAGS),
+            )
+            return [row["name"] for row in cursor.fetchall()]
+
+
+# Tags that do not describe a person: every new member starts with the first, and the
+# anonymous board is where people go not to be identified.
+NEUTRAL_TAGS = ("新手引導", "Anonymous")
 
 FEED_PAGE = 10  # posts per /api/blocks page; PAGE in static/js/pages/member/feed.js
 
