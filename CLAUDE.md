@@ -116,14 +116,19 @@ on 註冊 for new browsers.
 **Done in PR #28:** secret posts' images are private (`/images/block_<id>` checks
 `Block.visible`); search icon centred.
 
+**Done in PR #29:** pull-to-refresh (`static/js/lib/pull-refresh.js`), "有新貼文"
+pill, phone top bar hides on scroll, one-line composer on phones, double-tap image
+to like.
+
 **On branch `claude/sharp-bohr-bhm8n5` (not merged yet)**
-- Pull-to-refresh on phones (`static/js/lib/pull-refresh.js`; the browser's own
-  pull-to-reload is off via `overscroll-behavior-y`); a refresh keeps the old posts
-  until the new page arrives.
-- "有新貼文" pill: the feed checks its first page every minute and on returning to
-  the tab.
-- Phones: the top bar hides while scrolling down; the composer is one line until
-  tapped. Double-tapping a post image likes it (single tap still opens it).
+- "可能合得來的人" (`GET /api/v1/members/suggested`, `static/js/pages/member/suggest.js`):
+  members sharing the most tags, excluding existing friendships; `新手引導` and
+  `Anonymous` never count (`NEUTRAL_TAGS` in `data/data.py`).
+- Member cards show shared tags and **age instead of the birthday** (decided: the
+  full birthday is no longer sent to other members).
+- Sign-up requires age 18+ (`MIN_AGE`, server and page). The owner is considering an
+  adults-only dating direction; safety features (report/block, removing or labelling
+  demo accounts, terms) were recommended before anything dating-specific.
 
 **Roadmap (ADR 0010, phase 1 next)**
 1. Report content and block members (App Store Guideline 1.2).
@@ -137,4 +142,3 @@ on 註冊 for new browsers.
   changes work from a phone.
 - A free external uptime monitor (UptimeRobot / Better Stack) needs a Cloudflare
   exception because of the Taiwan-only rule.
-- Undecided: whether member cards should show birthdays.

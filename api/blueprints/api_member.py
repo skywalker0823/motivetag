@@ -30,6 +30,11 @@ ACCOUNT = re.compile(r"^\w{3,20}$")
 RESERVED = {"api", "tag", "images", "healthz", "js", "css", "img"}
 EMAIL = re.compile(r"^[^@\s]+@[^@\s]+\.[^@\s]+$")
 MIN_PASSWORD = 8
+MIN_AGE = 18
+
+
+def age_on(birthday, today):
+    return today.year - birthday.year - ((today.month, today.day) < (birthday.month, birthday.day))
 
 
 def signup_error(data):
@@ -49,6 +54,8 @@ def signup_error(data):
         return "生日格式不正確"
     if not date(1900, 1, 1) <= birthday <= date.today():
         return "生日格式不正確"
+    if age_on(birthday, date.today()) < MIN_AGE:
+        return f"需年滿 {MIN_AGE} 歲才能註冊"
     return None
 
 
@@ -121,4 +128,9 @@ def get_user_sp():
     member_id = session.get("member_id")
     user_basic_data = Member.getting_data_without_private(target_id)
     checker = Friend.friend_ship_checker(member_id, target_id)
-    return {"ok": True, "data": user_basic_data, "is_friend": checker}
+    return {
+        "ok": True,
+        "data": user_basic_data,
+        "is_friend": checker,
+        "shared_tags": Member.shared_tags(member_id, target_id) if user_basic_data else [],
+    }

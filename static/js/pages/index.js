@@ -154,7 +154,11 @@ accountInput.addEventListener("input", () => {
   checkAccount(name);
 });
 
-signupForm.elements.birthday.max = serverNow().slice(0, 10);
+// Members must be 18 or older (MIN_AGE in api/blueprints/api_member.py).
+const MIN_AGE = 18;
+const today = serverNow().slice(0, 10);
+const latestBirthday = `${Number(today.slice(0, 4)) - MIN_AGE}${today.slice(4)}`;
+signupForm.elements.birthday.max = latestBirthday;
 
 signupForm.addEventListener("submit", (event) => {
   event.preventDefault();
@@ -164,7 +168,8 @@ signupForm.addEventListener("submit", (event) => {
     accountProblem(name) ??
     (password.value.length < 8 ? "密碼至少 8 個字元" : null) ??
     (!email.checkValidity() || !email.value ? "請輸入正確的 Email" : null) ??
-    (!birthday.value ? "請選擇生日" : null);
+    (!birthday.value ? "請選擇生日" : null) ??
+    (birthday.value > latestBirthday ? `需年滿 ${MIN_AGE} 歲才能註冊` : null);
   showError(signupForm, problem ?? "");
   if (problem) return;
 

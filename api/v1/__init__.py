@@ -26,4 +26,4 @@ def login_required(view):
     return wrapped
 
 
-from . import account, posts  # noqa: E402,F401 - registers the routes on v1
+from . import account, members, posts  # noqa: E402,F401 - registers the routes on v1

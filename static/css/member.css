@@ -1143,6 +1143,48 @@ button.poll__option:hover {
   cursor: pointer;
 }
 
+/* Presence is only known for friends, so suggestions show no status dot. */
+.person--stacked .person__avatar::after {
+  display: none;
+}
+
+.person__text {
+  display: grid;
+  min-width: 0;
+  text-align: left;
+}
+
+.person__shared {
+  overflow: hidden;
+  color: var(--accent);
+  font-size: var(--text-xs);
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.card__hint {
+  margin: calc(var(--space-2) * -1) 0 var(--space-2);
+  color: var(--text-muted);
+  font-size: var(--text-xs);
+}
+
+.member-card__tags {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: var(--space-2);
+  padding: 0 var(--space-4) var(--space-4);
+}
+
+.member-card__tags[hidden] {
+  display: none;
+}
+
+.member-card__tags-label {
+  color: var(--text-muted);
+  font-size: var(--text-sm);
+}
+
 .person__name {
   overflow: hidden;
   text-overflow: ellipsis;

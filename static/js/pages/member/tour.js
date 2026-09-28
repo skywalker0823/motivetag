@@ -39,9 +39,15 @@ const STEPS = [
     before: () => showView("feed"),
   },
   {
+    target: "#suggested-card",
+    title: "3. 找到合得來的人",
+    text: "這裡會推薦和你訂閱相同標籤的人，按「加好友」就送出邀請。也可以在貼文上點頭像看對方的共同標籤。",
+    before: () => showView("friends"),
+  },
+  {
     target: "#friend-invite",
-    title: "3. 交朋友、聊天",
-    text: "輸入對方的帳號送出邀請，或在貼文上點頭像。好友上線時頭像旁會亮綠點，點一下就能開聊天室。",
+    title: "交朋友、聊天",
+    text: "也可以直接輸入帳號送出邀請。好友上線時頭像旁會亮綠點，點一下就能開聊天室。",
     before: () => showView("friends"),
   },
   {
