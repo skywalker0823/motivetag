@@ -80,6 +80,10 @@ uses it as a portfolio project for interviews. Read this first, then `README.md`
 - SSM `GetParameters` takes at most 10 names; `deploy/fetch_params.py` batches them
   (a deploy failed at 12). Values in Parameter Store are sourced as shell by
   deploy.sh, so they must not contain spaces or quotes.
+- nginx resolves `app` once at start and compose does not restart a running nginx:
+  a recreated app on a new address gave 502s (2026-09-28, when Alloy took the old
+  address). deploy.sh now runs `nginx -t && nginx -s reload` after every `up`,
+  which also applies a changed `nginx.conf`.
 - Playwright's `route()` turns the browser HTTP cache off; block external hosts with
   `--host-resolver-rules` when measuring caching.
 
@@ -163,7 +167,7 @@ instead of failing on the immutable tag.
 **Done in PR #33:** `fetch_params.py` reads SSM in batches of 10 (PR #31's deploy
 had failed on 12 names; production stayed on PR #30 until then).
 
-**On branch `claude/sharp-bohr-bhm8n5` (not merged yet)** (ADR 0012)
+**Done in PR #34** (ADR 0012; Grafana Cloud stack `humblesturgeon2584`, data flowing):
 - `/metrics` (prometheus-client): requests by route pattern/method/status, latency
   histogram, auth events, online members; nginx and the app refuse it from outside.
 - Grafana Alloy container + `deploy/alloy.alloy`; deploy.sh sets
@@ -173,6 +177,10 @@ had failed on 12 names; production stayed on PR #30 until then).
   rate-limits this sandbox; Playwright needs `locale: "zh-TW"` for Grafana).
 - Owner asked next for security monitoring: audit log of sign-ins, lockout after
   failed logins, "recent logins" for members, admin page, maybe logs to Loki.
+
+**On branch `claude/sharp-bohr-bhm8n5` (not merged yet)**
+- Fix: deploy.sh reloads nginx after `compose up` (PR #34's deploy left nginx on the
+  app's old address → Cloudflare 502 until nginx was reloaded by hand).
 
 **Roadmap (ADR 0010, phase 1 next)**
 1. Report content and block members (App Store Guideline 1.2).
