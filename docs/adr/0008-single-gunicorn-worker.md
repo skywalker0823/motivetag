@@ -5,8 +5,8 @@
 
 ## Context
 
-Online status and chat rooms are kept in module-level dictionaries in
-`api/blueprints/api_chat.py`. Two worker processes (or two servers) would each have
+Online status is kept in module-level dictionaries in `api/blueprints/api_chat.py`
+(chat messages are stored in MySQL since [0013](0013-stored-direct-messages.md)). Two worker processes (or two servers) would each have
 their own copy, so users on different workers could not see or call each other.
 
 ## Decision

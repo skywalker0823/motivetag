@@ -1,19 +1,21 @@
-import secrets
+"""Socket.IO side of presence and chat.
+
+Every tab of a member joins the room `member:<account>`; the server pushes presence,
+notifications and chat messages there (chat itself is stored and sent over HTTP, see
+api/v1/chats.py). Presence is kept in memory, which is why there is one worker (ADR 0008).
+"""
 
 from flask import request, session
-from flask_socketio import emit, join_room, leave_room
-from flask_socketio import rooms as joined_rooms
+from flask_socketio import emit, join_room
 
 from api.metrics import ONLINE
-from module import email_verification
+from data.data import Friend, Member
 
 from .. import socketio
 from . import api_chat  # noqa: F401 - re-exported for api/__init__.py
 
-online = {}  # {account:socketid}
+online = {}  # {account: {socket ids of their open tabs}}
 ONLINE.set_function(lambda: len(online))
-
-rooms = {}  # {socket_id : {who?:room,who2:room2...}}
 
 watching = {}  # {account: {friends whose presence they asked about}}
 watchers = {}  # the reverse: {account: {who wants to hear when it changes}}
@@ -54,12 +56,19 @@ def unwatch(me):
 
 def go_online(me):
     came_online = me not in online
-    online[me] = request.sid
+    online.setdefault(me, set()).add(request.sid)
     if came_online:
         tell_watchers(me, "on")
 
 
 def go_offline(me):
+    """This tab went away; the member is offline once their last tab has."""
+    tabs = online.get(me)
+    if tabs is None:
+        return
+    tabs.discard(request.sid)
+    if tabs:
+        return
     del online[me]
     unwatch(me)
     tell_watchers(me, "off")
@@ -76,73 +85,25 @@ def init_chat(data):
     friend_list = data["check_who_is_awake_too"]
     watch(me, {f for f in list(friend_list)[:MAX_WATCHED] if isinstance(f, str) and f != me})
     go_online(me)
-    online_box = {}
-    for a_friend in friend_list:
-        if a_friend in online:
-            online_box[a_friend] = "on"
-            if online[a_friend] in rooms and me in rooms[online[a_friend]]:
-                online_box[a_friend] = "on_calling"
-        else:
-            online_box[a_friend] = "off"
-    emit("awake_result", online_box)
+    emit("awake_result", {friend: "on" if friend in online else "off" for friend in friend_list})
 
 
 @socketio.on("logout")
 def logout(data):
+    go_offline(current_account())
+
+
+@socketio.on("chat:typing")
+def typing(data):
+    """Tells a friend I am typing to them. The browser sends this at most every few seconds."""
     me = current_account()
-    if online.get(me) == request.sid:
-        go_offline(me)
-    return
-
-
-@socketio.on("init_room")
-def init_room(data):
-    who_to_chat = data["account"]
-    me = current_account()
-    if not email_verification.verified(session.get("member_id")):
-        emit(
-            "init_result",
-            {"error": "請先到信箱完成 Email 驗證，才能開始聊天", "code": "email_not_verified"},
-        )
+    to = data.get("to") if isinstance(data, dict) else None
+    if not isinstance(to, str) or to == me or to not in online:
         return
-    if who_to_chat not in online:
-        emit("init_result", {"error": who_to_chat + " is not online"})
+    to_id = Member.id_for(to)
+    if to_id is None or not Friend.are_friends(session.get("member_id"), to_id):
         return
-    who_sid = online[who_to_chat]
-    if who_sid in rooms and me in rooms[who_sid]:
-        if request.sid not in rooms or len(rooms[request.sid]) == 0:
-            rooms[request.sid] = {who_to_chat: rooms[who_sid][me]}
-        join_room(rooms[who_sid][me])
-        emit("init_result", {"ok": "JOINED", "room": rooms[who_sid][me]})
-        emit(
-            "message",
-            {
-                "type": "message",
-                "to": who_to_chat,
-                "from": me,
-                "content": me + " JOINED!",
-                "room": rooms[who_sid][me],
-            },
-            room=rooms[who_sid][me],
-        )
-        return
-    new_room = "room" + secrets.token_hex(16)
-    if request.sid not in rooms or len(rooms[request.sid]) == 0:
-        rooms[request.sid] = {who_to_chat: new_room}
-    else:
-        rooms[request.sid].update({who_to_chat: new_room})
-    join_room(new_room)
-    emit("init_result", {"ok": "CREATED & WAITING", "room": new_room})
-    push_to(who_to_chat, "awake_result", {me: "on_calling"})
-
-
-@socketio.on("send")
-def send_mess(data):
-    room = data["room"]
-    if room not in joined_rooms() or not email_verification.verified(session.get("member_id")):
-        return
-    data["from"] = current_account()
-    emit("message", data, room=room)
+    push_to(to, "chat:typing", {"from": me})
 
 
 @socketio.on("connect")
@@ -158,34 +119,4 @@ def test_connect():
 
 @socketio.on("disconnect")
 def test_disconnect():
-    if request.sid in rooms:
-        del rooms[request.sid]
-    me = current_account()
-    if online.get(me) == request.sid:
-        go_offline(me)
-
-
-@socketio.on("left")
-def left(message):
-    """Sent by clients when they leave a room.
-    A status message is broadcast to all people in the room."""
-    me = current_account()
-    room = message["room"]
-    if room not in joined_rooms():
-        return
-    emit(
-        "message",
-        {
-            "type": "message",
-            "to": message["account"],
-            "from": me,
-            "content": me + " 離開了QQ!",
-            "room": room,
-        },
-        room=room,
-    )
-    rooms.get(request.sid, {}).pop(message["account"], None)
-    if message["account"] in online:
-        push_to(message["account"], "awake_result", {me: "on"})
-    emit("status", {"msg": me + " has left the room."}, room=room)
-    leave_room(room)
+    go_offline(current_account())

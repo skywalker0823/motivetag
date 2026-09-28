@@ -109,7 +109,7 @@ Docker Hub may rate-limit image builds; cdnjs and challenges.cloudflare.com
 (Turnstile) are blocked, so stub Turnstile's script with Playwright `route()`.
 `dockerd` does not survive between turns: restart it and `docker start motivetag-mysql`.
 
-## Status and next steps (as of 2026-09-27)
+## Status and next steps (as of 2026-09-28)
 
 Everything above is merged and deployed except where noted.
 
@@ -196,14 +196,28 @@ rate-limiting rule `API flood guard` (`/api/`, 60 requests / 10 s per IP → blo
 - The country rule blocks link-preview crawlers outside TW/US (LINE's are in Japan);
   the owner was given an exception expression for `/` and `/img/og.png`.
 
-**On branch `claude/sharp-bohr-bhm8n5` (not merged yet)**
+**Done in PR #37:**
 - Collapsible side cards (`static/js/lib/collapsible.js`, `data-collapse-key` on
   tags, trend, invite, suggested, friends; remembered in localStorage). Folded cards
-  still show `setCardBadge` (friends: requests + callers) and `setCardNote`
+  still show `setCardBadge` (friends: requests + unread chats) and `setCardNote`
   (online friends, suggestion and tag counts). The tour unfolds cards it points at.
 - The friends list reloads on a pushed "notification" (new requests appeared only
   after a refresh before).
-- Next agreed: report/block, and a "示範" badge or removal for demo accounts.
+
+**On branch `claude/focused-fermat-jjmmy8` (not merged yet)** (ADR 0013)
+- Chat rebuilt Messenger-style. The old one was a "call": in-memory rooms keyed by
+  socket id, both sides online, the callee had to notice "想跟你聊天" and click;
+  a second tab or a reconnect (new sid) split people into different rooms, and
+  messages were never stored. Now messages live in `direct_message` (migration
+  0004), are sent over HTTP (`/api/v1/chats...`) and pushed as `chat:message` to
+  every tab of both members; `chat:read` (已讀) and `chat:typing` (正在輸入).
+  Friends only, 1000 chars, 30 messages/minute per member.
+- `online` is now `{account: {sids}}`: offline only when the last tab goes.
+- UI: topbar 聊天 button (unread badge, conversation list, online friends row),
+  docked windows with history, day separators, receipts, retry on failure; full
+  screen on phones; unread counts on the friends list and in the page title.
+- Next agreed: report/block (ADR 0010 phase 1; blocking must also stop chat), and a
+  "示範" badge or removal for demo accounts.
 
 **Roadmap (ADR 0010, phase 1 next)**
 1. Report content and block members (App Store Guideline 1.2).

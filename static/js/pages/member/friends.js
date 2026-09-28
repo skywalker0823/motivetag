@@ -7,12 +7,13 @@ import { icon } from "../../lib/icons.js";
 import { socket } from "../../lib/socket.js";
 import { toast, toastError } from "../../lib/toast.js";
 import { notify } from "./notifications.js";
-import { avatarUrl, DEFAULT_AVATAR, emit, me } from "./state.js";
+import { avatarUrl, DEFAULT_AVATAR, emit, me, on } from "./state.js";
 
-// The server pushes changes (online, offline, calling); this re-check is only a fallback.
+// The server pushes changes (online, offline); this re-check is only a fallback.
 const PRESENCE_MS = 30000;
 let relations = [];
-const presence = new Map(); // account -> "on" | "off" | "on_calling"
+const presence = new Map(); // account -> "on" | "off"
+let unread = {}; // account -> unread chat messages, from chat.js
 
 const lists = {
   incoming: $("#friends-incoming"),
@@ -74,19 +75,19 @@ function render() {
     ...(friends.length
       ? friends.map((r) => {
           const who = other(r);
-          const state = presence.get(who.account);
+          const waiting = unread[who.account] ?? 0;
           return h(
             "li",
             null,
-            person(who, state === "on_calling" ? "想跟你聊天" : state === "on" ? "上線中" : ""),
+            person(who, waiting ? `${waiting} 則新訊息` : presence.get(who.account) === "on" ? "上線中" : ""),
             h(
               "button",
               {
                 class: "icon-btn icon-btn--sm",
                 type: "button",
-                "aria-label": `和 ${who.account} 聊天`,
+                "aria-label": waiting ? `和 ${who.account} 聊天（${waiting} 則未讀）` : `和 ${who.account} 聊天`,
                 title: "聊天",
-                dataset: { chat: who.account, calling: String(state === "on_calling") },
+                dataset: { chat: who.account, ...(waiting ? { unread: String(waiting) } : {}) },
                 onClick: () => emit("chat:open", who.account),
               },
               icon("comment", { size: "sm" }),
@@ -110,14 +111,17 @@ function render() {
   lists.outgoing.closest(".friend-group").hidden = outgoing.length === 0;
   lists.outgoing.replaceChildren(...outgoing.map((r) => h("li", null, person(other(r), "等待中"))));
 
-  const calling = friends.some((r) => presence.get(other(r).account) === "on_calling");
-  // Seen on the folded card too: requests and calls want an answer.
-  const callers = friends.filter((r) => presence.get(other(r).account) === "on_calling").length;
-  setCardBadge("friends", incoming.length + callers, `${incoming.length} 個好友邀請、${callers} 位想聊天`);
-  const online = friends.filter((r) => presence.get(other(r).account)?.startsWith("on")).length;
-  setCardNote("friends", online ? `${online} 位上線` : "", { live: true });
-  $("#tab-friends-badge").hidden = incoming.length === 0 && !calling;
+  // Seen on the folded card too: requests and messages want an answer.
+  const writers = friends.filter((r) => unread[other(r).account]).length;
+  setCardBadge("friends", incoming.length + writers, `${incoming.length} 個好友邀請、${writers} 位傳了新訊息`);
+  const online = friends.filter((r) => presence.get(other(r).account) === "on");
+  setCardNote("friends", online.length ? `${online.length} 位上線` : "", { live: true });
+  $("#tab-friends-badge").hidden = incoming.length === 0 && !writers;
   $("#tab-friends-badge").textContent = incoming.length ? String(incoming.length) : "";
+  emit(
+    "friends:changed",
+    friends.map((r) => ({ ...other(r), online: presence.get(other(r).account) === "on" })),
+  );
 }
 
 export async function loadFriends() {
@@ -215,6 +219,12 @@ export function initFriends() {
 
   // A pushed notification may be a new request or an accepted one: show it now.
   socket.on("notification", () => loadFriends());
+
+  on("chat:unread", (counts) => {
+    if (JSON.stringify(counts) === JSON.stringify(unread)) return;
+    unread = counts;
+    render();
+  });
 
   socket.on("awake_result", (states) => {
     let changed = false;
