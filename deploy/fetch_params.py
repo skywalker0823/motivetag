@@ -28,16 +28,27 @@ OPTIONAL = {
 }
 
 
+BATCH = 10  # GetParameters takes at most 10 names per call
+
+
+def get_parameters(ssm, names):
+    """All of `names` in batches; returns (found parameters, names that do not exist)."""
+    found, invalid = [], []
+    for start in range(0, len(names), BATCH):
+        response = ssm.get_parameters(Names=names[start : start + BATCH], WithDecryption=True)
+        found += response["Parameters"]
+        invalid += response["InvalidParameters"]
+    return found, invalid
+
+
 def main():
     ssm = boto3.client("ssm", region_name=os.environ["AWS_REGION"])
     names = [f"/motivetag/{n}" for n in {**NAMES, **OPTIONAL}]
-    response = ssm.get_parameters(Names=names, WithDecryption=True)
-    missing = [
-        n for n in response["InvalidParameters"] if n.removeprefix("/motivetag/") not in OPTIONAL
-    ]
+    found, invalid = get_parameters(ssm, names)
+    missing = [n for n in invalid if n.removeprefix("/motivetag/") not in OPTIONAL]
     if missing:
         sys.exit("missing parameters: " + ", ".join(missing))
-    values = {p["Name"].removeprefix("/motivetag/"): p["Value"] for p in response["Parameters"]}
+    values = {p["Name"].removeprefix("/motivetag/"): p["Value"] for p in found}
     for name, value in values.items():
         if not value.strip():
             sys.exit(f"/motivetag/{name} is empty")

@@ -73,6 +73,9 @@ uses it as a portfolio project for interviews. Read this first, then `README.md`
   misleading "GMT" suffix; `static/js/lib/time.js` `fromServer()` corrects for it.
   Moving to UTC is phase 0 of ADR 0010.
 - MySQL must be connected as `utf8mb4` (emoji).
+- SSM `GetParameters` takes at most 10 names; `deploy/fetch_params.py` batches them
+  (a deploy failed at 12). Values in Parameter Store are sourced as shell by
+  deploy.sh, so they must not contain spaces or quotes.
 - Playwright's `route()` turns the browser HTTP cache off; block external hosts with
   `--host-resolver-rules` when measuring caching.
 
@@ -144,9 +147,12 @@ accounts were recommended first.
 - CI gained **Run workflow** (workflow_dispatch) on `main` to redeploy after a
   Parameter Store change.
 
+**Done in PR #32:** a re-run on `main` deploys the commit's existing ECR image
+instead of failing on the immutable tag.
+
 **On branch `claude/sharp-bohr-bhm8n5` (not merged yet)**
-- Fix: a re-run on `main` failed because ECR tags are immutable; the deploy job now
-  skips the build when the commit's image is already in ECR.
+- Fix: PR #31's deploy failed (production still ran PR #30) because
+  `fetch_params.py` asked SSM for 12 parameters in one call; now batched by 10.
 
 **Roadmap (ADR 0010, phase 1 next)**
 1. Report content and block members (App Store Guideline 1.2).
