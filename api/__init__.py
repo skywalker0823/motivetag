@@ -39,8 +39,10 @@ def create_app(config_name):
     app.teardown_appcontext(release_connection)
 
     from api.assets import init_assets
+    from api.metrics import init_metrics
 
     init_assets(app)
+    init_metrics(app)
     from api.blueprints.api_blocks import api_blocks
     from api.blueprints.api_bricks import api_bricks
     from api.blueprints.api_chat import api_chat

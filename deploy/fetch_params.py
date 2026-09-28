@@ -25,6 +25,9 @@ OPTIONAL = {
     "ses-region": "SES_REGION",  # created by infra/main/ses.tf
     "turnstile-site-key": "TURNSTILE_SITE_KEY",  # added by hand, see infra/README.md
     "turnstile-secret": "TURNSTILE_SECRET",  # added by hand, see infra/README.md
+    "grafana-prom-url": "GRAFANA_PROM_URL",  # added by hand, see infra/README.md
+    "grafana-prom-user": "GRAFANA_PROM_USER",  # added by hand, see infra/README.md
+    "grafana-cloud-token": "GRAFANA_CLOUD_TOKEN",  # added by hand, see infra/README.md
 }
 
 

@@ -18,5 +18,6 @@ gets a new record that supersedes the old one rather than an edit.
 | [0009](0009-frontend-es-modules-before-react.md) | Frontend on native ES modules and design tokens now, React + Vite later | Accepted |
 | [0010](0010-roadmap-to-an-ios-app.md) | Prepare for an iOS app in phases: API v1, App Store rules, shared TypeScript core, Expo | Accepted |
 | [0011](0011-email-verification-and-signup-protection.md) | Verify e-mail with SES (capped at 500 a day); Turnstile and a disposable-domain list on sign-up | Accepted |
+| [0012](0012-metrics-dashboard-on-grafana-cloud.md) | Metrics dashboard on Grafana Cloud's free tier, fed by Grafana Alloy | Accepted |
 
 Template: [`template.md`](template.md).

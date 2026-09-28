@@ -285,9 +285,42 @@ The weekly drill times step 3; expect about the same.
 | "… is NN% full" | `/` or `/srv/motivetag` over 85 %, checked daily by the backup job |
 
 Application errors go to Sentry when `/motivetag/sentry-dsn` is set, tagged with
-the git SHA. Nothing checks from outside that the site is reachable yet; a free
+the git SHA. The Grafana Cloud dashboard (below) shows memory, requests, errors,
+latency and sign-in failures. Nothing checks from outside that the site is reachable yet; a free
 UptimeRobot or Better Stack monitor on `https://motivetag.com/healthz` would (it
 also fails when the database is down).
+
+### Dashboard on Grafana Cloud (free, one time)
+
+CPU, memory, disk, network, requests, errors, latency and sign-ins on one page
+(`docs/adr/0012`). Grafana Alloy runs next to the app once the three settings below
+exist; about 400–1,500 series at one sample a minute, well inside the free tier's
+10,000.
+
+1. **Sign up** at https://grafana.com (free plan, no card). Create a stack, e.g.
+   `motivetag`; pick an Asia region if offered.
+2. **Find the Prometheus details:** grafana.com → *My Account* → your stack →
+   **Prometheus** → *Details* (or *Send metrics*). Note the **Remote Write
+   Endpoint** (`https://prometheus-prod-….grafana.net/api/prom/push`) and the
+   **Username / Instance ID** (a number).
+3. **Create a token** that can only write metrics: *Administration* → *Users and
+   access* → **Access policies** → *Create access policy* (scope `metrics:write`)
+   → *Add token*. It starts with `glc_`.
+4. **Store the three values:**
+
+   ```bash
+   aws ssm put-parameter --name /motivetag/grafana-prom-url --type String --value 'https://prometheus-prod-XX-prod-XX.grafana.net/api/prom/push' --region ap-east-2 --profile motivetag
+   aws ssm put-parameter --name /motivetag/grafana-prom-user --type String --value '1234567' --region ap-east-2 --profile motivetag
+   aws ssm put-parameter --name /motivetag/grafana-cloud-token --type SecureString --value 'glc_...' --region ap-east-2 --profile motivetag
+   ```
+
+5. **Redeploy:** GitHub → Actions → CI → **Run workflow** on `main`. In the server
+   shell (`sudo -i`), `docker ps` now lists `motivetag-alloy-1`, and
+   `docker logs --tail 20 motivetag-alloy-1` shows no `401`/`403`.
+6. **Import the dashboard:** open `deploy/grafana/motivetag-overview.json` on
+   GitHub → *Raw* → copy everything. In your Grafana (`https://<stack>.grafana.net`)
+   → *Dashboards* → *New* → **Import** → paste → *Load* → pick the
+   `grafanacloud-…-prom` data source → *Import*. Data appears within two minutes.
 
 ## Notes
 

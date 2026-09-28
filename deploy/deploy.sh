@@ -13,9 +13,11 @@ mkdir -p "$DIR/certs" /srv/motivetag/mysql
 cd "$DIR"
 umask 077
 
-# compose.yaml and nginx.conf come from the same image, so a release is one artifact.
+# compose.yaml, nginx.conf and alloy.alloy come from the same image, so a release is
+# one artifact.
 docker run --rm --entrypoint cat "$IMAGE" deploy/compose.yaml > compose.yaml
 docker run --rm --entrypoint cat "$IMAGE" deploy/nginx.conf > nginx.conf
+docker run --rm --entrypoint cat "$IMAGE" deploy/alloy.alloy > alloy.alloy
 
 # Check the Cloudflare origin certificate before touching the running stack:
 # nginx exits on a bad certificate, which would take the site down.
@@ -39,10 +41,17 @@ mv certs/origin.pem.new certs/origin.pem
 mv certs/origin.key.new certs/origin.key
 
 # SECRET_KEY, DB_PASSWORD, DB_ROOT_PASSWORD, BACKUP_BUCKET, ALERT_TOPIC_ARN,
-# SENTRY_DSN, EMAIL_FROM, SES_REGION, TURNSTILE_SITE_KEY, TURNSTILE_SECRET
+# SENTRY_DSN, EMAIL_FROM, SES_REGION, TURNSTILE_SITE_KEY, TURNSTILE_SECRET,
+# GRAFANA_PROM_URL, GRAFANA_PROM_USER, GRAFANA_CLOUD_TOKEN
 # shellcheck source=/dev/null
 . ./params.env
 rm params.env
+
+# Grafana Alloy (monitoring) runs only once all three Grafana Cloud settings exist.
+PROFILES=""
+if [ -n "$GRAFANA_PROM_URL" ] && [ -n "$GRAFANA_PROM_USER" ] && [ -n "$GRAFANA_CLOUD_TOKEN" ]; then
+  PROFILES=monitoring
+fi
 
 write_env() {
   cat > .env <<ENV
@@ -59,6 +68,10 @@ EMAIL_FROM=$EMAIL_FROM
 SES_REGION=$SES_REGION
 TURNSTILE_SITE_KEY=$TURNSTILE_SITE_KEY
 TURNSTILE_SECRET=$TURNSTILE_SECRET
+GRAFANA_PROM_URL=$GRAFANA_PROM_URL
+GRAFANA_PROM_USER=$GRAFANA_PROM_USER
+GRAFANA_CLOUD_TOKEN=$GRAFANA_CLOUD_TOKEN
+COMPOSE_PROFILES=$PROFILES
 ENV
 }
 

@@ -3,6 +3,7 @@ from datetime import date
 
 from flask import current_app, request, session
 
+from api.metrics import auth_event
 from data.data import Friend, Member, Member_tags
 from module import email_verification, rules, turnstile
 from module.auth import login_required
@@ -81,8 +82,10 @@ def sign_up_member():
     data = request.get_json(silent=True) or {}
     error = signup_error(data)
     if error:
+        auth_event("signup_refused")
         return {"error": error}, 400
     if not turnstile.passed(data.get("turnstile_token"), client_ip()):
+        auth_event("signup_refused")
         return {"error": "人機驗證沒有通過，請再試一次"}, 400
     account = data["account"]
     password = data["password"]
@@ -92,7 +95,9 @@ def sign_up_member():
     session["FIRST_TIME"] = "YES"
     result = Member.sign_up(account, password, email, birthday, first_signup)
     if result != "ok":
+        auth_event("signup_refused")
         return {"error": result}
+    auth_event("signup_ok")
     if email_verification.required():
         member = Member.get_member(account)
         try:
@@ -114,6 +119,7 @@ def sign_in_member():
     if session.get("FIRST_TIME") and session["FIRST_TIME"] == "YES" and result["msg"] == "ok":
         Member_tags.new_bie_tag(result["data"]["member_id"], "新手引導")
         session["FIRST_TIME"] = "NO"
+    auth_event("login_ok" if result["msg"] == "ok" else "login_failed")
     if result["msg"] == "ok":
         result = result["data"]
         session.clear()
