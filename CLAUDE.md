@@ -109,23 +109,20 @@ Docker Hub may rate-limit image builds; cdnjs and challenges.cloudflare.com
 (Turnstile) are blocked, so stub Turnstile's script with Playwright `route()`.
 `dockerd` does not survive between turns: restart it and `docker start motivetag-mysql`.
 
-## Status and next steps (as of 2026-09-27)
+## Status and next steps (as of 2026-09-28)
 
-Everything above is merged and deployed except where noted.
+Everything below is merged and deployed (PR #26 to #37); no feature work is in progress.
 
 **Waiting on the owner**
-- Run the **Demo data** workflow (`seed`) once, if they want the site to look active.
-- Grafana Cloud dashboard setup (`infra/README.md`, "Dashboard on Grafana Cloud"):
-  sign up, three parameters, Run workflow, import the dashboard JSON.
-- SES production access: the owner replied to AWS's request for details
-  (case 179058323800303); after approval, `email_enabled = true` + apply + Run
-  workflow.
-- Sign-up protection setup (`infra/README.md`, "Sign-up protection"). Done
-  2026-09-28: SES `terraform apply` (identity in ap-northeast-1; this also applied
-  PR #23's `s3:DeleteObject`). Still to do: the 3 DKIM CNAMEs + `_dmarc` TXT in
-  Cloudflare (done; identity verified), SES production access (pending), then
-  `email_enabled = true` + apply; Turnstile keys into Parameter Store. Each part is
-  off until done.
+- SES production access: AWS first answered DENIED and asked for details; the owner
+  replied (case 179058323800303). After approval: `email_enabled = true` in
+  `terraform.tfvars` → `terraform apply` → **Run workflow** on CI. Until then
+  e-mail verification is off (the SES identity and DKIM/DMARC are done and verified).
+- Turnstile keys (`/motivetag/turnstile-site-key` and `-secret`) into Parameter
+  Store, then Run workflow. Not confirmed whether this was done; ask.
+- Cloudflare exception for link-preview crawlers (see PR #36 below). Not confirmed.
+- Optional: run the **Demo data** workflow (`seed`) if they want the site to look active.
+- Done: Grafana Cloud (parameters set, Alloy running, dashboard imported, data flowing).
 
 **Done in PR #26:** photos shrunk to WebP in the browser; `/images/<key>` reuses its
 presigned URL for 30 min; presence, calls and notifications pushed over Socket.IO
@@ -194,19 +191,22 @@ rate-limiting rule `API flood guard` (`/api/`, 60 requests / 10 s per IP → blo
   the inviter; metric event `signup_invited`. "邀請朋友" card uses the Web Share API
   or copies the link (`static/js/pages/member/invite.js`).
 - The country rule blocks link-preview crawlers outside TW/US (LINE's are in Japan);
-  the owner was given an exception expression for `/` and `/img/og.png`.
+  the owner was given an exception expression for `/` and `/img/og.png`:
+  `(not ip.src.country in {"TW" "US"}) and not (http.request.uri.path in {"/" "/img/og.png"} and (cf.client.bot or http.user_agent contains "facebookexternalhit" or http.user_agent contains "line-poker" or http.user_agent contains "Twitterbot" or http.user_agent contains "Discordbot"))`
 
-**On branch `claude/sharp-bohr-bhm8n5` (not merged yet)**
+**Done in PR #37:**
 - Collapsible side cards (`static/js/lib/collapsible.js`, `data-collapse-key` on
   tags, trend, invite, suggested, friends; remembered in localStorage). Folded cards
   still show `setCardBadge` (friends: requests + callers) and `setCardNote`
   (online friends, suggestion and tag counts). The tour unfolds cards it points at.
 - The friends list reloads on a pushed "notification" (new requests appeared only
   after a refresh before).
-- Next agreed: report/block, and a "示範" badge or removal for demo accounts.
+
+**Next agreed with the owner:** report/block, then a "示範" badge or removal for
+demo accounts.
 
 **Roadmap (ADR 0010, phase 1 next)**
-1. Report content and block members (App Store Guideline 1.2).
+1. Report content and block members (App Store Guideline 1.2). Start here.
 2. Privacy policy and terms pages (mention backups keep deleted data up to 35 days).
 3. Optional: a small "示範" badge on demo accounts, or remove them once real people join.
 4. Then phase 0/2/3: UTC timestamps, OpenAPI + shared TypeScript core, React + Vite
@@ -217,3 +217,9 @@ rate-limiting rule `API flood guard` (`/api/`, 60 requests / 10 s per IP → blo
   changes work from a phone.
 - A free external uptime monitor (UptimeRobot / Better Stack) needs a Cloudflare
   exception because of the Taiwan-only rule.
+- Security monitoring (asked for in PR #34's session): a sign-in audit log, lockout
+  after repeated failed logins, "recent logins" for members, an admin page, maybe
+  logs to Grafana Cloud Loki (free tier).
+- Dashboard: "每分鐘請求" shows "—" instead of 0 when there is no traffic
+  (add `or vector(0)`).
+- Write the hand-set Cloudflare rules into `infra/README.md`.
