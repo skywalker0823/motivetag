@@ -193,49 +193,62 @@ async function deletePost(post, article) {
 
 // ---------- Likes ----------
 
+const LABELS = { like: "讚", dislike: "爛" };
+
+function pop(button) {
+  button.classList.remove("pop");
+  void button.offsetWidth; // restart the animation
+  button.classList.add("pop");
+}
+
+/** 讚 and 爛: one of them at most; tapping the pressed one again takes it back. */
 function renderActions(post) {
-  const reaction = (kind, method, label, count, pressed) => {
-    const counter = h("span", null, count || "");
-    const button = h(
-      "button",
-      {
-        class: "action",
-        type: "button",
-        "aria-label": label,
-        title: pressed ? `你已經按過${label}` : label,
-        "aria-pressed": String(Boolean(pressed)),
-      },
-      icon(kind),
-      counter,
-    );
-    button.addEventListener("click", async () => {
-      if (button.getAttribute("aria-pressed") === "true") return;
-      const before = Number(counter.textContent || 0);
-      button.setAttribute("aria-pressed", "true");
-      button.title = `你已經按過${label}`;
-      counter.textContent = String(before + 1);
-      button.classList.remove("pop");
-      void button.offsetWidth; // restart the animation
-      button.classList.add("pop");
-      try {
-        const result = await api("/api/blocks", { method, body: { block_id: post.block_id } });
-        if (result.error && !String(result.error).includes("before")) throw result;
-        if (result.error) counter.textContent = String(before); // already counted earlier
-      } catch (error) {
-        button.setAttribute("aria-pressed", "false");
-        button.title = label;
-        counter.textContent = before ? String(before) : "";
-        toastError(error);
-      }
-    });
-    return button;
+  let reaction = post.liked ? "like" : post.disliked ? "dislike" : null;
+  let counts = { like: Number(post.good || 0), dislike: Number(post.bad || 0) };
+  let latest = 0; // only the answer to the last tap counts
+  const buttons = {};
+
+  const show = () => {
+    for (const [kind, button] of Object.entries(buttons)) {
+      const on = reaction === kind;
+      button.setAttribute("aria-pressed", String(on));
+      button.title = on ? `再按一次取消${LABELS[kind]}` : LABELS[kind];
+      button.querySelector("span").textContent = counts[kind] > 0 ? String(counts[kind]) : "";
+    }
   };
-  return h(
-    "footer",
-    { class: "post__actions" },
-    reaction("like", "PATCH", "讚", post.good, post.liked),
-    reaction("dislike", "PUT", "爛", post.bad, post.disliked),
-  );
+
+  const choose = async (kind) => {
+    const next = reaction === kind ? null : kind;
+    const before = { reaction, counts: { ...counts } };
+    if (reaction) counts[reaction] -= 1;
+    if (next) counts[next] += 1;
+    reaction = next;
+    show();
+    if (next) pop(buttons[next]);
+    const request = ++latest;
+    try {
+      const { data } = await api(`/api/v1/posts/${post.block_id}/reaction`, { method: "PUT", body: { reaction: next } });
+      if (request !== latest) return;
+      reaction = data.reaction;
+      counts = { like: data.good, dislike: data.bad };
+    } catch (error) {
+      if (request !== latest) return;
+      ({ reaction, counts } = before);
+      toastError(error);
+    }
+    show();
+  };
+
+  for (const kind of ["like", "dislike"]) {
+    buttons[kind] = h(
+      "button",
+      { class: "action", type: "button", "aria-label": LABELS[kind], onClick: () => choose(kind) },
+      icon(kind),
+      h("span"),
+    );
+  }
+  show();
+  return h("footer", { class: "post__actions" }, buttons.like, buttons.dislike);
 }
 
 // ---------- Poll ----------
@@ -422,17 +435,23 @@ function renderComment(comment) {
     icon("like"),
     likes,
   );
+  let latest = 0;
   like.addEventListener("click", async () => {
-    if (like.getAttribute("aria-pressed") === "true") return;
+    // A second tap takes the like back.
+    const liked = like.getAttribute("aria-pressed") !== "true";
     const before = Number(likes.textContent || 0);
-    like.setAttribute("aria-pressed", "true");
-    likes.textContent = String(before + 1);
+    const count = Math.max(before + (liked ? 1 : -1), 0);
+    like.setAttribute("aria-pressed", String(liked));
+    likes.textContent = count ? String(count) : "";
+    const request = ++latest;
     try {
-      const result = await api("/api/message", { method: "PATCH", body: { message_id: comment.comment_id } });
-      if (result.error && !String(result.error).includes("before")) throw result;
-      if (result.error) likes.textContent = before ? String(before) : "";
+      const { data } = await api(`/api/v1/comments/${comment.comment_id}/like`, { method: "PUT", body: { liked } });
+      if (request !== latest) return;
+      like.setAttribute("aria-pressed", String(data.liked));
+      likes.textContent = data.likes ? String(data.likes) : "";
     } catch (error) {
-      like.setAttribute("aria-pressed", "false");
+      if (request !== latest) return;
+      like.setAttribute("aria-pressed", String(!liked));
       likes.textContent = before ? String(before) : "";
       toastError(error);
     }

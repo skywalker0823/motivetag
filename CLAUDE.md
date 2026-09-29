@@ -116,7 +116,7 @@ Docker Hub may rate-limit image builds; cdnjs and challenges.cloudflare.com
 Everything above is merged and deployed except where noted.
 
 **Waiting on the owner**
-- After this branch is merged: put their account name in `/motivetag/admin-accounts`
+- Put their account name in `/motivetag/admin-accounts`
   and Run workflow (`infra/README.md`, "Reviewing reports"), so `/admin` opens.
 - Run the **Demo data** workflow (`seed`) once, if they want the site to look active.
 - Grafana Cloud dashboard setup (`infra/README.md`, "Dashboard on Grafana Cloud"):
@@ -221,7 +221,7 @@ rate-limiting rule `API flood guard` (`/api/`, 60 requests / 10 s per IP → blo
   docked windows with history, day separators, receipts, retry on failure; full
   screen on phones; unread counts on the friends list and in the page title.
 
-**On branch `claude/focused-fermat-jjmmy8` (not merged yet)**
+**Done in PR #39:**
 - Blocking and reporting (ADR 0014; ADR 0010 phase 1 done except privacy/terms):
   `member_block`, `report`, `block.hidden` (migration 0005); `/api/v1/blocks`,
   `POST /api/v1/reports` (post, comment, received message, member; 20/day). Blocking
@@ -239,6 +239,13 @@ rate-limiting rule `API flood guard` (`/api/`, 60 requests / 10 s per IP → blo
   10 posts/day, no tag topics; Lv 5 avatar frame; Lv 10 double-weight reports.
   Badges on posts/comments/chat/cards (never anonymous posts); `exp` socket push
   moves the bar and toasts level-ups. Demo members start at Lv 3–8.
+
+**On branch `claude/focused-fermat-jjmmy8` (not merged yet)**
+- 讚/爛 are exclusive and a second tap takes them back: `PUT /api/v1/posts/<id>/reaction`
+  (`like` | `dislike` | null) and `PUT /api/v1/comments/<id>/like` (`liked`); counts
+  are recounted from `goods`/`bads`/`c_goods`. A like earns exp once per post (or
+  comment) a day (`levels.once_today`, key `like:<id>` in `exp_daily`), so toggling
+  earns nothing. The old `PATCH`/`PUT /api/blocks` also keep one reaction.
 - Next: privacy policy and terms pages; "示範" badge or removal for demo accounts;
   maybe account suspension on `/admin`.
 

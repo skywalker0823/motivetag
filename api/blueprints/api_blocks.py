@@ -100,38 +100,35 @@ def build_blocks():
     return {"ok": True, "data": with_extras([post], member_id)}
 
 
-def react(checker, counter, error_before, liked):
-    try:
-        data = request.get_json(silent=True) or {}
-        block_id = rules.integer(data.get("block_id"))
-        member_id = session.get("member_id")
-        if block_id is None or not Block.visible(member_id, block_id):
-            return {"error": "block not found or not yours"}, 404
-        if checker(member_id, block_id) == 0:
-            return {"error": error_before}
-        result = counter(block_id)
-        if liked:  # a boo earns nothing: exp should not reward piling on
-            levels.award(member_id, "like_given")
-            author = Block.author(block_id)
-            if author != member_id:
-                levels.award(author, "like_received")
-        return result
-    except Exception as e:
-        print("type error: " + str(e))
-        print(traceback.format_exc())
-        return {"error": True, "msg": "block reaction error"}
+def react(reaction, error_before):
+    """The 2022 endpoints, kept for pages loaded before an update; the page now uses
+    PUT /api/v1/posts/<id>/reaction, which can also take a reaction back."""
+    data = request.get_json(silent=True) or {}
+    block_id = rules.integer(data.get("block_id"))
+    member_id = session.get("member_id")
+    if block_id is None or not Block.visible(member_id, block_id):
+        return {"error": "block not found or not yours"}, 404
+    previous, _, _ = Block.set_reaction(member_id, block_id, reaction)
+    if previous == reaction:
+        return {"error": error_before}
+    if reaction == "like" and levels.once_today(member_id, f"like:{block_id}"):
+        levels.award(member_id, "like_given")
+        author = Block.author(block_id)
+        if author != member_id:
+            levels.award(author, "like_received")
+    return {"ok": 1}
 
 
 @api_blocks.route("/api/blocks", methods=["PATCH"])
 @login_required
 def gooding_blocks():
-    return react(Block.good_block_checker, Block.good_block, "you pressed this good before", True)
+    return react("like", "you pressed this good before")
 
 
 @api_blocks.route("/api/blocks", methods=["PUT"])
 @login_required
 def bading_blocks():
-    return react(Block.bad_block_checker, Block.bad_block, "you pressed this boo before", False)
+    return react("dislike", "you pressed this boo before")
 
 
 @api_blocks.route("/api/blocks", methods=["DELETE"])
