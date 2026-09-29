@@ -4,6 +4,8 @@
 import { api, errorMessage } from "../../lib/api.js";
 import { $, h, img } from "../../lib/dom.js";
 import { icon } from "../../lib/icons.js";
+import { frameClass, levelBadge } from "../../lib/levels.js";
+import { reportDialog } from "../../lib/report.js";
 import { socket } from "../../lib/socket.js";
 import { fromServer, fullDateTime, timeAgo } from "../../lib/time.js";
 import { toast, toastError } from "../../lib/toast.js";
@@ -175,11 +177,38 @@ function scrollToBottom(win) {
 function bubble(win, message) {
   const mine = message.from === me.account;
   const sent = fromServer(message.sent_at);
-  return h(
+  const el = h(
     "div",
     { class: `bubble${mine ? " bubble--mine" : ""}`, title: fullDateTime(sent), dataset: { id: String(message.id) } },
     h("span", { class: "bubble__text" }, message.content),
     h("time", { class: "bubble__time", dateTime: sent?.toISOString() ?? "" }, hhmm(sent)),
+  );
+  // Tapping their message offers to report it.
+  if (!mine) el.addEventListener("click", () => offerReport(win, message, el));
+  return el;
+}
+
+function offerReport(win, message, el) {
+  const open = el.nextElementSibling?.classList.contains("chat__report");
+  for (const old of win.body.querySelectorAll(".chat__report")) old.remove();
+  if (open) return;
+  el.after(
+    h(
+      "button",
+      {
+        class: "btn btn--ghost btn--sm chat__report",
+        type: "button",
+        onClick: async (event) => {
+          event.currentTarget.remove();
+          const result = await reportDialog({ type: "message", id: message.id, account: win.account });
+          if (!result) return;
+          el.remove();
+          if (result.blocked) emit("member:blocked", { id: win.memberId, account: win.account });
+        },
+      },
+      icon("flag", { size: "sm" }),
+      "檢舉這則訊息",
+    ),
   );
 }
 
@@ -202,7 +231,10 @@ function updateHeader(win) {
   win.status.textContent = online ? "上線中" : "離線";
   win.avatarWrap.dataset.online = String(online);
   if (win.memberId && !win.avatarSet) {
-    win.avatarWrap.replaceChildren(avatarFor(win.memberId));
+    const avatar = avatarFor(win.memberId);
+    avatar.className += frameClass(win.level);
+    win.avatarWrap.replaceChildren(avatar);
+    win.levelSlot.replaceChildren(levelBadge(win.level) ?? "");
     win.avatarSet = true;
   }
   updateReceipt(win);
@@ -285,8 +317,9 @@ async function loadHistory(win) {
   if (!win.loaded) win.more = result.more;
   win.loaded = true;
   win.memberId = result.partner.member_id;
+  win.level = result.partner.level;
   presence.set(win.account, result.online);
-  setCanSend(win, result.can_send);
+  setCanSend(win, result.can_send, result.blocked);
   renderAll(win);
   updateHeader(win);
   scrollToBottom(win);
@@ -310,9 +343,10 @@ async function loadOlder(win) {
   }
 }
 
-function setCanSend(win, canSend) {
+function setCanSend(win, canSend, blocked = false) {
   win.form.hidden = !canSend;
   win.blocked.hidden = canSend;
+  win.blocked.textContent = blocked ? "你已封鎖對方，解除封鎖後才能傳訊息" : "你們目前不是好友，無法傳訊息";
 }
 
 /** Tells the server I have seen their messages, when this window is really in view. */
@@ -352,7 +386,8 @@ async function send(win, content, retrying) {
     temp.lastChild.textContent = "傳送失敗，點一下重試";
     temp.title = errorMessage(error);
     temp.onclick = () => send(win, content, temp);
-    if (error.data?.error?.code === "not_friends") setCanSend(win, false);
+    const code = error.data?.error?.code;
+    if (code === "not_friends" || code === "blocked") setCanSend(win, false);
     toastError(error, "訊息傳送失敗");
   }
   updateReceipt(win);
@@ -377,6 +412,7 @@ function createWindow(account) {
   const blocked = h("p", { class: "chat__blocked", hidden: true }, "你們目前不是好友，無法傳訊息");
   const avatarWrap = h("span", { class: "chat-item__avatar", dataset: { online: "false" } }, avatarFor(null));
   const status = h("span", { class: "chat__status" });
+  const levelSlot = h("span");
   const badge = h("span", { class: "chat__badge", hidden: true });
   const minimize = h("button", { class: "icon-btn icon-btn--sm", type: "button", "aria-label": "縮小" }, icon("minus", { size: "sm" }));
   const el = h(
@@ -389,7 +425,7 @@ function createWindow(account) {
         "button",
         { class: "chat__who", type: "button", title: "看個人資料", onClick: () => emit("member:show", win.memberId) },
         avatarWrap,
-        h("span", { class: "chat__name" }, h("strong", null, account), status),
+        h("span", { class: "chat__name" }, h("strong", null, account, " ", levelSlot), status),
         badge,
       ),
       minimize,
@@ -415,6 +451,8 @@ function createWindow(account) {
     avatarWrap,
     status,
     badge,
+    levelSlot,
+    level: null,
     memberId: conversations.get(account)?.partner.member_id ?? null,
     avatarSet: false,
     messages: [],
@@ -483,6 +521,13 @@ function close(account) {
   clearTimeout(win.typingTimer);
   win.el.remove();
   windows.delete(account);
+}
+
+/** Someone I blocked: close our window and drop the conversation from the list. */
+export function forgetChat(account) {
+  close(account);
+  conversations.delete(account);
+  refreshBadges();
 }
 
 export function openChat(account, { focus = true } = {}) {

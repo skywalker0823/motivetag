@@ -1,6 +1,6 @@
 from flask import request, session
 
-from data.data import Notification
+from data.data import Member, MemberBlock, Notification
 from module.auth import login_required
 from module.clock import taipei_now
 
@@ -33,6 +33,9 @@ def posting_notifi():
     who = data.get("who")
     if template is None or not isinstance(who, str):
         return {"error": "unknown notification"}, 400
+    recipient = Member.id_for(who)
+    if recipient is not None and MemberBlock.has_blocked(recipient, session.get("member_id")):
+        return {"ok": "Notification send"}  # they blocked me; they are not told either way
     content = template.format(me=session.get("account"))
     result = Notification.post_notifi(session.get("member_id"), who, content, taipei_now())
     if "ok" in result:

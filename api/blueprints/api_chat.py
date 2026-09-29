@@ -9,7 +9,7 @@ from flask import request, session
 from flask_socketio import emit, join_room
 
 from api.metrics import ONLINE
-from data.data import Friend, Member
+from data.data import Friend, Member, MemberBlock
 
 from .. import socketio
 from . import api_chat  # noqa: F401 - re-exported for api/__init__.py
@@ -101,7 +101,8 @@ def typing(data):
     if not isinstance(to, str) or to == me or to not in online:
         return
     to_id = Member.id_for(to)
-    if to_id is None or not Friend.are_friends(session.get("member_id"), to_id):
+    me_id = session.get("member_id")
+    if to_id is None or not Friend.are_friends(me_id, to_id) or MemberBlock.between(me_id, to_id):
         return
     push_to(to, "chat:typing", {"from": me})
 

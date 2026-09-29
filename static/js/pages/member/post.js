@@ -6,7 +6,9 @@ import { api } from "../../lib/api.js";
 import { confirmDialog } from "../../lib/confirm.js";
 import { h, img } from "../../lib/dom.js";
 import { icon } from "../../lib/icons.js";
+import { frameClass, levelBadge } from "../../lib/levels.js";
 import { openLightbox } from "../../lib/lightbox.js";
+import { reportDialog } from "../../lib/report.js";
 import { timeAgo } from "../../lib/time.js";
 import { toast, toastError } from "../../lib/toast.js";
 import { ANON_AVATAR, avatarUrl, DEFAULT_AVATAR, emit, me } from "./state.js";
@@ -25,7 +27,10 @@ export function renderPost(post) {
   const [visibilityLabel, visibilityClass] = VISIBILITY[post.content_type] ?? [];
   const score = h("span", { class: "post__score", title: "留言評分總和", hidden: true });
 
-  const article = h("article", { class: "card post", dataset: { id: post.block_id } });
+  const article = h("article", {
+    class: "card post",
+    dataset: { id: post.block_id, ...(post.member_id ? { author: post.member_id } : {}) },
+  });
   const actions = renderActions(post);
   // Native append() would print a skipped part (null) as text, so go through h()'s rules.
   const parts = [
@@ -41,14 +46,20 @@ export function renderPost(post) {
           onClick: () => emit("member:show", post.member_id),
         },
         img(anonymous ? ANON_AVATAR : avatarUrl(post.member_id), DEFAULT_AVATAR, {
-          class: "avatar",
+          class: `avatar${frameClass(post.level)}`,
           width: 40,
           height: 40,
         }),
         h(
           "span",
           { class: "post__who" },
-          h("span", { class: "post__name" }, anonymous ? (mine ? "匿名（你）" : "匿名") : `@${post.account}`),
+          h(
+            "span",
+            { class: "post__name" },
+            anonymous ? (mine ? "匿名（你）" : "匿名") : `@${post.account}`,
+            " ",
+            levelBadge(post.level),
+          ),
           h(
             "span",
             { class: "post__meta" },
@@ -70,6 +81,18 @@ export function renderPost(post) {
           },
           icon("trash"),
         ),
+      !mine &&
+        h(
+          "button",
+          {
+            class: "icon-btn icon-btn--sm post__report",
+            type: "button",
+            "aria-label": "檢舉貼文",
+            title: "檢舉",
+            onClick: () => report("post", post.block_id, anonymous ? null : post.account, post.member_id, article),
+          },
+          icon("flag", { size: "sm" }),
+        ),
     ),
     h("p", { class: "post__content" }, withHashtags(post.content)),
     post.block_img && renderImage(post, () => like(actions)),
@@ -79,6 +102,22 @@ export function renderPost(post) {
   ];
   article.append(...parts.filter((part) => part instanceof Node));
   return article;
+}
+
+/** Reports something; it leaves my screen, and so does everything by someone I block. */
+async function report(type, id, account, authorId, element) {
+  const result = await reportDialog({ type, id, account });
+  if (!result) return;
+  element.remove();
+  if (result.blocked) removeAuthor(authorId);
+}
+
+/** Takes a blocked member's posts and comments off the page (the server leaves them out from now on). */
+export function removeAuthor(memberId) {
+  if (!memberId) return;
+  for (const el of document.querySelectorAll(`.post[data-author="${memberId}"], .comment[data-author="${memberId}"]`)) {
+    el.remove();
+  }
 }
 
 /** Text with each #tag turned into a button that filters the feed by it. */
@@ -342,6 +381,7 @@ function renderComments(post, score) {
       nice_comment: 0,
       given_score: given,
       liked: false,
+      level: me.level,
     });
     pending.classList.add("is-pending");
     list.append(pending);
@@ -397,9 +437,10 @@ function renderComment(comment) {
       toastError(error);
     }
   });
-  return h(
+  const mine = comment.member_id === me.id;
+  const item = h(
     "li",
-    { class: "comment" },
+    { class: "comment", dataset: { author: comment.member_id } },
     h(
       "button",
       {
@@ -408,7 +449,11 @@ function renderComment(comment) {
         "aria-label": `查看 ${comment.account}`,
         onClick: () => emit("member:show", comment.member_id),
       },
-      img(avatarUrl(comment.member_id), DEFAULT_AVATAR, { class: "avatar avatar--sm", width: 32, height: 32 }),
+      img(avatarUrl(comment.member_id), DEFAULT_AVATAR, {
+        class: `avatar avatar--sm${frameClass(comment.level)}`,
+        width: 32,
+        height: 32,
+      }),
     ),
     h(
       "div",
@@ -417,6 +462,7 @@ function renderComment(comment) {
         "div",
         { class: "comment__head" },
         h("span", { class: "comment__name" }, comment.account),
+        levelBadge(comment.level),
         given !== 0 &&
           h(
             "span",
@@ -427,6 +473,20 @@ function renderComment(comment) {
       ),
       h("p", { class: "comment__text" }, comment.content),
       like,
+      !mine &&
+        comment.comment_id !== null &&
+        h(
+          "button",
+          {
+            class: "comment__like comment__report",
+            type: "button",
+            "aria-label": "檢舉留言",
+            title: "檢舉",
+            onClick: () => report("comment", comment.comment_id, comment.account, comment.member_id, item),
+          },
+          icon("flag", { size: "sm" }),
+        ),
     ),
   );
+  return item;
 }

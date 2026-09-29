@@ -149,9 +149,10 @@ def test_exp_is_awarded_by_server(member, query):
     alice, alice_id, _ = member()
     bob, bob_id, _ = member()
     block_id = create_block(alice)
-    assert exp_of(query, alice_id) == 50
+    assert exp_of(query, alice_id) == 20
     bob.patch("/api/blocks", json={"block_id": block_id})
-    assert exp_of(query, bob_id) == 5
+    assert exp_of(query, bob_id) == 1  # giving a like
+    assert exp_of(query, alice_id) == 25  # receiving it
     assert alice.post("/api/level", json={"exp": 99999}).status_code == 405
 
 

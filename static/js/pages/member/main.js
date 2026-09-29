@@ -6,12 +6,13 @@ import { hydrateIcons } from "../../lib/icons.js";
 import { pullToRefresh } from "../../lib/pull-refresh.js";
 import { socket } from "../../lib/socket.js";
 import { toastError } from "../../lib/toast.js";
-import { initChat, openChat } from "./chat.js";
+import { forgetChat, initChat, openChat } from "./chat.js";
 import { initComposer } from "./composer.js";
 import { initFeed, refreshFeed, resetFeed } from "./feed.js";
-import { initFriends } from "./friends.js";
+import { initFriends, loadFriends } from "./friends.js";
 import { initInvite } from "./invite.js";
 import { initNotifications } from "./notifications.js";
+import { removeAuthor } from "./post.js";
 import { initProfile, showMember } from "./profile.js";
 import { initSettings } from "./settings.js";
 import { initSuggestions } from "./suggest.js";
@@ -115,6 +116,11 @@ async function start() {
 
   on("feed:tag", showFeedFor);
   on("member:show", (id) => id && showMember(id));
+  on("member:blocked", ({ id, account }) => {
+    removeAuthor(id);
+    forgetChat(account);
+    loadFriends();
+  });
   on("chat:open", openChat);
   on("friend:invite", (account) => friends.invite(account).catch((e) => toastError(e)));
   on("friend:accept", ({ id, account }) => friends.accept(id, account));

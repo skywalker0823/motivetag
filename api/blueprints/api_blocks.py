@@ -3,9 +3,9 @@ import traceback
 from flask import request, session
 
 from data.data import Block, Block_tags, Level, Message, Vote_table
-from module import rules, tag_filter
+from module import levels, rules, tag_filter
 from module.auth import login_required, verified_required
-from module.clock import taipei_now
+from module.clock import taipei_datetime, taipei_now
 
 from . import api_blocks
 
@@ -16,15 +16,20 @@ def with_extras(posts, member_id):
     comments = Message.for_blocks(member_id, ids)
     polls = Vote_table.summary(member_id, ids)
     liked, disliked = Block.my_reactions(member_id, ids)
+    exps = Level.exps(post["member_id"] for post in posts)
     for post in posts:
-        # Anonymous posts hide their author from everyone but the author.
+        post["level"] = levels.level_of(exps.get(post["member_id"]))
+        # Anonymous posts hide their author, and so their level, from everyone else.
         if post["content_type"] == "Anonymous" and post["member_id"] != member_id:
             post["account"] = None
             post["member_id"] = None
+            post["level"] = None
         post["tags"] = tag_filter.filter(post["content"])
         if post["content_type"] == "Anonymous":
             post["tags"].append("Anonymous")
         post["comments"] = comments.get(post["block_id"], [])
+        for comment in post["comments"]:
+            comment["level"] = levels.level_of(comment.pop("exp", 0))
         post["votes"] = polls.get(post["block_id"], [])
         post["liked"] = post["block_id"] in liked
         post["disliked"] = post["block_id"] in disliked
@@ -70,6 +75,14 @@ def build_blocks():
     if error:
         return {"error": error}, 400
     member_id = session.get("member_id")
+    if levels.level_of(Level.exps([member_id]).get(member_id)) < levels.TOPICS_LEVEL:
+        today = taipei_datetime().replace(hour=0, minute=0, second=0)
+        if Level.posts_since(member_id, today) >= levels.NEWCOMER_POSTS_PER_DAY:
+            message = (
+                f"Lv {levels.TOPICS_LEVEL} 以下每天最多發 {levels.NEWCOMER_POSTS_PER_DAY} 篇，"
+                f"升到 Lv {levels.TOPICS_LEVEL} 就沒有限制"
+            )
+            return {"error": message}, 429
     block["content"] = block["content"].strip()
     block["time"] = taipei_now()
     tags = tag_filter.filter(block["content"])
@@ -83,11 +96,11 @@ def build_blocks():
     options = [option.strip() for option in block.get("vote_box") or []]
     if options:
         Vote_table.create_vote(post["block_id"], options)
-    Level.reward(member_id, "block_creater")
+    levels.award(member_id, "post")
     return {"ok": True, "data": with_extras([post], member_id)}
 
 
-def react(checker, counter, error_before):
+def react(checker, counter, error_before, liked):
     try:
         data = request.get_json(silent=True) or {}
         block_id = rules.integer(data.get("block_id"))
@@ -97,7 +110,11 @@ def react(checker, counter, error_before):
         if checker(member_id, block_id) == 0:
             return {"error": error_before}
         result = counter(block_id)
-        Level.reward(member_id, "good_bad")
+        if liked:  # a boo earns nothing: exp should not reward piling on
+            levels.award(member_id, "like_given")
+            author = Block.author(block_id)
+            if author != member_id:
+                levels.award(author, "like_received")
         return result
     except Exception as e:
         print("type error: " + str(e))
@@ -108,13 +125,13 @@ def react(checker, counter, error_before):
 @api_blocks.route("/api/blocks", methods=["PATCH"])
 @login_required
 def gooding_blocks():
-    return react(Block.good_block_checker, Block.good_block, "you pressed this good before")
+    return react(Block.good_block_checker, Block.good_block, "you pressed this good before", True)
 
 
 @api_blocks.route("/api/blocks", methods=["PUT"])
 @login_required
 def bading_blocks():
-    return react(Block.bad_block_checker, Block.bad_block, "you pressed this boo before")
+    return react(Block.bad_block_checker, Block.bad_block, "you pressed this boo before", False)
 
 
 @api_blocks.route("/api/blocks", methods=["DELETE"])
@@ -126,7 +143,6 @@ def delete_blocks():
         member_id = session.get("member_id")
         if Block.delete_block(member_id, block_id) != 1:
             return {"error": True, "msg": "block not found or not yours"}, 403
-        Level.reward(member_id, "block_destroy")
         return {"ok": True, "msg": str(block_id) + " delete complete"}
     except Exception as e:
         print("type error: " + str(e))

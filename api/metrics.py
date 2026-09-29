@@ -37,6 +37,11 @@ AUTH = Counter(
     "Sign-ins and sign-ups: login_ok, login_failed, signup_ok, signup_refused, signup_invited.",
     ["event"],
 )
+REPORTS = Counter(
+    "motivetag_reports_total",
+    "Reports members filed, by what they reported: post, comment, message, member.",
+    ["type"],
+)
 ONLINE = Gauge("motivetag_online_members", "Members with an open chat connection.")
 
 # Long-lived Socket.IO connections would swamp the latency figures; ONLINE covers them.

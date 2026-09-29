@@ -24,10 +24,12 @@ def test_deleting_removes_the_member_and_their_content(member, query):
     alice.patch("/api/blocks", json={"block_id": bobs["block_id"]})
     bob.post("/api/message", json={"block_id": own["block_id"], "message": "yo", "score": 0})
     alice.post("/api/friend", json={"who": bob_account})
-    alice.post(
+    query("UPDATE member SET exp=200 WHERE member_id=%s", alice_id)  # Lv 3 opens topics
+    topic = alice.post(
         "/api/tag_page",
         json={"title": "topic", "content": "body", "classifi": "閒聊", "tag_name": "deltest"},
     )
+    assert topic.get_json() == {"ok": "tag post success"}
 
     deleted = alice.delete("/api/v1/account", json={"password": account + "-pw"})
     assert deleted.status_code == 200 and deleted.get_json() == {"deleted": True}
@@ -44,7 +46,12 @@ def test_deleting_removes_the_member_and_their_content(member, query):
     assert query("SELECT 1 FROM member WHERE member_id=%s", bob_id)
     # The tag she created and her topic stay, without an author.
     assert query("SELECT create_by FROM tag WHERE name='deltest'")[0]["create_by"] is None
-    assert query("SELECT member_id FROM bricks WHERE title='topic'")[0]["member_id"] is None
+    assert (
+        query("SELECT member_id FROM bricks WHERE title='topic' ORDER BY brick_id DESC")[0][
+            "member_id"
+        ]
+        is None
+    )
     # Signed out, and the account name is free again.
     assert alice.get("/api/member").get_json().get("error")
     assert (

@@ -18,8 +18,8 @@ from datetime import timedelta
 from flask import request, session
 
 from api.blueprints.api_chat import online, push_to
-from data.data import DirectMessage, Friend, Member
-from module import email_verification, rules
+from data.data import DirectMessage, Friend, Level, Member, MemberBlock
+from module import email_verification, levels, rules
 from module.clock import taipei_datetime
 
 from . import error, login_required, v1
@@ -92,9 +92,14 @@ def history(account):
     return {
         "data": [_message(row, accounts) for row in rows],
         "more": len(rows) == PAGE,
-        "partner": {"member_id": partner_id, "account": account},
+        "partner": {
+            "member_id": partner_id,
+            "account": account,
+            "level": levels.level_of(Level.exps([partner_id]).get(partner_id)),
+        },
         "online": account in online,
-        "can_send": Friend.are_friends(me, partner_id),
+        "can_send": Friend.are_friends(me, partner_id) and not MemberBlock.between(me, partner_id),
+        "blocked": MemberBlock.has_blocked(me, partner_id),
     }
 
 
@@ -108,6 +113,8 @@ def send(account):
     me = session["member_id"]
     if not email_verification.verified(me):
         return error("email_not_verified", "請先到信箱完成 Email 驗證，才能開始聊天", 403)
+    if MemberBlock.between(me, partner_id):
+        return error("blocked", "無法傳訊息給這個帳號", 403)
     if not Friend.are_friends(me, partner_id):
         return error("not_friends", "成為好友後才能傳訊息", 403)
     body = request.get_json(silent=True) or {}

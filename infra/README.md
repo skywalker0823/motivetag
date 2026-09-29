@@ -235,6 +235,29 @@ sends at most 500 a day (about US$1.50 a month at the very most).
    the spam folder the first time), click the link: the yellow banner disappears and
    posting works.
 
+## Reviewing reports (one time, free)
+
+Members can report posts, comments, chat messages and accounts (ADR 0014). Reports are
+reviewed on **https://motivetag.com/admin**, which only the accounts listed in
+`/motivetag/admin-accounts` can open (everyone else gets 404). Apple expects reports
+to be handled within 24 hours once there is an iOS app.
+
+1. Store your MotiveTag account name (several: comma-separated, no spaces), from your
+   Mac or AWS CloudShell:
+
+   ```bash
+   aws ssm put-parameter --name /motivetag/admin-accounts --type String --value 'YOUR_ACCOUNT' --region ap-east-2 --profile motivetag
+   ```
+
+   (In CloudShell leave out `--profile motivetag`.) It prints
+   `{"Version": 1, "Tier": "Standard"}`. To change it later add `--overwrite`.
+2. Redeploy: GitHub → **Actions** → **CI** → **Run workflow** (branch `main`); the
+   GitHub app can do this too.
+3. Open `/admin` while signed in. New reports also arrive in your bell (通知) as
+   「有一則新的檢舉待處理」. A post whose reports weigh 3 or more (a Lv 10 member's
+   report counts twice) is hidden until you decide: **刪除內容** deletes it for good,
+   **保留** closes the reports and shows it again.
+
 ## Backups
 
 - Daily at 03:00 Taipei time: `mysqldump` → gzip → `s3://<backup_bucket>/mysql/`

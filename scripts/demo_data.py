@@ -4,8 +4,9 @@
     python scripts/demo_data.py remove    delete every demo member and what they made
 
 Everything goes through the site's own API (Flask's test client, no network), so the
-same validation, exp and tag popularity rules apply as for real members. Timestamps
-are then spread over the past two weeks. Demo members are recognisable by their
+same validation, exp and tag popularity rules apply as for real members. Demo members
+start at Lv 3–8, as if they had been around for a while (below Lv 3 members may post
+ten times a day and cannot open tag topics). Timestamps are then spread over the past two weeks. Demo members are recognisable by their
 e-mail domain and have random passwords nobody knows. In production this runs inside
 the app container (the "Demo data" GitHub Actions workflow does it).
 """
@@ -22,6 +23,7 @@ from demo_content import ANONYMOUS_POSTS, COMMENTS, POSTS, TOPICS, USERS  # noqa
 
 from api import create_app  # noqa: E402
 from data.data import Member  # noqa: E402
+from module import levels  # noqa: E402
 from module.clock import TAIPEI, taipei_now  # noqa: E402
 
 DEMO_DOMAIN = "demo.motivetag.com"
@@ -85,6 +87,13 @@ class Demo:
             self.ids[account] = signin.get_json()["data"]["member_id"]
             # Demo addresses cannot receive mail, so they are verified directly.
             Member.mark_verified(self.ids[account], taipei_now())
+            sql(self.app)(
+                "UPDATE member SET exp=%s WHERE member_id=%s",
+                (
+                    self.rng.randint(levels.exp_for(3), levels.exp_for(9) - 1),
+                    self.ids[account],
+                ),
+            )
             self.call(account, "patch", "/api/member", {"category": "mood", "content": mood})
             # Most people drop the beginner tag new members start with.
             if self.rng.random() < 0.75:

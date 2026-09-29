@@ -53,6 +53,8 @@ uses it as a portfolio project for interviews. Read this first, then `README.md`
   `{"error": {"code", "message"}}` (ADR 0010). New or reworked endpoints go to v1.
 - `data/data.py` all SQL (PyMySQL + DBUtils pool; one connection per request via
   `flask.g`, never a shared connection: gevent interleaves requests).
+- `module/levels.py` exp rewards, daily caps and level unlocks (mirrored in
+  `static/js/lib/levels.js`); `module/admin.py` who may open `/admin`.
 - `module/rules.py` input limits; `module/clock.py` server timestamps;
   `module/tag_filter.py` hashtag rule (`#` + letters/digits/_, ends at punctuation;
   the browser uses the same regex in `static/js/pages/member/post.js`).
@@ -61,7 +63,7 @@ uses it as a portfolio project for interviews. Read this first, then `README.md`
 - Frontend: plain HTML/CSS + native ES modules, no build step (ADR 0009).
   `static/css/base.css` tokens and components; `static/js/lib/` framework-free helpers
   (api, dom `h()`, icons, time, toast, upload, confirm, lightbox, socket, tour,
-  pull-refresh, collapsible);
+  pull-refresh, collapsible, levels, report);
   `static/js/pages/` one folder per page. `module/urls.py` `public_base_url()` for
   absolute links (e-mail, invites, og tags). Socket.IO client is vendored in `static/vendor/`.
 - `migrations/versions/` Alembic, applied on container start. Migrations must keep the
@@ -109,11 +111,13 @@ Docker Hub may rate-limit image builds; cdnjs and challenges.cloudflare.com
 (Turnstile) are blocked, so stub Turnstile's script with Playwright `route()`.
 `dockerd` does not survive between turns: restart it and `docker start motivetag-mysql`.
 
-## Status and next steps (as of 2026-09-28)
+## Status and next steps (as of 2026-09-29)
 
 Everything above is merged and deployed except where noted.
 
 **Waiting on the owner**
+- After this branch is merged: put their account name in `/motivetag/admin-accounts`
+  and Run workflow (`infra/README.md`, "Reviewing reports"), so `/admin` opens.
 - Run the **Demo data** workflow (`seed`) once, if they want the site to look active.
 - Grafana Cloud dashboard setup (`infra/README.md`, "Dashboard on Grafana Cloud"):
   sign up, three parameters, Run workflow, import the dashboard JSON.
@@ -204,7 +208,7 @@ rate-limiting rule `API flood guard` (`/api/`, 60 requests / 10 s per IP → blo
 - The friends list reloads on a pushed "notification" (new requests appeared only
   after a refresh before).
 
-**On branch `claude/focused-fermat-jjmmy8` (not merged yet)** (ADR 0013)
+**Done in PR #38** (ADR 0013)
 - Chat rebuilt Messenger-style. The old one was a "call": in-memory rooms keyed by
   socket id, both sides online, the callee had to notice "想跟你聊天" and click;
   a second tab or a reconnect (new sid) split people into different rooms, and
@@ -216,14 +220,33 @@ rate-limiting rule `API flood guard` (`/api/`, 60 requests / 10 s per IP → blo
 - UI: topbar 聊天 button (unread badge, conversation list, online friends row),
   docked windows with history, day separators, receipts, retry on failure; full
   screen on phones; unread counts on the friends list and in the page title.
-- Next agreed: report/block (ADR 0010 phase 1; blocking must also stop chat), and a
-  "示範" badge or removal for demo accounts.
 
-**Roadmap (ADR 0010, phase 1 next)**
-1. Report content and block members (App Store Guideline 1.2).
-2. Privacy policy and terms pages (mention backups keep deleted data up to 35 days).
-3. Optional: a small "示範" badge on demo accounts, or remove them once real people join.
-4. Then phase 0/2/3: UTC timestamps, OpenAPI + shared TypeScript core, React + Vite
+**On branch `claude/focused-fermat-jjmmy8` (not merged yet)**
+- Blocking and reporting (ADR 0014; ADR 0010 phase 1 done except privacy/terms):
+  `member_block`, `report`, `block.hidden` (migration 0005); `/api/v1/blocks`,
+  `POST /api/v1/reports` (post, comment, received message, member; 20/day). Blocking
+  ends friendship, hides their posts/comments from me, stops chat, typing, invites,
+  notifications and suggestions both ways. Reported things leave the reporter's view;
+  posts with report weight ≥ 3 hidden until reviewed (Lv 10 reports weigh 2). Owner
+  reviews on `/admin` (`ADMIN_ACCOUNTS` from Parameter Store, 404 for others); new
+  reports ring the admins' bell; metric `motivetag_reports_total`. UI: flag on posts,
+  comments, tapping a received chat bubble; 檢舉/封鎖 on member cards; block list in
+  帳號設定. No account suspension yet.
+- Levels reworked (ADR 0015, migration 0006 converts exp so no level changes):
+  curve 50·(n−1)²; daily-capped rewards in `exp_daily` (visit +10, 7-day streak +50,
+  post +20×3, comment +5×10, like given +1×20; authors +5 per like, +3 per comment,
+  +3 per comment like); boos, chat and self-interaction earn nothing. Below Lv 3:
+  10 posts/day, no tag topics; Lv 5 avatar frame; Lv 10 double-weight reports.
+  Badges on posts/comments/chat/cards (never anonymous posts); `exp` socket push
+  moves the bar and toasts level-ups. Demo members start at Lv 3–8.
+- Next: privacy policy and terms pages; "示範" badge or removal for demo accounts;
+  maybe account suspension on `/admin`.
+
+**Roadmap (ADR 0010, phase 1 nearly done)**
+1. Privacy policy and terms pages (mention backups keep deleted data up to 35 days,
+   stored chat messages and report snapshots).
+2. Optional: a small "示範" badge on demo accounts, or remove them once real people join.
+3. Then phase 0/2/3: UTC timestamps, OpenAPI + shared TypeScript core, React + Vite
    (`apps/web`), token auth, cursor paging, Redis presence; phase 4 Expo app.
 
 **Other ideas offered, not started**

@@ -103,6 +103,16 @@ def create_app(config_name):
                 base_url=public_base_url(),
             )
 
+    @app.route("/admin")
+    def admin_page():
+        from flask import abort
+
+        from module.admin import is_admin
+
+        if not is_admin():
+            abort(404)
+        return rt("admin.html")
+
     @app.route("/tag/<tag_name>")
     def tag(tag_name):
         if session.get("account"):

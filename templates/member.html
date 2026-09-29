@@ -5,7 +5,7 @@
     <title>MotiveTag</title>
 </head>
 <body data-view="feed">
-    <script type="application/json" id="bootstrap">{{ {"me": me, "avatar": asset("/img/avatar.svg"), "anon": asset("/img/anon.svg")} | tojson }}</script>
+    <script type="application/json" id="bootstrap">{{ {"me": me, "levels": levels, "avatar": asset("/img/avatar.svg"), "anon": asset("/img/anon.svg")} | tojson }}</script>
     <header class="topbar">
         <a class="topbar__logo" href="/" aria-label="MotiveTag 首頁">
             <img src="{{ asset('/img/title-member.webp') }}" alt="MotiveTag" width="320" height="57">
@@ -60,6 +60,7 @@
                 <div class="level">
                     <div class="level__row"><span class="level__label" id="my-level">Lv 1</span><span class="level__exp" id="my-exp"></span></div>
                     <div class="level__bar" role="progressbar" aria-label="升級進度" aria-valuemin="0" aria-valuemax="100" id="my-level-bar"><span id="my-level-fill"></span></div>
+                    <p class="level__next" id="my-level-next"></p>
                 </div>
                 <div class="mood">
                     <button class="mood__text" id="mood-text" type="button" title="點一下修改心情"></button>
@@ -183,6 +184,10 @@
             <h2 class="dialog__title" id="settings-title">帳號設定</h2>
             <form method="dialog"><button class="icon-btn" data-icon="x" aria-label="關閉"></button></form>
         </div>
+        <section class="dialog__body blocked-list" aria-labelledby="blocked-title">
+            <h3 class="danger-zone__title" id="blocked-title">封鎖名單</h3>
+            <ul class="people" id="blocked-members"></ul>
+        </section>
         <form class="dialog__body danger-zone" id="delete-account" novalidate>
             <h3 class="danger-zone__title">刪除帳號</h3>
             <p class="dialog__message">帳號會立即永久刪除，無法復原。以下資料會一起刪除：</p>
