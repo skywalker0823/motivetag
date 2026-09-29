@@ -20,5 +20,7 @@ gets a new record that supersedes the old one rather than an edit.
 | [0011](0011-email-verification-and-signup-protection.md) | Verify e-mail with SES (capped at 500 a day); Turnstile and a disposable-domain list on sign-up | Accepted |
 | [0012](0012-metrics-dashboard-on-grafana-cloud.md) | Metrics dashboard on Grafana Cloud's free tier, fed by Grafana Alloy | Accepted |
 | [0013](0013-stored-direct-messages.md) | Chat messages stored in MySQL, sent over HTTP and pushed to every tab; no rooms | Accepted |
+| [0014](0014-blocking-and-reporting.md) | Blocking members and reporting content, reviewed by the owner on /admin | Accepted |
+| [0015](0015-levels-reward-what-others-value.md) | Levels reward what others value, with daily caps and unlocks | Accepted |
 
 Template: [`template.md`](template.md).

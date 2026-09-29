@@ -1,7 +1,7 @@
 from flask import request, session
 
-from data.data import Block, Level, Message
-from module import rules
+from data.data import Block, Message
+from module import levels, rules
 from module.auth import login_required, verified_required
 from module.clock import taipei_now
 
@@ -15,7 +15,10 @@ def getting_message():
     member_id = session.get("member_id")
     if block_id is None or not Block.visible(member_id, block_id):
         return {"error": "block not found or not yours"}, 404
-    return {"ok": Message.for_blocks(member_id, [block_id])[block_id]}
+    comments = Message.for_blocks(member_id, [block_id])[block_id]
+    for comment in comments:
+        comment["level"] = levels.level_of(comment.pop("exp", 0))
+    return {"ok": comments}
 
 
 @api_message.route("/api/message", methods=["POST"])
@@ -37,7 +40,10 @@ def posting_message():
         member_id, {"block_id": block_id, "message": content, "time": time, "score": score}
     )
     if "ok" in result:
-        Level.reward(member_id, "message")
+        levels.award(member_id, "comment")
+        author = Block.author(block_id)
+        if author != member_id:
+            levels.award(author, "comment_received")
         result["comment"] = {
             "comment_id": result["ok"]["LAST_INSERT_ID()"],
             "block_id": block_id,
@@ -69,5 +75,8 @@ def nice_message():
     if checker == 0:
         return {"error": "you pressed this good message before"}
     result = Message.nice_message(message_id)
-    Level.reward(member_id, "good_message")
+    levels.award(member_id, "like_given")
+    author = Message.author(message_id)
+    if author != member_id:
+        levels.award(author, "comment_like_received")
     return result

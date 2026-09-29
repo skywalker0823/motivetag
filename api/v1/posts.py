@@ -17,5 +17,5 @@ def explore():
     offset = rules.integer(request.args.get("offset", "0"))
     if offset is None or offset < 0:
         return error("bad_offset", "offset 需為 0 以上的整數", 400)
-    posts = Block.explore(offset)
+    posts = Block.explore(offset, session["member_id"])
     return {"data": with_extras(posts, session["member_id"])}

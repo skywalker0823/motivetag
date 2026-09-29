@@ -344,6 +344,12 @@ html {
   color: var(--text-faint);
 }
 
+.level__next {
+  margin: var(--space-1) 0 0;
+  color: var(--text-faint);
+  font-size: var(--text-xs);
+}
+
 .level__bar {
   height: 6px;
   overflow: hidden;
@@ -1065,6 +1071,24 @@ button.poll__option:hover {
   color: var(--accent);
 }
 
+.comment__report {
+  margin-left: var(--space-3);
+  opacity: 0.6;
+}
+
+.comment__report:hover {
+  color: var(--danger);
+  opacity: 1;
+}
+
+.post__report {
+  color: var(--text-faint);
+}
+
+.post__report:hover {
+  color: var(--danger);
+}
+
 .comment__like .icon {
   width: 14px;
   height: 14px;
@@ -1490,6 +1514,11 @@ button.poll__option:hover {
   color: var(--accent-ink);
 }
 
+.chat__report {
+  align-self: flex-start;
+  color: var(--danger);
+}
+
 .bubble--pending {
   opacity: 0.6;
 }
@@ -1707,6 +1736,18 @@ button.poll__option:hover {
 }
 
 /* ---------- Member dialog ---------- */
+
+/* Report and block sit apart from the friendly actions, on the left. */
+.member-card__safety {
+  display: flex;
+  order: -1;
+  gap: var(--space-1);
+  margin-right: auto;
+}
+
+#member-dialog-actions {
+  flex-wrap: wrap;
+}
 
 .member-card__who {
   display: flex;

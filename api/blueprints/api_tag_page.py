@@ -1,7 +1,7 @@
 from flask import request, session
 
-from data.data import Tag_info
-from module import rules
+from data.data import Level, Tag_info
+from module import levels, rules
 from module.auth import login_required, verified_required
 from module.clock import taipei_now
 
@@ -20,6 +20,11 @@ def get_tag_datas():
 @verified_required
 def post_discuss():
     data = request.get_json(silent=True) or {}
+    member_id = session.get("member_id")
+    if levels.level_of(Level.exps([member_id]).get(member_id)) < levels.TOPICS_LEVEL:
+        return {
+            "error": f"升到 Lv {levels.TOPICS_LEVEL} 就能發起討論，先去發文、留言累積經驗值吧"
+        }, 403
     title = rules.text(data.get("title"), rules.TOPIC_TITLE_MAX)
     content = rules.text(data.get("content"), rules.TOPIC_MAX)
     if title is None or content is None:

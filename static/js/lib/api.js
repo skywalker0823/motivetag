@@ -29,6 +29,7 @@ const MESSAGES = {
   "file type not allowed": "只能上傳 PNG、JPEG、GIF 或 WebP 圖片",
   "block not found or not yours": "找不到這篇貼文，或它不是你的",
   "email not verified": "請先到信箱完成 Email 驗證",
+  blocked: "無法邀請這個帳號",
 };
 
 export function errorMessage(error, fallback = "發生錯誤，請稍後再試") {

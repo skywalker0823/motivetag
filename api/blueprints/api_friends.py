@@ -1,11 +1,17 @@
 from flask import redirect, request, session
 from flask import render_template as rt
 
-from data.data import Friend, Member
+from data.data import Friend, Member, MemberBlock
+from module import levels
 from module.auth import login_required, verified_required
 
 from . import api_friends
 from .api_member import with_verification
+
+
+def levels_bootstrap():
+    """The level curve and perks, so the page shows them without repeating the numbers."""
+    return {"step": levels.STEP, "perks": levels.PERKS, "frame": levels.FRAME_LEVEL}
 
 
 @api_friends.route("/<account>")
@@ -13,7 +19,10 @@ def to_member(account):
     if session.get("account") == account:
         # Who I am comes with the page, saving the browser a round trip before the
         # feed, tags and friends can load.
-        return rt("member.html", me=with_verification(Member.get_member(account)))
+        visit = levels.daily_visit(session["member_id"])
+        me = with_verification(Member.get_member(account))
+        me["visit"] = visit
+        return rt("member.html", me=me, levels=levels_bootstrap())
     return redirect("/")
 
 
@@ -42,6 +51,9 @@ def waiting_relationship():
     data = request.get_json()
     someone_else = data["who"]
     me = session.get("member_id")
+    other = Member.id_for(someone_else) if isinstance(someone_else, str) else None
+    if other is not None and MemberBlock.between(me, other):
+        return {"error": "blocked"}
     result = Friend.send_friend_request(me, someone_else)
     result["me"] = me
     result["someone_else"] = someone_else
@@ -54,6 +66,9 @@ def forgeing_relationship():
     data = request.get_json()
     target = data["friend_ship_id"]
     result = Friend.forge_friend_request(session.get("member_id"), target)
+    if result["result"] and result["data"]:
+        levels.award(result["data"]["request_from"], "friend_made")
+        levels.award(result["data"]["request_to"], "friend_made")
     return {
         "ok": result["ok"],
         "data_changed": result["result"],

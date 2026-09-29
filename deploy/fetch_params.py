@@ -28,6 +28,7 @@ OPTIONAL = {
     "grafana-prom-url": "GRAFANA_PROM_URL",  # added by hand, see infra/README.md
     "grafana-prom-user": "GRAFANA_PROM_USER",  # added by hand, see infra/README.md
     "grafana-cloud-token": "GRAFANA_CLOUD_TOKEN",  # added by hand, see infra/README.md
+    "admin-accounts": "ADMIN_ACCOUNTS",  # added by hand, see infra/README.md
 }
 
 

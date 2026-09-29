@@ -153,7 +153,10 @@ Every pull request runs lint, tests, a dependency audit and an image scan
 
 ### Member
 * User avatar.
-* Levels with activities.
+* Levels that reward what others value (likes and comments on your posts), with daily
+  caps, visit streaks, coloured level badges and unlocks ([ADR 0015](docs/adr/0015-levels-reward-what-others-value.md)).
+* Block members and report posts, comments, messages or accounts; reports are
+  reviewed on `/admin` ([ADR 0014](docs/adr/0014-blocking-and-reporting.md)).
 * Personal custom message.
 * Click on user avatar or friend status to show his/her personal information.
 ### Tag
@@ -179,9 +182,10 @@ Every pull request runs lint, tests, a dependency audit and an image scan
 * Refresh posts with the button located in middle of nav bar.
 * Up & Down scoring - Leave your comment with scroe!
 ### Chat
-* OK with multi-window chat.
-* Ringing - When someone wants to start a chat with you, will recieve a shaking effect on the chat image.
-* Online status - Online = blue, Offline = red
+* Messenger-style one-to-one chat between friends: stored history, unread counts,
+  "已讀" receipts and typing indicators, delivered to every open tab and to people who
+  were offline ([ADR 0013](docs/adr/0013-stored-direct-messages.md)).
+* Online status of friends.
 ### Notification
 * Informs you with friendship status update and offline calling.
 ### Tag forum (In progress)

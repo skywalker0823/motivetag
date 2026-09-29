@@ -4,7 +4,7 @@ from datetime import date
 from flask import current_app, request, session
 
 from api.metrics import auth_event
-from data.data import Friend, Member, Member_tags, Notification
+from data.data import Friend, Member, Member_tags, MemberBlock, Notification
 from module import email_verification, invites, rules, turnstile
 from module.auth import login_required
 from module.clock import taipei_now
@@ -44,7 +44,7 @@ def check_member():
 # Letters (any language), digits and _; the name becomes the member's page at
 # /<account>, so it must not shadow the site's own paths.
 ACCOUNT = re.compile(r"^\w{3,20}$")
-RESERVED = {"api", "tag", "images", "healthz", "js", "css", "img"}
+RESERVED = {"api", "tag", "images", "healthz", "js", "css", "img", "admin", "metrics"}
 EMAIL = re.compile(r"^[^@\s]+@[^@\s]+\.[^@\s]+$")
 MIN_PASSWORD = 8
 MIN_AGE = 18
@@ -182,4 +182,5 @@ def get_user_sp():
         "data": user_basic_data,
         "is_friend": checker,
         "shared_tags": Member.shared_tags(member_id, target_id) if user_basic_data else [],
+        "blocked": bool(user_basic_data) and MemberBlock.has_blocked(member_id, target_id),
     }

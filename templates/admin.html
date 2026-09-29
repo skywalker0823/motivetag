@@ -1,0 +1,30 @@
+<!DOCTYPE html>
+<html lang="zh-TW">
+<head>
+    {% with entry="/js/pages/admin.js", stylesheets=['/css/tag.css', '/css/admin.css'] %}{% include "_head.html" %}{% endwith %}
+    <meta name="robots" content="noindex">
+    <title>檢舉審核 - MotiveTag</title>
+</head>
+<body>
+    <header class="page-bar">
+        <a class="btn btn--ghost btn--sm" href="/" data-icon="arrow-left">回到動態</a>
+    </header>
+    <main class="page">
+        <section class="tag-hero">
+            <div>
+                <p class="tag-hero__kicker">管理</p>
+                <h1 class="tag-hero__title">檢舉審核</h1>
+            </div>
+        </section>
+        <p class="admin-hint">App Store 規定檢舉要在 24 小時內處理。「刪除內容」會永久刪除貼文、留言或訊息；「保留」會結案，被自動隱藏的貼文會重新顯示。</p>
+        <div class="status-tabs" id="status-tabs" role="group" aria-label="檢舉狀態">
+            <button type="button" data-status="open" aria-pressed="true">待處理</button>
+            <button type="button" data-status="resolved" aria-pressed="false">已刪除</button>
+            <button type="button" data-status="dismissed" aria-pressed="false">已保留</button>
+        </div>
+        <div class="admin-list" id="reports" aria-live="polite">
+            <div class="spinner" role="status" aria-label="載入中"></div>
+        </div>
+    </main>
+</body>
+</html>

@@ -2,16 +2,52 @@
 import { api, errorMessage } from "../../lib/api.js";
 import { $, h } from "../../lib/dom.js";
 import { icon } from "../../lib/icons.js";
+import { frameClass, levelBadge, levelOf } from "../../lib/levels.js";
+import { blockMember, reportDialog } from "../../lib/report.js";
+import { socket } from "../../lib/socket.js";
 import { dateOnly, fromServer, relative } from "../../lib/time.js";
 import { toast, toastError } from "../../lib/toast.js";
 import { uploadImage } from "../../lib/upload.js";
-import { avatarUrl, DEFAULT_AVATAR, emit, me } from "./state.js";
+import { avatarUrl, bootstrap, DEFAULT_AVATAR, emit, me } from "./state.js";
 
-/** Level from experience points: Lv n needs 50·n(n−1)/2 exp. */
-export function levelOf(exp) {
-  const raw = ((((8 * Math.max(exp, 0)) / 50 + 1) ** 0.5 + 1) / 2);
-  const level = Math.floor(raw);
-  return { level, progress: raw - level, next: (50 * (level + 1) * level) / 2 };
+const PERKS = bootstrap.levels?.perks ?? []; // [[level, what it unlocks], …]
+
+/** The level card: level, exp towards the next one and what the next levels unlock. */
+function showLevel(exp) {
+  const { level, progress, next } = levelOf(exp);
+  me.level = level;
+  $("#my-level").replaceChildren(levelBadge(level));
+  $("#my-exp").textContent = `${exp} / ${next} exp`;
+  $("#my-level-fill").style.width = `${Math.round(progress * 100)}%`;
+  $("#my-level-bar").setAttribute("aria-valuenow", String(Math.round(progress * 100)));
+  const upcoming = PERKS.find(([at]) => at > level);
+  $("#my-level-next").textContent = upcoming
+    ? `再 ${next - exp} exp 升 Lv ${level + 1}${upcoming[0] === level + 1 ? `・解鎖：${upcoming[1]}` : `・Lv ${upcoming[0]} 解鎖：${upcoming[1]}`}`
+    : `再 ${next - exp} exp 升 Lv ${level + 1}`;
+  $("#my-avatar").className = `avatar avatar--lg${frameClass(level)}`;
+}
+
+const ACTIONS = {
+  daily_visit: "每日登入",
+  streak_week: "連續登入 7 天",
+  post: "發文",
+  comment: "留言",
+  like_given: "按讚",
+  like_received: "貼文被按讚",
+  comment_received: "貼文收到留言",
+  comment_like_received: "留言被按讚",
+  friend_made: "交到新朋友",
+};
+
+/** Exp pushed by the server (module/levels.py award()): update the card, cheer level-ups. */
+function onExp({ exp, level, gained, action, level_up }) {
+  showLevel(exp);
+  if (level_up) {
+    const perk = PERKS.find(([at]) => at === level);
+    toast(`🎉 升到 Lv ${level}！${perk ? `解鎖：${perk[1]}` : ""}`, { type: "success", timeout: 6000 });
+  } else if (["like_received", "comment_received", "comment_like_received", "friend_made"].includes(action)) {
+    toast(`${ACTIONS[action]} +${gained} exp`);
+  }
 }
 
 export function initProfile(data) {
@@ -23,11 +59,12 @@ export function initProfile(data) {
   avatar.src = avatarUrl(data.member_id);
   avatar.addEventListener("error", () => (avatar.src = DEFAULT_AVATAR), { once: true });
 
-  const { level, progress, next } = levelOf(data.exp ?? 0);
-  $("#my-level").textContent = `Lv ${level}`;
-  $("#my-exp").textContent = `${data.exp ?? 0} / ${next} exp`;
-  $("#my-level-fill").style.width = `${Math.round(progress * 100)}%`;
-  $("#my-level-bar").setAttribute("aria-valuenow", String(Math.round(progress * 100)));
+  showLevel(data.exp ?? 0);
+  socket.on("exp", onExp);
+  if (data.visit?.gained) {
+    const streak = data.visit.streak > 1 ? `連續登入 ${data.visit.streak} 天，` : "";
+    toast(`${streak}每日登入 +${data.visit.gained} exp`);
+  }
 
   initAvatarUpload(avatar);
   initMood(data.mood ?? "");
@@ -100,6 +137,7 @@ const dialog = $("#member-dialog");
 
 export async function showMember(memberId) {
   const avatar = $("#member-dialog-avatar");
+  avatar.className = "avatar avatar--lg";
   avatar.src = avatarUrl(memberId);
   avatar.onerror = () => {
     avatar.onerror = null;
@@ -124,9 +162,10 @@ export async function showMember(memberId) {
     $("#member-dialog-name").textContent = "找不到這位成員";
     return;
   }
-  $("#member-dialog-name").textContent = user.account;
+  $("#member-dialog-name").replaceChildren(user.account, " ", levelBadge(levelOf(user.exp ?? 0).level));
   $("#member-dialog-mood").textContent = user.mood || "";
   const { level } = levelOf(user.exp ?? 0);
+  avatar.className = `avatar avatar--lg${frameClass(level)}`;
   const facts = [
     ["等級", `Lv ${level}（${user.exp ?? 0} exp）`],
     ["加入", dateOnly(user.first_signup)],
@@ -157,7 +196,51 @@ export async function showMember(memberId) {
       ),
     ),
   );
-  $("#member-dialog-actions").replaceChildren(...friendActions(user.account, result.is_friend));
+  $("#member-dialog-actions").replaceChildren(
+    ...(result.blocked ? [] : friendActions(user.account, result.is_friend)),
+    ...safetyActions(memberId, user.account, result.blocked),
+  );
+}
+
+/** Report and block (or unblock) someone else, at the end of their card. */
+function safetyActions(memberId, account, blocked) {
+  if (account === me.account) return [];
+  const report = h(
+    "button",
+    {
+      class: "btn btn--ghost btn--sm",
+      type: "button",
+      onClick: async () => {
+        dialog.close();
+        await reportDialog({ type: "member", id: memberId });
+      },
+    },
+    icon("flag", { size: "sm" }),
+    "檢舉",
+  );
+  const toggle = h(
+    "button",
+    {
+      class: "btn btn--ghost btn--sm",
+      type: "button",
+      onClick: async () => {
+        dialog.close();
+        if (blocked) {
+          try {
+            await api(`/api/v1/blocks/${encodeURIComponent(account)}`, { method: "DELETE" });
+            toast(`已解除封鎖 ${account}`);
+          } catch (error) {
+            toastError(error, "解除封鎖失敗");
+          }
+        } else if (await blockMember(account)) {
+          emit("member:blocked", { id: memberId, account });
+        }
+      },
+    },
+    icon("ban", { size: "sm" }),
+    blocked ? "解除封鎖" : "封鎖",
+  );
+  return [h("span", { class: "member-card__safety" }, report, toggle)];
 }
 
 function friendActions(account, friendship) {

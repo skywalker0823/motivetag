@@ -263,10 +263,14 @@ class Member:
                        SELECT 1 FROM friendship f
                        WHERE (f.request_from = %s AND f.request_to = m.member_id)
                           OR (f.request_to = %s AND f.request_from = m.member_id))
+                     AND NOT EXISTS (
+                       SELECT 1 FROM member_block b
+                       WHERE (b.blocker_id = %s AND b.blocked_id = m.member_id)
+                          OR (b.blocked_id = %s AND b.blocker_id = m.member_id))
                    GROUP BY m.member_id, m.account, m.mood, m.last_signin
                    ORDER BY shared_count DESC, m.last_signin DESC
                    LIMIT %s""",  # noqa: S608 - placeholders only
-                (member_id, *NEUTRAL_TAGS, member_id, member_id, limit),
+                (member_id, *NEUTRAL_TAGS, member_id, member_id, member_id, member_id, limit),
             )
             rows = cursor.fetchall()
         for row in rows:
@@ -344,57 +348,80 @@ NEUTRAL_TAGS = ("新手引導", "Anonymous")
 
 FEED_PAGE = 10  # posts per /api/blocks page; PAGE in static/js/pages/member/feed.js
 
+# What `member_id` (the %s, three times) may see of post `{b}`: nothing by members they
+# blocked, nothing they reported, and nothing waiting for review unless it is theirs.
+SEEN_BY = """
+    AND NOT EXISTS (SELECT 1 FROM member_block mb
+                    WHERE mb.blocker_id=%s AND mb.blocked_id={b}.member_id)
+    AND NOT EXISTS (SELECT 1 FROM report r WHERE r.reporter_id=%s
+                    AND r.target_type='post' AND r.target_id={b}.block_id)
+    AND ({b}.hidden=0 OR {b}.member_id=%s)"""
+
 
 class Block:
     def get_block(member_id, page, obseve_key=None, order_by=None):
         page = int(page)
-        # sql_me=None
-        # sql_by_score = None
-        sql_observe_key = """SELECT account,block_id, block.member_id, content_type, content, build_time,good,bad,block_img
-                                FROM block RIGHT JOIN member ON member.member_id=block.member_id
-                                WHERE block_id IN(SELECT block_id FROM block_tag WHERE tag_id=(SELECT tag_id FROM tag WHERE name=%s))
-                                AND (content_type <> "SECRET" OR block.member_id=%s)
-                                ORDER BY build_time DESC LIMIT %s,%s"""
-        sql_all = """SELECT account,block_id, block.member_id, content_type, content, build_time,good,bad,block_img
-                                FROM block RIGHT JOIN member ON member.member_id=block.member_id
-                                WHERE block.member_id IN
-                                (
-                                    SELECT request_from AS ids FROM friendship WHERE status="0" 
-                                    AND(request_from=%s OR request_to=%s) 
-                                    UNION
-                                    SELECT request_to AS ids FROM friendship WHERE status="0" AND(request_from=%s OR request_to=%s)) AND content_type <> "SECRET" AND content_type <> "Anonymous"
-                                    UNION
-                                    SELECT (SELECT account FROM member WHERE member_id=block.member_id)AS account,block_id, block.member_id, content_type, content, build_time,good,bad,block_img FROM block WHERE member_id=%s
-                                    UNION
-                                    SELECT (SELECT account FROM member WHERE member_id=block.member_id)AS account,block_id,block.member_id,content_type,content,build_time,good,bad,block_img FROM block WHERE block_id IN(SELECT block_id FROM block_tag WHERE tag_id IN(SELECT tag_id FROM member_tags WHERE member_id=%s)
-                                ) AND content_type <> "SECRET"
-                                ORDER BY build_time DESC
-                                LIMIT %s,%s"""
+        sql_observe_key = f"""SELECT account, block_id, block.member_id, content_type, content,
+                                     build_time, good, bad, block_img
+                              FROM block JOIN member ON member.member_id=block.member_id
+                              WHERE block_id IN (SELECT block_id FROM block_tag WHERE tag_id=
+                                                 (SELECT tag_id FROM tag WHERE name=%s))
+                                AND (content_type <> 'SECRET' OR block.member_id=%s)
+                                {SEEN_BY.format(b="block")}
+                              ORDER BY build_time DESC LIMIT %s,%s"""  # noqa: S608 - constant fragment
+        # My friends' posts, my own and those under tags I follow, minus what I blocked,
+        # reported or what waits for review.
+        sql_all = f"""SELECT feed.* FROM (
+                        SELECT account, block_id, block.member_id, content_type, content,
+                               build_time, good, bad, block_img
+                        FROM block JOIN member ON member.member_id=block.member_id
+                        WHERE block.member_id IN (
+                            SELECT request_from FROM friendship
+                            WHERE status='0' AND (request_from=%s OR request_to=%s)
+                            UNION
+                            SELECT request_to FROM friendship
+                            WHERE status='0' AND (request_from=%s OR request_to=%s))
+                          AND content_type <> 'SECRET' AND content_type <> 'Anonymous'
+                        UNION
+                        SELECT account, block_id, block.member_id, content_type, content,
+                               build_time, good, bad, block_img
+                        FROM block JOIN member ON member.member_id=block.member_id
+                        WHERE block.member_id=%s
+                        UNION
+                        SELECT account, block_id, block.member_id, content_type, content,
+                               build_time, good, bad, block_img
+                        FROM block JOIN member ON member.member_id=block.member_id
+                        WHERE block_id IN (SELECT block_id FROM block_tag WHERE tag_id IN
+                                           (SELECT tag_id FROM member_tags WHERE member_id=%s))
+                          AND content_type <> 'SECRET'
+                      ) AS feed JOIN block b ON b.block_id = feed.block_id
+                      WHERE 1=1 {SEEN_BY.format(b="b")}
+                      ORDER BY feed.build_time DESC
+                      LIMIT %s,%s"""  # noqa: S608 - constant fragment
         with connection.cursor() as cursor:
             if obseve_key is None:
-                got = cursor.execute(
-                    sql_all,
-                    (*[member_id] * 6, page, FEED_PAGE),
-                )
-                # got = cursor.execute(sql_all_altered, (member_id, member_id, member_id, member_id, member_id,member_id,page,5))
+                got = cursor.execute(sql_all, (*[member_id] * 6, *[member_id] * 3, page, FEED_PAGE))
             else:
-                got = cursor.execute(sql_observe_key, (obseve_key, member_id, page, FEED_PAGE))
+                got = cursor.execute(
+                    sql_observe_key,
+                    (obseve_key, member_id, *[member_id] * 3, page, FEED_PAGE),
+                )
             result = cursor.fetchall()
             connection.commit()
             if got == 0:
                 return {"msg": "No blocks found"}
             return {"msg": "ok", "datas": result}
 
-    def explore(offset):
+    def explore(offset, member_id):
         """Everyone's newest posts except secret ones; anonymous authors are hidden later."""
         with connection.cursor() as cursor:
             cursor.execute(
-                """SELECT account, block_id, block.member_id, content_type, content, build_time,
+                f"""SELECT account, block_id, block.member_id, content_type, content, build_time,
                           good, bad, block_img
                    FROM block JOIN member ON member.member_id=block.member_id
-                   WHERE content_type <> 'SECRET'
-                   ORDER BY build_time DESC, block_id DESC LIMIT %s,%s""",
-                (offset, FEED_PAGE),
+                   WHERE content_type <> 'SECRET' {SEEN_BY.format(b="block")}
+                   ORDER BY build_time DESC, block_id DESC LIMIT %s,%s""",  # noqa: S608 - constant fragment
+                (*[member_id] * 3, offset, FEED_PAGE),
             )
             return cursor.fetchall()
 
@@ -462,10 +489,12 @@ class Block:
             return result
 
     def visible(member_id, block_id):
-        """Whether this member may see the post: it exists and is not someone else's secret."""
+        """Whether this member may see the post: it exists, is not someone else's secret
+        and is not waiting for review (unless it is theirs)."""
         with connection.cursor() as cursor:
             got = cursor.execute(
-                "SELECT 1 FROM block WHERE block_id=%s AND (content_type<>'SECRET' OR member_id=%s)",
+                """SELECT 1 FROM block WHERE block_id=%s
+                   AND ((content_type<>'SECRET' AND hidden=0) OR member_id=%s)""",
                 (block_id, member_id),
             )
             return got != 0
@@ -486,6 +515,12 @@ class Block:
             )
             disliked = {row["block_id"] for row in cursor.fetchall()}
         return liked, disliked
+
+    def author(block_id):
+        with connection.cursor() as cursor:
+            cursor.execute("SELECT member_id FROM block WHERE block_id=%s", (block_id,))
+            row = cursor.fetchone()
+        return row["member_id"] if row else None
 
     def is_owner(member_id, block_id):
         with connection.cursor() as cursor:
@@ -776,18 +811,24 @@ class Message:
             return {"error": "message POST Error"}
 
     def for_blocks(member_id, block_ids):
-        """Comments of several posts at once, oldest first, each with whether I liked it."""
+        """Comments of several posts at once, oldest first, each with whether I liked it.
+        Leaves out comments by members I blocked and comments I reported."""
         if not block_ids:
             return {}
         with connection.cursor() as cursor:
             cursor.execute(
-                f"""SELECT c.comment_id, c.block_id, c.member_id, m.account, c.content,
+                f"""SELECT c.comment_id, c.block_id, c.member_id, m.account, m.exp, c.content,
                     c.build_time, c.nice_comment, c.given_score,
                     EXISTS(SELECT 1 FROM c_goods g
                            WHERE g.comment_id=c.comment_id AND g.member_id=%s) AS liked
                 FROM block_comment c JOIN member m ON m.member_id=c.member_id
-                WHERE c.block_id IN ({_in(block_ids)}) ORDER BY c.comment_id""",  # noqa: S608 - placeholders only
-                (member_id, *block_ids),
+                WHERE c.block_id IN ({_in(block_ids)})
+                  AND NOT EXISTS (SELECT 1 FROM member_block mb
+                                  WHERE mb.blocker_id=%s AND mb.blocked_id=c.member_id)
+                  AND NOT EXISTS (SELECT 1 FROM report r WHERE r.reporter_id=%s
+                                  AND r.target_type='comment' AND r.target_id=c.comment_id)
+                ORDER BY c.comment_id""",  # noqa: S608 - placeholders only
+                (member_id, *block_ids, member_id, member_id),
             )
             rows = cursor.fetchall()
         comments = {block_id: [] for block_id in block_ids}
@@ -795,6 +836,12 @@ class Message:
             row["liked"] = bool(row["liked"])
             comments[row["block_id"]].append(row)
         return comments
+
+    def author(comment_id):
+        with connection.cursor() as cursor:
+            cursor.execute("SELECT member_id FROM block_comment WHERE comment_id=%s", (comment_id,))
+            row = cursor.fetchone()
+        return row["member_id"] if row else None
 
     def nice_message(comment_id):
         with connection.cursor() as cursor:
@@ -880,8 +927,10 @@ class DirectMessage:
                    ) last
                    JOIN direct_message m ON m.message_id = last.last_id
                    JOIN member p ON p.member_id = last.partner_id
+                   WHERE NOT EXISTS (SELECT 1 FROM member_block b
+                                     WHERE b.blocker_id=%s AND b.blocked_id=p.member_id)
                    ORDER BY m.message_id DESC LIMIT {int(limit)}""",  # noqa: S608 - no user input
-                (me, me, me),
+                (me, me, me, me),
             )
             return cursor.fetchall()
 
@@ -912,6 +961,200 @@ class DirectMessage:
                 (sender_id, since),
             )
             return cursor.fetchone()["n"]
+
+
+class MemberBlock:
+    """Members I blocked: I no longer see their posts or comments, and neither of us can
+    message, befriend or notify the other (api/v1/blocks.py)."""
+
+    def block(blocker_id, blocked_id, now):
+        with connection.cursor() as cursor:
+            cursor.execute(
+                "INSERT IGNORE INTO member_block (blocker_id, blocked_id, created_at)"
+                " VALUES (%s, %s, %s)",
+                (blocker_id, blocked_id, now),
+            )
+            # Friendship and pending invitations end either way.
+            cursor.execute(
+                """DELETE FROM friendship WHERE (request_from=%s AND request_to=%s)
+                   OR (request_from=%s AND request_to=%s)""",
+                (blocker_id, blocked_id, blocked_id, blocker_id),
+            )
+        connection.commit()
+
+    def unblock(blocker_id, blocked_id):
+        with connection.cursor() as cursor:
+            count = cursor.execute(
+                "DELETE FROM member_block WHERE blocker_id=%s AND blocked_id=%s",
+                (blocker_id, blocked_id),
+            )
+        connection.commit()
+        return count
+
+    def blocked_by(blocker_id):
+        """The members I blocked, most recent first."""
+        with connection.cursor() as cursor:
+            cursor.execute(
+                """SELECT m.member_id, m.account, b.created_at FROM member_block b
+                   JOIN member m ON m.member_id = b.blocked_id
+                   WHERE b.blocker_id=%s ORDER BY b.created_at DESC""",
+                (blocker_id,),
+            )
+            return list(cursor.fetchall())
+
+    def has_blocked(blocker_id, blocked_id):
+        with connection.cursor() as cursor:
+            got = cursor.execute(
+                "SELECT 1 FROM member_block WHERE blocker_id=%s AND blocked_id=%s",
+                (blocker_id, blocked_id),
+            )
+        return got != 0
+
+    def between(member_a, member_b):
+        """Whether either member blocked the other."""
+        with connection.cursor() as cursor:
+            got = cursor.execute(
+                """SELECT 1 FROM member_block WHERE (blocker_id=%s AND blocked_id=%s)
+                   OR (blocker_id=%s AND blocked_id=%s)""",
+                (member_a, member_b, member_b, member_a),
+            )
+        return got != 0
+
+
+REPORT_COLUMNS = """r.report_id, r.target_type, r.target_id, r.target_member_id,
+    t.account AS target_account, r.reporter_id, rp.account AS reporter, r.reason, r.detail,
+    r.weight, r.snapshot, r.created_at, r.status, r.handled_at"""
+
+
+class Report:
+    """Reports of posts, comments, members and chat messages (api/v1/reports.py)."""
+
+    def create(report):
+        """Stores a report; returns its id, or None if this member already reported it."""
+        with connection.cursor() as cursor:
+            try:
+                cursor.execute(
+                    """INSERT INTO report (reporter_id, target_type, target_id, target_member_id,
+                         reason, detail, weight, snapshot, created_at)
+                       VALUES (%(reporter_id)s, %(target_type)s, %(target_id)s,
+                         %(target_member_id)s, %(reason)s, %(detail)s, %(weight)s,
+                         %(snapshot)s, %(created_at)s)""",
+                    report,
+                )
+            except pymysql.err.IntegrityError:
+                return None
+            report_id = cursor.lastrowid
+        connection.commit()
+        return report_id
+
+    def open_weight(target_type, target_id):
+        """How much the open reports on something weigh together."""
+        with connection.cursor() as cursor:
+            cursor.execute(
+                """SELECT COALESCE(SUM(weight), 0) AS w FROM report
+                   WHERE target_type=%s AND target_id=%s AND status='open'""",
+                (target_type, target_id),
+            )
+            return int(cursor.fetchone()["w"])
+
+    def made_since(reporter_id, since):
+        with connection.cursor() as cursor:
+            cursor.execute(
+                "SELECT COUNT(*) AS n FROM report WHERE reporter_id=%s AND created_at >= %s",
+                (reporter_id, since),
+            )
+            return cursor.fetchone()["n"]
+
+    def listing(status, limit=100):
+        with connection.cursor() as cursor:
+            cursor.execute(
+                f"""SELECT {REPORT_COLUMNS} FROM report r
+                    JOIN member rp ON rp.member_id = r.reporter_id
+                    LEFT JOIN member t ON t.member_id = r.target_member_id
+                    WHERE r.status=%s ORDER BY r.report_id DESC LIMIT {int(limit)}""",  # noqa: S608 - constant columns
+                (status,),
+            )
+            return list(cursor.fetchall())
+
+    def get(report_id):
+        with connection.cursor() as cursor:
+            cursor.execute(
+                f"""SELECT {REPORT_COLUMNS} FROM report r
+                    JOIN member rp ON rp.member_id = r.reporter_id
+                    LEFT JOIN member t ON t.member_id = r.target_member_id
+                    WHERE r.report_id=%s""",  # noqa: S608 - constant columns
+                (report_id,),
+            )
+            return cursor.fetchone()
+
+    def close_all(target_type, target_id, status, now):
+        """Closes every open report on the same thing (resolved or dismissed)."""
+        with connection.cursor() as cursor:
+            count = cursor.execute(
+                """UPDATE report SET status=%s, handled_at=%s
+                   WHERE target_type=%s AND target_id=%s AND status='open'""",
+                (status, now, target_type, target_id),
+            )
+        connection.commit()
+        return count
+
+    def open_count():
+        with connection.cursor() as cursor:
+            cursor.execute("SELECT COUNT(*) AS n FROM report WHERE status='open'")
+            return cursor.fetchone()["n"]
+
+
+class Moderation:
+    """What a report can point at, and what the owner can do about it."""
+
+    def post(block_id):
+        with connection.cursor() as cursor:
+            cursor.execute(
+                """SELECT block_id, member_id, content_type, content, block_img, hidden
+                   FROM block WHERE block_id=%s""",
+                (block_id,),
+            )
+            return cursor.fetchone()
+
+    def comment(comment_id):
+        with connection.cursor() as cursor:
+            cursor.execute(
+                "SELECT comment_id, block_id, member_id, content FROM block_comment"
+                " WHERE comment_id=%s",
+                (comment_id,),
+            )
+            return cursor.fetchone()
+
+    def message(message_id):
+        with connection.cursor() as cursor:
+            cursor.execute(
+                "SELECT message_id, sender_id, recipient_id, content FROM direct_message"
+                " WHERE message_id=%s",
+                (message_id,),
+            )
+            return cursor.fetchone()
+
+    def set_hidden(block_id, hidden):
+        with connection.cursor() as cursor:
+            cursor.execute("UPDATE block SET hidden=%s WHERE block_id=%s", (int(hidden), block_id))
+        connection.commit()
+
+    def remove(target_type, target_id):
+        """Deletes a post, comment or message; returns the post's image key to remove."""
+        table, key = {
+            "post": ("block", "block_id"),
+            "comment": ("block_comment", "comment_id"),
+            "message": ("direct_message", "message_id"),
+        }[target_type]
+        image = None
+        with connection.cursor() as cursor:
+            if target_type == "post":
+                cursor.execute("SELECT block_img FROM block WHERE block_id=%s", (target_id,))
+                row = cursor.fetchone()
+                image = row and row["block_img"]
+            count = cursor.execute(f"DELETE FROM {table} WHERE {key}=%s", (target_id,))  # noqa: S608 - fixed names
+        connection.commit()
+        return count, image
 
 
 class Images:
@@ -1122,31 +1365,80 @@ class Tag_info:
 
 
 class Level:
-    def get_current_exp(member_id):
-        return
+    """Exp bookkeeping for module/levels.py, which decides who gets what.
 
-    # Exp is awarded by the server for actions it has already verified, never by client-sent amounts.
-    EXP_REWARDS = {
-        "block_creater": 50,
-        "block_destroy": -50,  # takes back the creation reward, so posting and deleting earns nothing
-        "good_bad": 5,
-        "good_message": 5,
-        "message": 3,
-    }
+    Exp is awarded by the server for actions it has already verified, never by
+    client-sent amounts."""
 
-    def exp_up(member_id, exp):
+    def count_today(member_id, action, day):
+        """Counts one more `action` today and returns today's count, this one included."""
         with connection.cursor() as cursor:
-            result = cursor.execute(
-                "UPDATE member SET exp=exp+%s WHERE member_id=%s", (exp, member_id)
+            cursor.execute(
+                """INSERT INTO exp_daily (member_id, day, action, count) VALUES (%s, %s, %s, 1)
+                   ON DUPLICATE KEY UPDATE count = count + 1""",
+                (member_id, day, action),
             )
-            connection.commit()
-        return result
+            cursor.execute(
+                "SELECT count FROM exp_daily WHERE member_id=%s AND day=%s AND action=%s",
+                (member_id, day, action),
+            )
+            count = cursor.fetchone()["count"]
+        connection.commit()
+        return count
 
-    def reward(member_id, action):
-        return Level.exp_up(member_id, Level.EXP_REWARDS[action])
+    def add_exp(member_id, exp):
+        """Adds exp; returns (exp before, exp after, account)."""
+        with connection.cursor() as cursor:
+            cursor.execute(
+                "SELECT exp, account FROM member WHERE member_id=%s FOR UPDATE", (member_id,)
+            )
+            row = cursor.fetchone()
+            before = row["exp"] or 0
+            cursor.execute("UPDATE member SET exp=%s WHERE member_id=%s", (before + exp, member_id))
+        connection.commit()
+        return before, before + exp, row["account"]
 
-    def exp_down(member_id, exp):
-        return
+    def last_visit(member_id):
+        with connection.cursor() as cursor:
+            cursor.execute(
+                "SELECT last_active_day, streak FROM member WHERE member_id=%s", (member_id,)
+            )
+            row = cursor.fetchone()
+        return (row["last_active_day"], row["streak"] or 0) if row else (None, 0)
+
+    def set_visit(member_id, day, streak):
+        with connection.cursor() as cursor:
+            cursor.execute(
+                "UPDATE member SET last_active_day=%s, streak=%s WHERE member_id=%s",
+                (day, streak, member_id),
+            )
+        connection.commit()
+
+    def exps(member_ids):
+        """{member_id: exp} for several members, for level badges."""
+        ids = [i for i in set(member_ids) if i]
+        if not ids:
+            return {}
+        with connection.cursor() as cursor:
+            cursor.execute(
+                f"SELECT member_id, exp FROM member WHERE member_id IN ({_in(ids)})",  # noqa: S608 - placeholders only
+                ids,
+            )
+            return {row["member_id"]: row["exp"] or 0 for row in cursor.fetchall()}
+
+    def posts_since(member_id, since):
+        with connection.cursor() as cursor:
+            cursor.execute(
+                "SELECT COUNT(*) AS n FROM block WHERE member_id=%s AND build_time >= %s",
+                (member_id, since),
+            )
+            return cursor.fetchone()["n"]
+
+    def purge(before):
+        """Daily counts only matter for today."""
+        with connection.cursor() as cursor:
+            cursor.execute("DELETE FROM exp_daily WHERE day < %s", (before,))
+        connection.commit()
 
 
 class Bricks:

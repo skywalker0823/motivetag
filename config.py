@@ -48,6 +48,8 @@ class Config_dev(object):
     # Cloudflare Turnstile on sign-up (module/turnstile.py): off unless both are set.
     TURNSTILE_SITE_KEY = os.getenv("TURNSTILE_SITE_KEY")
     TURNSTILE_SECRET = os.getenv("TURNSTILE_SECRET")
+    # Accounts that may review reports on /admin (comma-separated, no spaces).
+    ADMIN_ACCOUNTS = frozenset(a for a in os.getenv("ADMIN_ACCOUNTS", "").split(",") if a)
 
 
 class Config_prodution(Config_dev):

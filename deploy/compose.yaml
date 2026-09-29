@@ -40,6 +40,7 @@ services:
       SES_REGION: ${SES_REGION:-}
       TURNSTILE_SITE_KEY: ${TURNSTILE_SITE_KEY:-}
       TURNSTILE_SECRET: ${TURNSTILE_SECRET:-}
+      ADMIN_ACCOUNTS: ${ADMIN_ACCOUNTS:-}
     healthcheck:
       test: ["CMD", "python", "-c", "import urllib.request; urllib.request.urlopen('http://127.0.0.1:3000/healthz')"]
       interval: 10s
