@@ -193,7 +193,13 @@ fieldset.field {
 
 .reply-form {
   display: grid;
+  grid-template-columns: auto 1fr;
+  align-items: center;
   gap: var(--space-3);
+}
+
+.reply-form .textarea {
+  grid-column: 1 / -1;
 }
 
 .reply-form .btn {

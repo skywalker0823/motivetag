@@ -1,6 +1,7 @@
 // One discussion topic and its replies (/tag/<name>/<id>).
 import { api, errorMessage } from "../lib/api.js";
 import { $, busy, h } from "../lib/dom.js";
+import { emojiButton } from "../lib/emoji.js";
 import { hydrateIcons } from "../lib/icons.js";
 import { timeAgo } from "../lib/time.js";
 import { toastError } from "../lib/toast.js";
@@ -85,3 +86,6 @@ form.addEventListener("submit", (event) => {
 
 loadTopic();
 loadReplies();
+
+// 😀 next to 回覆.
+$("#reply-form [type=submit]").before(emojiButton($("#reply-input")));

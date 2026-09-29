@@ -6,6 +6,7 @@ import { api } from "../../lib/api.js";
 import { confirmDialog } from "../../lib/confirm.js";
 import { h, img } from "../../lib/dom.js";
 import { icon } from "../../lib/icons.js";
+import { emojiButton } from "../../lib/emoji.js";
 import { frameClass, levelBadge } from "../../lib/levels.js";
 import { openLightbox } from "../../lib/lightbox.js";
 import { reportDialog } from "../../lib/report.js";
@@ -378,7 +379,7 @@ function renderComments(post, score) {
     "aria-label": "留言內容",
   });
   const send = h("button", { class: "btn btn--sm", type: "submit" }, "送出");
-  const form = h("form", { class: "comment-form" }, input, stepper, send);
+  const form = h("form", { class: "comment-form" }, input, emojiButton(input, { size: "sm" }), stepper, send);
   form.addEventListener("submit", async (event) => {
     event.preventDefault();
     const message = input.value.trim();
