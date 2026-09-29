@@ -63,7 +63,7 @@ uses it as a portfolio project for interviews. Read this first, then `README.md`
 - Frontend: plain HTML/CSS + native ES modules, no build step (ADR 0009).
   `static/css/base.css` tokens and components; `static/js/lib/` framework-free helpers
   (api, dom `h()`, icons, time, toast, upload, confirm, lightbox, socket, tour,
-  pull-refresh, collapsible, levels, report);
+  pull-refresh, collapsible, levels, report, emoji);
   `static/js/pages/` one folder per page. `module/urls.py` `public_base_url()` for
   absolute links (e-mail, invites, og tags). Socket.IO client is vendored in `static/vendor/`.
 - `migrations/versions/` Alembic, applied on container start. Migrations must keep the
@@ -240,12 +240,18 @@ rate-limiting rule `API flood guard` (`/api/`, 60 requests / 10 s per IP → blo
   Badges on posts/comments/chat/cards (never anonymous posts); `exp` socket push
   moves the bar and toasts level-ups. Demo members start at Lv 3–8.
 
-**On branch `claude/focused-fermat-jjmmy8` (not merged yet)**
+**Done in PR #40:**
 - 讚/爛 are exclusive and a second tap takes them back: `PUT /api/v1/posts/<id>/reaction`
   (`like` | `dislike` | null) and `PUT /api/v1/comments/<id>/like` (`liked`); counts
   are recounted from `goods`/`bads`/`c_goods`. A like earns exp once per post (or
   comment) a day (`levels.once_today`, key `like:<id>` in `exp_daily`), so toggling
   earns nothing. The old `PATCH`/`PUT /api/blocks` also keep one reaction.
+
+**On branch `claude/focused-fermat-jjmmy8` (not merged yet)**
+- Emoji picker (`static/js/lib/emoji.js`, no library: emoji are text in the system
+  font) on the post composer, comments, chat and tag-topic replies; "最近" tab kept in
+  localStorage; bottom sheet on phones. Outside-click check uses `composedPath()`
+  because switching tabs re-renders the clicked button away.
 - Next: privacy policy and terms pages; "示範" badge or removal for demo accounts;
   maybe account suspension on `/admin`.
 

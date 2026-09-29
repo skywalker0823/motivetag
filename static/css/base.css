@@ -984,3 +984,71 @@ dialog[open] {
   font-size: var(--text-sm);
   cursor: pointer;
 }
+
+/* ---------- Emoji picker (static/js/lib/emoji.js) ---------- */
+
+.emoji-panel {
+  position: fixed;
+  z-index: 1000;
+  display: grid;
+  grid-template-rows: auto 1fr;
+  width: 320px;
+  height: 300px;
+  overflow: hidden;
+  border: 1px solid var(--border-strong);
+  border-radius: var(--radius);
+  background: var(--surface);
+  box-shadow: var(--shadow);
+}
+
+.emoji-panel--sheet {
+  right: 0;
+  bottom: 0;
+  left: 0;
+  width: auto;
+  height: min(45dvh, 320px);
+  padding-bottom: env(safe-area-inset-bottom);
+  border-radius: var(--radius) var(--radius) 0 0;
+}
+
+.emoji-panel__tabs {
+  display: flex;
+  gap: 2px;
+  overflow-x: auto;
+  padding: var(--space-1);
+  border-bottom: 1px solid var(--border);
+}
+
+.emoji-panel__tabs button,
+.emoji-panel__grid button {
+  display: grid;
+  place-items: center;
+  width: 36px;
+  height: 36px;
+  flex: none;
+  padding: 0;
+  border: 0;
+  border-radius: var(--radius-sm);
+  background: none;
+  font-size: 22px;
+  line-height: 1;
+  cursor: pointer;
+}
+
+.emoji-panel__tabs button[aria-selected="true"] {
+  background: var(--surface-3);
+}
+
+.emoji-panel__grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(36px, 1fr));
+  align-content: start;
+  overflow-y: auto;
+  padding: var(--space-1);
+}
+
+.emoji-panel__tabs button:hover,
+.emoji-panel__grid button:hover,
+.emoji-panel__grid button:focus-visible {
+  background: var(--surface-2);
+}

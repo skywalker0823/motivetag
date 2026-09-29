@@ -1,6 +1,7 @@
 // Writing a post: visibility (public, secret, anonymous), optional image and poll.
 import { api, errorMessage } from "../../lib/api.js";
 import { $, busy, h } from "../../lib/dom.js";
+import { emojiButton } from "../../lib/emoji.js";
 import { icon } from "../../lib/icons.js";
 import { toast, toastError } from "../../lib/toast.js";
 import { imageError, uploadImage } from "../../lib/upload.js";
@@ -33,6 +34,7 @@ function setHint(message, error = false) {
 
 const LIMIT = Number(text.maxLength);
 const count = $("#composer-count");
+count.after(emojiButton(text));
 
 function autosize() {
   text.style.height = "auto";

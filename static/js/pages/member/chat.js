@@ -4,6 +4,7 @@
 import { api, errorMessage } from "../../lib/api.js";
 import { $, h, img } from "../../lib/dom.js";
 import { icon } from "../../lib/icons.js";
+import { emojiButton } from "../../lib/emoji.js";
 import { frameClass, levelBadge } from "../../lib/levels.js";
 import { reportDialog } from "../../lib/report.js";
 import { socket } from "../../lib/socket.js";
@@ -408,7 +409,7 @@ function createWindow(account) {
     maxlength: "1000",
     enterkeyhint: "send",
   });
-  const form = h("form", { class: "chat__form" }, input, h("button", { class: "icon-btn", type: "submit", "aria-label": "送出" }, icon("send")));
+  const form = h("form", { class: "chat__form" }, input, emojiButton(input), h("button", { class: "icon-btn", type: "submit", "aria-label": "送出" }, icon("send")));
   const blocked = h("p", { class: "chat__blocked", hidden: true }, "你們目前不是好友，無法傳訊息");
   const avatarWrap = h("span", { class: "chat-item__avatar", dataset: { online: "false" } }, avatarFor(null));
   const status = h("span", { class: "chat__status" });
