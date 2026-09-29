@@ -458,36 +458,6 @@ class Block:
             print(traceback.format_exc())
             return {"msg": "block create database error"}
 
-    def good_block(block_id):
-        with connection.cursor() as cursor:
-            result = cursor.execute("UPDATE block SET good=good+1 WHERE block_id=%s", (block_id,))
-            connection.commit()
-            return {"ok": result}
-
-    def good_block_checker(member_id, block_id):
-        with connection.cursor() as cursor:
-            result = cursor.execute(
-                "INSERT INTO goods(member_id,block_id) SELECT * FROM (SELECT %s,%s) AS tmp WHERE NOT exists (SELECT member_id,block_id FROM goods WHERE member_id=%s AND block_id=%s) LIMIT 1;",
-                (member_id, block_id, member_id, block_id),
-            )
-            connection.commit()
-            return result
-
-    def bad_block(block_id):
-        with connection.cursor() as cursor:
-            result = cursor.execute("UPDATE block SET bad=bad+1 WHERE block_id=%s", (block_id,))
-            connection.commit()
-            return {"ok": result}
-
-    def bad_block_checker(member_id, block_id):
-        with connection.cursor() as cursor:
-            result = cursor.execute(
-                "INSERT INTO bads(member_id,block_id) SELECT * FROM (SELECT %s,%s) AS tmp WHERE NOT exists (SELECT member_id,block_id FROM bads WHERE member_id=%s AND block_id=%s) LIMIT 1;",
-                (member_id, block_id, member_id, block_id),
-            )
-            connection.commit()
-            return result
-
     def visible(member_id, block_id):
         """Whether this member may see the post: it exists, is not someone else's secret
         and is not waiting for review (unless it is theirs)."""
@@ -498,6 +468,43 @@ class Block:
                 (block_id, member_id),
             )
             return got != 0
+
+    def set_reaction(member_id, block_id, reaction):
+        """Sets my reaction to a post: "like", "dislike" or None (neither; one at most).
+
+        Returns (my previous reaction, good count, bad count); the counts are recounted
+        from the reaction rows so they cannot drift.
+        """
+        with connection.cursor() as cursor:
+            cursor.execute(
+                """SELECT EXISTS(SELECT 1 FROM goods WHERE member_id=%s AND block_id=%s) AS liked,
+                          EXISTS(SELECT 1 FROM bads WHERE member_id=%s AND block_id=%s) AS disliked""",
+                (member_id, block_id, member_id, block_id),
+            )
+            row = cursor.fetchone()
+            previous = "like" if row["liked"] else "dislike" if row["disliked"] else None
+            cursor.execute(
+                "DELETE FROM goods WHERE member_id=%s AND block_id=%s", (member_id, block_id)
+            )
+            cursor.execute(
+                "DELETE FROM bads WHERE member_id=%s AND block_id=%s", (member_id, block_id)
+            )
+            if reaction in ("like", "dislike"):
+                table = "goods" if reaction == "like" else "bads"
+                cursor.execute(
+                    f"INSERT INTO {table} (member_id, block_id) VALUES (%s, %s)",  # noqa: S608 - fixed names
+                    (member_id, block_id),
+                )
+            cursor.execute(
+                """UPDATE block SET good=(SELECT COUNT(*) FROM goods WHERE block_id=%s),
+                                    bad=(SELECT COUNT(*) FROM bads WHERE block_id=%s)
+                   WHERE block_id=%s""",
+                (block_id, block_id, block_id),
+            )
+            cursor.execute("SELECT good, bad FROM block WHERE block_id=%s", (block_id,))
+            counts = cursor.fetchone()
+        connection.commit()
+        return previous, counts["good"], counts["bad"]
 
     def my_reactions(member_id, block_ids):
         """(ids I liked, ids I disliked) among `block_ids`."""
@@ -842,6 +849,38 @@ class Message:
             cursor.execute("SELECT member_id FROM block_comment WHERE comment_id=%s", (comment_id,))
             row = cursor.fetchone()
         return row["member_id"] if row else None
+
+    def comment(comment_id):
+        """(block_id, author) of a comment, or None."""
+        with connection.cursor() as cursor:
+            cursor.execute(
+                "SELECT block_id, member_id FROM block_comment WHERE comment_id=%s", (comment_id,)
+            )
+            return cursor.fetchone()
+
+    def set_like(member_id, comment_id, liked):
+        """Likes or unlikes a comment; returns (liked before, like count)."""
+        with connection.cursor() as cursor:
+            before = cursor.execute(
+                "DELETE FROM c_goods WHERE member_id=%s AND comment_id=%s", (member_id, comment_id)
+            )
+            if liked:
+                cursor.execute(
+                    "INSERT INTO c_goods (member_id, comment_id) VALUES (%s, %s)",
+                    (member_id, comment_id),
+                )
+            cursor.execute(
+                """UPDATE block_comment
+                   SET nice_comment=(SELECT COUNT(*) FROM c_goods WHERE comment_id=%s)
+                   WHERE comment_id=%s""",
+                (comment_id, comment_id),
+            )
+            cursor.execute(
+                "SELECT nice_comment FROM block_comment WHERE comment_id=%s", (comment_id,)
+            )
+            count = cursor.fetchone()["nice_comment"]
+        connection.commit()
+        return before > 0, count
 
     def nice_message(comment_id):
         with connection.cursor() as cursor:

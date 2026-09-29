@@ -83,6 +83,12 @@ def award(member_id, action):
     return exp
 
 
+def once_today(member_id, key):
+    """True the first time today `member_id` does `key` (e.g. liking one post), so
+    taking a like back and giving it again earns nothing more."""
+    return Level.count_today(member_id, key, taipei_datetime().date()) == 1
+
+
 def daily_visit(member_id):
     """The first visit of a Taipei day: +10, and +50 on every 7th day in a row.
 
