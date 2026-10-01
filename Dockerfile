@@ -1,4 +1,4 @@
-FROM python:3.11-slim
+FROM python:3.14-slim
 
 # The app runs from .venv; drop the base image's own pip/setuptools so they can't ship CVEs.
 RUN pip install --no-cache-dir uv==0.8.17 \
