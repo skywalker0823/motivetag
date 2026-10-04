@@ -58,6 +58,9 @@
                     </div>
                     <button class="icon-btn icon-btn--sm profile__settings" id="settings-open" type="button" data-icon="settings" aria-label="帳號設定" title="帳號設定"></button>
                 </div>
+                {% if admin %}
+                <a class="btn btn--secondary btn--sm profile__admin" href="/admin" data-icon="shield">管理後台{% if admin.open_reports %}<span class="profile__admin-count" aria-label="{{ admin.open_reports }} 則待處理檢舉">{{ admin.open_reports }}</span>{% endif %}</a>
+                {% endif %}
                 <div class="level">
                     <div class="level__row"><span class="level__label" id="my-level">Lv 1</span><span class="level__exp" id="my-exp"></span></div>
                     <div class="level__bar" role="progressbar" aria-label="升級進度" aria-valuemin="0" aria-valuemax="100" id="my-level-bar"><span id="my-level-fill"></span></div>

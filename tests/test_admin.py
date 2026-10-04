@@ -147,3 +147,10 @@ def test_a_right_password_clears_the_count(app, member):
     assert client.put(
         "/api/member", json={"account": account, "password": account + "-pw"}
     ).get_json()["ok"]
+
+
+def test_member_page_links_admins_to_admin(admin, member):
+    client, account = admin
+    assert 'href="/admin"' in client.get(f"/{account}").get_data(as_text=True)
+    alice, _, alice_account = member()
+    assert 'href="/admin"' not in alice.get(f"/{alice_account}").get_data(as_text=True)

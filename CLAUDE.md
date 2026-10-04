@@ -326,7 +326,7 @@ App Store road (owner, 2026-10-04: move towards the Apple app step by step):
 
 **Done in PR #49:** streak test uses Taiwan dates (see Gotchas).
 
-**On branch `claude/beautiful-faraday-a61bzb` (not merged yet)**: admin tools and
+**Done in PR #50**: admin tools and
 sign-in protection (owner asked whether /admin is safe and for "god mode" tools):
 - `/admin` is now sections 總覽 / 檢舉 / 會員 / 公告 / 紀錄 (`static/js/pages/admin.js`
   + `static/js/pages/admin/`). 總覽 (`GET /api/v1/admin/stats`): members (demo
@@ -344,6 +344,10 @@ sign-in protection (owner asked whether /admin is safe and for "god mode" tools)
   `login_locked`. Someone can lock another account out for 15 minutes this way.
 - Sign-up refuses a name in `ADMIN_ACCOUNTS` (case-insensitive), and admin checks
   in `/admin` actions compare case-insensitively (MySQL matches accounts that way).
+
+**On branch `claude/beautiful-faraday-a61bzb` (not merged yet)**: admins see a
+"管理後台" button on their profile card (under 我 on phones), with the number of open
+reports; the member page template gets `admin` only when `is_admin()`.
 
 **UI/UX backlog (offered 2026-10-04, owner to pick)**
 - Phones: move 登出 out of the top bar into 我 / 帳號設定; put 聊天 and 通知 in the

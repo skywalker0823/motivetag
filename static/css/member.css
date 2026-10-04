@@ -1977,6 +1977,21 @@ button.poll__option:hover {
   right: -6px;
 }
 
+/* Only admins see this (templates/member.html). */
+.profile__admin {
+  justify-self: start;
+  margin-top: var(--space-2);
+}
+
+.profile__admin-count {
+  margin-left: var(--space-1);
+  padding: 0 6px;
+  border-radius: var(--radius-pill);
+  background: var(--danger);
+  color: #fff;
+  font-size: var(--text-xs);
+}
+
 .danger-zone__title {
   color: var(--danger);
   font-size: var(--text-md);
