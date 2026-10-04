@@ -6,8 +6,8 @@
   z-index: 10;
   display: flex;
   align-items: center;
-  height: 56px;
-  padding: 0 var(--space-3);
+  height: calc(56px + var(--safe-top));
+  padding: var(--safe-top) var(--space-3) 0;
   border-bottom: 1px solid var(--border);
   background: var(--bar-bg);
   backdrop-filter: blur(10px);

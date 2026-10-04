@@ -48,7 +48,9 @@
 
   --shadow: 0 12px 40px rgba(0, 0, 0, 0.45);
   --focus: 0 0 0 3px color-mix(in srgb, var(--accent) 45%, transparent);
-  --topbar-h: 60px;
+  /* The installed app (PWA) draws under the iPhone status bar: bars pad by this. */
+  --safe-top: env(safe-area-inset-top, 0px);
+  --topbar-h: calc(60px + var(--safe-top));
   --tabbar-h: 64px;
   --bar-bg: color-mix(in srgb, var(--bg) 85%, transparent); /* frosted top and tab bars */
 }
@@ -895,7 +897,7 @@ dialog[open] {
 
 .lightbox__close {
   position: fixed;
-  top: var(--space-4);
+  top: calc(var(--space-4) + var(--safe-top));
   right: var(--space-4);
   background: var(--surface-2);
   color: var(--text);

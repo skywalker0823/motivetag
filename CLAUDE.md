@@ -116,13 +116,15 @@ Docker Hub may rate-limit image builds; cdnjs and challenges.cloudflare.com
 (Turnstile) are blocked, so stub Turnstile's script with Playwright `route()`.
 `dockerd` does not survive between turns: restart it and `docker start motivetag-mysql`.
 
-## Status and next steps (as of 2026-09-29)
+## Status and next steps (as of 2026-10-04)
 
 Everything above is merged and deployed except where noted.
 
 **Waiting on the owner**
-- After the PWA/push branch: `/motivetag/contact-email` and the two
-  `/motivetag/vapid-*` keys (`infra/README.md`), then Run workflow.
+- Web Push: `/motivetag/contact-email` is set (2026-10-04); the two
+  `/motivetag/vapid-*` keys were being created in CloudShell, then Run workflow
+  (`infra/README.md`, "Phone notifications"). Confirm a push arrives on the phone.
+  Never ask them to paste the VAPID private key into chat.
 - Put their account name in `/motivetag/admin-accounts`
   and Run workflow (`infra/README.md`, "Reviewing reports"), so `/admin` opens.
 - Run the **Demo data** workflow (`seed`) once, if they want the site to look active.
@@ -287,7 +289,7 @@ passes (see Gotchas); main went green and deployed.
   `_head.html` from a localStorage copy. Light-mode and accent tokens in `base.css`;
   `--accent-soft`, `--focus` and the bar backgrounds are `color-mix()` of the tokens.
 
-**On branch `claude/focused-fermat-jjmmy8` (not merged yet)** (owner wants the App Store)
+**Done in PR #46** (owner wants the App Store; the installed PWA works on their iPhone)
 - Gender icon next to names (`member_profile.gender`, migration 0009; male / female /
   nonbinary / none; `PUT /api/v1/me/gender`; `static/js/lib/gender.js`): posts,
   comments, member cards, chat header, my profile; never on anonymous posts.
@@ -300,10 +302,30 @@ passes (see Gotchas); main went green and deployed.
   `api/v1/push.py`; `push_subscription` table; pushes on chat messages and bell
   notifications; tapping a chat push opens `/<me>?chat=<them>`. `Vapid.from_raw`
   takes the base64url string, not bytes.
-- Next: privacy policy and terms pages; "示範" badge or removal for demo accounts;
-  maybe account suspension on `/admin`.
 
-**Roadmap (ADR 0010, phase 1 done once the branch above is merged)**
+**On branch `claude/focused-fermat-jjmmy8` (not merged yet)**
+- Installed-app fix: `_head.html` uses `apple-mobile-web-app-status-bar-style:
+  black-translucent` with `viewport-fit=cover`, so the page draws under the iPhone
+  status bar and the top bar (logout, bell, chat) could not be tapped. `base.css`
+  now has `--safe-top: env(safe-area-inset-top)` and `--topbar-h` includes it; the
+  member `.topbar` (both the wide and the phone rule), `.page-bar` (tag, legal,
+  admin, brick pages) and `.lightbox__close` pad by it; a hidden top bar leaves a
+  strip behind the status bar. Checked in Playwright by setting `--safe-top: 47px`
+  (headless Chromium has no safe area), not yet on a real iPhone.
+- UI/UX ideas given to the owner (2026-10-04), none started; see the list below.
+
+**UI/UX backlog (offered 2026-10-04, owner to pick)**
+- Phones: move 登出 out of the top bar into 我 / 帳號設定; put 聊天 and 通知 in the
+  bottom tab bar (5 tabs) so the top bar only holds logo + search; search as an icon
+  that expands (the input is squeezed to "搜…" at 390px); 44px tap targets;
+  a floating "發文" button instead of the always-visible composer; swipe back from a
+  full-screen chat; visible pressed states.
+- Desktop: wider feed column, the chat list as a right-hand dock, keyboard shortcuts
+  (`/` search, `n` new post, `Esc` closes).
+- Both: skeleton loaders instead of blank cards, optimistic likes/comments,
+  an unread divider in chats, settings split into pages.
+
+**Roadmap (ADR 0010, phase 1 done)**
 1. Account suspension on `/admin` (terms promise it).
 2. Optional: a small "示範" badge on demo accounts, or remove them once real people join.
 3. Then phase 0/2/3: UTC timestamps, OpenAPI + shared TypeScript core, React + Vite
