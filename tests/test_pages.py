@@ -55,3 +55,13 @@ def test_member_page_carries_who_i_am(member):
     bootstrap = page.split('id="bootstrap">', 1)[1].split("</script>", 1)[0]
     assert f'"member_id": {alice_id}' in bootstrap
     assert "password" not in bootstrap
+
+
+def test_privacy_and_terms_pages(client, app, monkeypatch):
+    for path in ("/privacy", "/terms"):
+        page = client.get(path)
+        assert page.status_code == 200
+        assert "35 天" in page.get_data(as_text=True)
+    monkeypatch.setitem(app.config, "CONTACT_EMAIL", "hello@example.com")
+    assert "mailto:hello@example.com" in client.get("/privacy").get_data(as_text=True)
+    assert 'href="/terms"' in client.get("/").get_data(as_text=True)

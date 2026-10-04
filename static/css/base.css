@@ -1135,3 +1135,31 @@ dialog[open] {
 .emoji-panel__grid button:focus-visible {
   background: var(--surface-2);
 }
+
+/* ---------- Gender icon next to names (static/js/lib/gender.js) ---------- */
+
+.gender {
+  display: inline-grid;
+  place-items: center;
+  width: 18px;
+  height: 18px;
+  vertical-align: middle;
+}
+
+.gender .icon {
+  width: 14px;
+  height: 14px;
+  stroke-width: 2.5;
+}
+
+.gender--male {
+  color: #4da3ff;
+}
+
+.gender--female {
+  color: #ff6fb5;
+}
+
+.gender--nonbinary {
+  color: #b28dff;
+}

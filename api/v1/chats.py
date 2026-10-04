@@ -34,8 +34,8 @@ from api.blueprints.api_images import (
     presigned_post,
     uploaded,
 )
-from data.data import DirectMessage, Friend, Level, Member, MemberBlock
-from module import email_verification, levels, rules
+from data.data import DirectMessage, Friend, Level, Member, MemberBlock, Profile
+from module import email_verification, levels, push, rules
 from module.clock import taipei_datetime
 
 from . import error, login_required, v1
@@ -113,6 +113,7 @@ def history(account):
             "member_id": partner_id,
             "account": account,
             "level": levels.level_of(Level.exps([partner_id]).get(partner_id)),
+            "gender": Profile.genders([partner_id]).get(partner_id),
         },
         "online": account in online,
         "can_send": Friend.are_friends(me, partner_id) and not MemberBlock.between(me, partner_id),
@@ -202,6 +203,10 @@ def send(account):
     message = _message(row, {me: session["account"], partner_id: account})
     push_to(account, "chat:message", message)
     push_to(session["account"], "chat:message", message)  # my other tabs and devices
+    preview = f"📷 {content or '照片'}" if image else content
+    push.notify(
+        partner_id, account, session["account"], preview, f"/{account}?chat={session['account']}"
+    )
     return {"data": message}, 201
 
 

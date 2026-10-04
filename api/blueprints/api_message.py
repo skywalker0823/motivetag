@@ -1,6 +1,6 @@
 from flask import request, session
 
-from data.data import Block, Message
+from data.data import Block, Message, Profile
 from module import levels, rules
 from module.auth import login_required, verified_required
 from module.clock import taipei_now
@@ -16,8 +16,10 @@ def getting_message():
     if block_id is None or not Block.visible(member_id, block_id):
         return {"error": "block not found or not yours"}, 404
     comments = Message.for_blocks(member_id, [block_id])[block_id]
+    genders = Profile.genders(c["member_id"] for c in comments)
     for comment in comments:
         comment["level"] = levels.level_of(comment.pop("exp", 0))
+        comment["gender"] = genders.get(comment["member_id"])
     return {"ok": comments}
 
 

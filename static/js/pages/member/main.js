@@ -116,6 +116,12 @@ async function start() {
 
   on("feed:tag", showFeedFor);
   on("member:show", (id) => id && showMember(id));
+  // A tapped chat notification opens the conversation (module/push.py sends ?chat=).
+  const chatWith = new URLSearchParams(location.search).get("chat");
+  if (chatWith) {
+    openChat(chatWith);
+    history.replaceState(null, "", location.pathname);
+  }
   on("member:blocked", ({ id, account }) => {
     removeAuthor(id);
     forgetChat(account);

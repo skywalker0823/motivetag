@@ -313,6 +313,7 @@ PROFILE_FIELDS = (
     "ui_mode",
     "ui_accent",
     "ui_text",
+    "gender",
 )
 
 
@@ -330,6 +331,19 @@ class Profile:
             row = cursor.fetchone()
         return row or dict.fromkeys((*PROFILE_FIELDS, "updated_at"))
 
+    def genders(member_ids):
+        """{member_id: gender} for the members who chose to show one."""
+        ids = [i for i in set(member_ids) if i]
+        if not ids:
+            return {}
+        with connection.cursor() as cursor:
+            cursor.execute(
+                f"""SELECT member_id, gender FROM member_profile
+                    WHERE gender IS NOT NULL AND member_id IN ({_in(ids)})""",  # noqa: S608 - placeholders only
+                ids,
+            )
+            return {row["member_id"]: row["gender"] for row in cursor.fetchall()}
+
     def update(member_id, values, now):
         """Sets the given fields (names from PROFILE_FIELDS), creating the row if needed."""
         names = [name for name in values if name in PROFILE_FIELDS]
@@ -346,6 +360,44 @@ class Profile:
                 (member_id, *[values[name] for name in names], now),
             )
         connection.commit()
+
+
+class PushSubscription:
+    """Browsers and phones that agreed to Web Push notifications (module/push.py)."""
+
+    def save(member_id, endpoint, p256dh, auth, now):
+        """Stores a subscription; an endpoint seen before now belongs to this member."""
+        with connection.cursor() as cursor:
+            cursor.execute(
+                """INSERT INTO push_subscription (member_id, endpoint, p256dh, auth, created_at)
+                   VALUES (%s, %s, %s, %s, %s)
+                   ON DUPLICATE KEY UPDATE member_id=VALUES(member_id), p256dh=VALUES(p256dh),
+                     auth=VALUES(auth), created_at=VALUES(created_at)""",
+                (member_id, endpoint, p256dh, auth, now),
+            )
+        connection.commit()
+
+    def remove(endpoint, member_id=None):
+        with connection.cursor() as cursor:
+            if member_id is None:
+                count = cursor.execute(
+                    "DELETE FROM push_subscription WHERE endpoint=%s", (endpoint,)
+                )
+            else:
+                count = cursor.execute(
+                    "DELETE FROM push_subscription WHERE endpoint=%s AND member_id=%s",
+                    (endpoint, member_id),
+                )
+        connection.commit()
+        return count
+
+    def for_member(member_id):
+        with connection.cursor() as cursor:
+            cursor.execute(
+                "SELECT endpoint, p256dh, auth FROM push_subscription WHERE member_id=%s",
+                (member_id,),
+            )
+            return list(cursor.fetchall())
 
 
 class EmailToken:

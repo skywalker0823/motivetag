@@ -29,6 +29,9 @@ OPTIONAL = {
     "grafana-prom-user": "GRAFANA_PROM_USER",  # added by hand, see infra/README.md
     "grafana-cloud-token": "GRAFANA_CLOUD_TOKEN",  # added by hand, see infra/README.md
     "admin-accounts": "ADMIN_ACCOUNTS",  # added by hand, see infra/README.md
+    "contact-email": "CONTACT_EMAIL",  # added by hand, see infra/README.md
+    "vapid-public-key": "VAPID_PUBLIC_KEY",  # added by hand, see infra/README.md
+    "vapid-private-key": "VAPID_PRIVATE_KEY",  # added by hand, see infra/README.md
 }
 
 

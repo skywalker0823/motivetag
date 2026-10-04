@@ -17,6 +17,11 @@
   })();
 </script>
 <link rel="icon" href="{{ asset('/img/main.PNG') }}">
+<link rel="manifest" href="/manifest.webmanifest">
+<link rel="apple-touch-icon" href="{{ asset('/img/icon-180.png') }}">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-title" content="MotiveTag">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
 <link rel="stylesheet" href="{{ asset('/css/base.css') }}">
 {% for sheet in stylesheets %}<link rel="stylesheet" href="{{ asset(sheet) }}">
 {% endfor %}

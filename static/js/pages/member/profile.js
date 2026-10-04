@@ -2,6 +2,7 @@
 import { api, errorMessage } from "../../lib/api.js";
 import { $, h } from "../../lib/dom.js";
 import { icon } from "../../lib/icons.js";
+import { genderIcon } from "../../lib/gender.js";
 import { frameClass, levelBadge, levelOf } from "../../lib/levels.js";
 import { blockMember, reportDialog } from "../../lib/report.js";
 import { applyCard } from "./card.js";
@@ -51,8 +52,14 @@ function onExp({ exp, level, gained, action, level_up }) {
   }
 }
 
+/** My name on my profile card, with the gender icon I chose (if any). */
+export function showMyName() {
+  $("#my-account").replaceChildren(me.account, " ", genderIcon(me.gender) ?? "");
+}
+
 export function initProfile(data) {
-  $("#my-account").textContent = data.account;
+  me.gender = bootstrap.settings?.card?.gender ?? null;
+  showMyName();
   $("#my-email").textContent = data.email;
   $("#my-joined").textContent = `${dateOnly(data.first_signup)} 加入`;
 
@@ -165,7 +172,13 @@ export async function showMember(memberId) {
     $("#member-dialog-name").textContent = "找不到這位成員";
     return;
   }
-  $("#member-dialog-name").replaceChildren(user.account, " ", levelBadge(levelOf(user.exp ?? 0).level));
+  $("#member-dialog-name").replaceChildren(
+    user.account,
+    " ",
+    genderIcon(result.card?.gender) ?? "",
+    " ",
+    levelBadge(levelOf(user.exp ?? 0).level),
+  );
   $("#member-dialog-mood").textContent = user.mood || "";
   applyCard(dialog, result.card);
   const { level } = levelOf(user.exp ?? 0);

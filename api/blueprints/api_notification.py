@@ -1,6 +1,7 @@
 from flask import request, session
 
 from data.data import Member, MemberBlock, Notification
+from module import push
 from module.auth import login_required
 from module.clock import taipei_now
 
@@ -40,6 +41,8 @@ def posting_notifi():
     result = Notification.post_notifi(session.get("member_id"), who, content, taipei_now())
     if "ok" in result:
         push_to(who, "notification", {})  # their open tabs fetch it now, not at the next poll
+        if recipient is not None:
+            push.notify(recipient, who, "MotiveTag", content, f"/{who}")
     return result
 
 

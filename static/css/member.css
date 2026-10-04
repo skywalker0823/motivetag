@@ -2142,3 +2142,10 @@ button.poll__option:hover {
   opacity: 0.5;
   pointer-events: none;
 }
+
+.settings__legal {
+  margin: 0;
+  padding: 0 var(--space-4) var(--space-3);
+  color: var(--text-muted);
+  font-size: var(--text-sm);
+}

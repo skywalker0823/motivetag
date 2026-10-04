@@ -18,6 +18,7 @@ def test_card_colours_are_saved_and_shown_to_others(member):
         "cover_to": None,
         "name_color": "#ffffff",
         "cover": None,
+        "gender": None,
     }
     card = bob.get(f"/api/get_user_sp?member_id={alice_id}").get_json()["card"]
     assert card["accent"] == "#ff6fb5" and card["name_color"] == "#ffffff"
@@ -92,3 +93,24 @@ def test_removing_the_cover(member, query, uploaded, monkeypatch):
     monkeypatch.setattr("api.v1.account.remove_images", lambda keys: gone.extend(keys))
     alice.delete("/api/v1/account", json={"password": account + "-pw"})
     assert f"cover_{alice_id}" in gone
+
+
+def test_gender_icon_shows_on_posts_comments_and_cards(member):
+    alice, alice_id, _ = member()
+    bob, _, _ = member()
+    assert alice.put("/api/v1/me/gender", json={"gender": "female"}).status_code == 200
+    assert alice.put("/api/v1/me/gender", json={"gender": "robot"}).status_code == 400
+    public = alice.post("/api/blocks", json={"type": "PUBLIC", "content": "gender post"})
+    block_id = public.get_json()["data"][0]["block_id"]
+    alice.post("/api/message", json={"block_id": block_id, "message": "mine", "score": 0})
+    alice.post("/api/blocks", json={"type": "Anonymous", "content": "gender anon"})
+    posts = {p["content"]: p for p in bob.get("/api/v1/posts/explore").get_json()["data"]}
+    assert posts["gender post"]["gender"] == "female"
+    assert posts["gender post"]["comments"][0]["gender"] == "female"
+    # Never on anonymous posts, where it would help guess the author.
+    assert posts["gender anon"]["gender"] is None
+    card = bob.get(f"/api/get_user_sp?member_id={alice_id}").get_json()["card"]
+    assert card["gender"] == "female"
+    alice.put("/api/v1/me/gender", json={"gender": None})
+    card = bob.get(f"/api/get_user_sp?member_id={alice_id}").get_json()["card"]
+    assert card["gender"] is None

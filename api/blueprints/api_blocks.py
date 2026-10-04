@@ -2,7 +2,7 @@ import traceback
 
 from flask import request, session
 
-from data.data import Block, Block_tags, Level, Message, Vote_table
+from data.data import Block, Block_tags, Level, Message, Profile, Vote_table
 from module import levels, rules, tag_filter
 from module.auth import login_required, verified_required
 from module.clock import taipei_datetime, taipei_now
@@ -17,19 +17,24 @@ def with_extras(posts, member_id):
     polls = Vote_table.summary(member_id, ids)
     liked, disliked = Block.my_reactions(member_id, ids)
     exps = Level.exps(post["member_id"] for post in posts)
+    commenters = [c["member_id"] for cs in comments.values() for c in cs]
+    genders = Profile.genders([*(post["member_id"] for post in posts), *commenters])
     for post in posts:
         post["level"] = levels.level_of(exps.get(post["member_id"]))
+        post["gender"] = genders.get(post["member_id"])
         # Anonymous posts hide their author, and so their level, from everyone else.
         if post["content_type"] == "Anonymous" and post["member_id"] != member_id:
             post["account"] = None
             post["member_id"] = None
             post["level"] = None
+            post["gender"] = None
         post["tags"] = tag_filter.filter(post["content"])
         if post["content_type"] == "Anonymous":
             post["tags"].append("Anonymous")
         post["comments"] = comments.get(post["block_id"], [])
         for comment in post["comments"]:
             comment["level"] = levels.level_of(comment.pop("exp", 0))
+            comment["gender"] = genders.get(comment["member_id"])
         post["votes"] = polls.get(post["block_id"], [])
         post["liked"] = post["block_id"] in liked
         post["disliked"] = post["block_id"] in disliked

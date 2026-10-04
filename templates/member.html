@@ -218,6 +218,15 @@
                     <strong class="card-name" id="card-preview-name"></strong>
                 </div>
             </div>
+            <div class="settings__row">
+                <span class="settings__label">性別圖示</span>
+                <div class="segmented" role="radiogroup" aria-label="名字旁的性別圖示" id="gender-choice">
+                    <label><input type="radio" name="gender" value=""><span>不顯示</span></label>
+                    <label><input type="radio" name="gender" value="male"><span data-icon="male">男</span></label>
+                    <label><input type="radio" name="gender" value="female"><span data-icon="female">女</span></label>
+                    <label><input type="radio" name="gender" value="nonbinary"><span data-icon="nonbinary">非二元</span></label>
+                </div>
+            </div>
             <div class="card-colors" id="card-colors"></div>
             <div class="settings__row">
                 <span class="settings__label">封面照片</span>
@@ -231,10 +240,19 @@
                 </div>
             </div>
         </section>
+        <section class="dialog__body settings-section" aria-labelledby="push-title">
+            <h3 class="settings__title" id="push-title">手機通知</h3>
+            <p class="settings__hint" id="push-hint">網站關著時，有新訊息或好友邀請也會跳出通知。每台手機或電腦要各自開啟。</p>
+            <div class="settings__row">
+                <button class="btn btn--sm" type="button" id="push-toggle">開啟通知</button>
+                <span class="settings__hint" id="push-state"></span>
+            </div>
+        </section>
         <section class="dialog__body blocked-list" aria-labelledby="blocked-title">
             <h3 class="danger-zone__title" id="blocked-title">封鎖名單</h3>
             <ul class="people" id="blocked-members"></ul>
         </section>
+        <p class="settings__legal"><a href="/privacy" target="_blank">隱私權政策</a>・<a href="/terms" target="_blank">服務條款</a></p>
         <form class="dialog__body danger-zone" id="delete-account" novalidate>
             <h3 class="danger-zone__title">刪除帳號</h3>
             <p class="dialog__message">帳號會立即永久刪除，無法復原。以下資料會一起刪除：</p>

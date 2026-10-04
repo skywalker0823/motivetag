@@ -22,5 +22,6 @@ gets a new record that supersedes the old one rather than an edit.
 | [0013](0013-stored-direct-messages.md) | Chat messages stored in MySQL, sent over HTTP and pushed to every tab; no rooms | Accepted |
 | [0014](0014-blocking-and-reporting.md) | Blocking members and reporting content, reviewed by the owner on /admin | Accepted |
 | [0015](0015-levels-reward-what-others-value.md) | Levels reward what others value, with daily caps and unlocks | Accepted |
+| [0016](0016-pwa-and-web-push.md) | Privacy and terms pages, installable web app and Web Push before a native app | Accepted |
 
 Template: [`template.md`](template.md).

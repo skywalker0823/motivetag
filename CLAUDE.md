@@ -121,6 +121,8 @@ Docker Hub may rate-limit image builds; cdnjs and challenges.cloudflare.com
 Everything above is merged and deployed except where noted.
 
 **Waiting on the owner**
+- After the PWA/push branch: `/motivetag/contact-email` and the two
+  `/motivetag/vapid-*` keys (`infra/README.md`), then Run workflow.
 - Put their account name in `/motivetag/admin-accounts`
   and Run workflow (`infra/README.md`, "Reviewing reports"), so `/admin` opens.
 - Run the **Demo data** workflow (`seed`) once, if they want the site to look active.
@@ -272,7 +274,7 @@ rate-limiting rule `API flood guard` (`/api/`, 60 requests / 10 s per IP → blo
 **Done in PR #44:** Dockerfile `apt-get upgrade` + weekly `SECURITY_REFRESH` so Trivy
 passes (see Gotchas); main went green and deployed.
 
-**On branch `claude/focused-fermat-jjmmy8` (not merged yet)**
+**Done in PR #45:**
 - Personal cards and site look (`api/v1/profile.py`, `member_profile`, migration 0008):
   card colours for everyone (accent, cover gradient from/to, name colour; `#rrggbb`
   only), cover photo from Lv 5 (`levels.COVER_LEVEL`; upload type `cover` → key
@@ -284,12 +286,25 @@ passes (see Gotchas); main went green and deployed.
   by the member page template and, on other pages, by an inline script in
   `_head.html` from a localStorage copy. Light-mode and accent tokens in `base.css`;
   `--accent-soft`, `--focus` and the bar backgrounds are `color-mix()` of the tokens.
+
+**On branch `claude/focused-fermat-jjmmy8` (not merged yet)** (owner wants the App Store)
+- Gender icon next to names (`member_profile.gender`, migration 0009; male / female /
+  nonbinary / none; `PUT /api/v1/me/gender`; `static/js/lib/gender.js`): posts,
+  comments, member cards, chat header, my profile; never on anonymous posts.
+- `/privacy` and `/terms` (`templates/legal.html` + `privacy.html`, `terms.html`),
+  linked from sign-up and settings; `CONTACT_EMAIL` from `/motivetag/contact-email`.
+- PWA + Web Push (ADR 0016): `/manifest.webmanifest` and `/sw.js` have explicit routes
+  (the `/<account>` route would take them); icons `static/img/icon-*.png`;
+  `module/push.py` (pywebpush, VAPID raw keys from `/motivetag/vapid-*`, sent in a
+  background task, only to members not online, 404/410 forgets the subscription);
+  `api/v1/push.py`; `push_subscription` table; pushes on chat messages and bell
+  notifications; tapping a chat push opens `/<me>?chat=<them>`. `Vapid.from_raw`
+  takes the base64url string, not bytes.
 - Next: privacy policy and terms pages; "示範" badge or removal for demo accounts;
   maybe account suspension on `/admin`.
 
-**Roadmap (ADR 0010, phase 1 nearly done)**
-1. Privacy policy and terms pages (mention backups keep deleted data up to 35 days,
-   stored chat messages and report snapshots).
+**Roadmap (ADR 0010, phase 1 done once the branch above is merged)**
+1. Account suspension on `/admin` (terms promise it).
 2. Optional: a small "示範" badge on demo accounts, or remove them once real people join.
 3. Then phase 0/2/3: UTC timestamps, OpenAPI + shared TypeScript core, React + Vite
    (`apps/web`), token auth, cursor paging, Redis presence; phase 4 Expo app.
