@@ -18,7 +18,7 @@
   --accent: #1cbfff;
   --accent-hover: #4dceff;
   --accent-ink: #04121b; /* text on accent */
-  --accent-soft: rgba(28, 191, 255, 0.12);
+  --accent-soft: color-mix(in srgb, var(--accent) 12%, transparent);
   --anon: #d24dff;
   --anon-soft: rgba(210, 77, 255, 0.14);
   --danger: #ff5a78;
@@ -47,9 +47,92 @@
   --text-xl: 24px;
 
   --shadow: 0 12px 40px rgba(0, 0, 0, 0.45);
-  --focus: 0 0 0 3px rgba(28, 191, 255, 0.45);
+  --focus: 0 0 0 3px color-mix(in srgb, var(--accent) 45%, transparent);
   --topbar-h: 60px;
   --tabbar-h: 64px;
+  --bar-bg: color-mix(in srgb, var(--bg) 85%, transparent); /* frosted top and tab bars */
+}
+
+/* ---------- Looks members choose (帳號設定 → 外觀; api/v1/profile.py) ---------- */
+
+:root[data-mode="black"] {
+  --bg: #000;
+  --surface: #0b0b0f;
+  --surface-2: #15151b;
+  --surface-3: #1e1e26;
+  --border: #26262f;
+  --border-strong: #383844;
+}
+
+:root[data-mode="light"] {
+  color-scheme: light;
+  --bg: #f3f5fa;
+  --surface: #fff;
+  --surface-2: #eef1f7;
+  --surface-3: #e2e7f1;
+  --border: #d9dfeb;
+  --border-strong: #bcc5d8;
+  --text: #151b2f;
+  --text-muted: #58627f;
+  --text-faint: #828ba5;
+  --accent: #0a86c4;
+  --accent-hover: #0b73a8;
+  --accent-ink: #fff;
+  --anon: #a020d0;
+  --success: #0f9d63;
+  --warning: #b7860b;
+  --danger: #d6284a;
+  --shadow: 0 12px 40px rgba(21, 27, 47, 0.14);
+}
+
+:root[data-accent="violet"] {
+  --accent: #a78bfa;
+  --accent-hover: #c4b5fd;
+}
+:root[data-accent="green"] {
+  --accent: #2ee59d;
+  --accent-hover: #6cf0bc;
+}
+:root[data-accent="pink"] {
+  --accent: #ff6fb5;
+  --accent-hover: #ff9ccb;
+}
+:root[data-accent="orange"] {
+  --accent: #ff9f43;
+  --accent-hover: #ffbb78;
+}
+:root[data-accent="gold"] {
+  --accent: #ffc940;
+  --accent-hover: #ffd873;
+}
+/* Darker shades keep text on white readable. */
+:root[data-mode="light"][data-accent="violet"] {
+  --accent: #7c3aed;
+  --accent-hover: #6d28d9;
+}
+:root[data-mode="light"][data-accent="green"] {
+  --accent: #0f9d63;
+  --accent-hover: #0b7d4f;
+}
+:root[data-mode="light"][data-accent="pink"] {
+  --accent: #d63384;
+  --accent-hover: #b52a6f;
+}
+:root[data-mode="light"][data-accent="orange"] {
+  --accent: #d9670b;
+  --accent-hover: #b85609;
+}
+:root[data-mode="light"][data-accent="gold"] {
+  --accent: #a87a00;
+  --accent-hover: #8a6400;
+}
+
+:root[data-text="large"] {
+  --text-xs: 13px;
+  --text-sm: 16px;
+  --text-md: 18px;
+  --text-lg: 20px;
+  --text-xl: 27px;
 }
 
 *,

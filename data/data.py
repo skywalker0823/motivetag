@@ -234,6 +234,11 @@ class Member:
             keys += [row["image"] for row in cursor.fetchall()]
             if member["member_img"]:
                 keys.append(member["member_img"])
+            cursor.execute(
+                "SELECT cover_img FROM member_profile WHERE member_id=%s AND cover_img IS NOT NULL",
+                (member_id,),
+            )
+            keys += [row["cover_img"] for row in cursor.fetchall()]
             cursor.execute("DELETE FROM member WHERE member_id=%s", (member_id,))
             connection.commit()
         return keys
@@ -297,6 +302,50 @@ class Member:
                 (member_id, other_id, *NEUTRAL_TAGS),
             )
             return [row["name"] for row in cursor.fetchall()]
+
+
+PROFILE_FIELDS = (
+    "card_accent",
+    "cover_from",
+    "cover_to",
+    "name_color",
+    "cover_img",
+    "ui_mode",
+    "ui_accent",
+    "ui_text",
+)
+
+
+class Profile:
+    """A member's card colours, cover image and site look (api/v1/profile.py)."""
+
+    def get(member_id):
+        """The member's settings; every field None when they never changed anything."""
+        with connection.cursor() as cursor:
+            cursor.execute(
+                f"""SELECT {", ".join(PROFILE_FIELDS)}, updated_at
+                    FROM member_profile WHERE member_id=%s""",  # noqa: S608 - constant columns
+                (member_id,),
+            )
+            row = cursor.fetchone()
+        return row or dict.fromkeys((*PROFILE_FIELDS, "updated_at"))
+
+    def update(member_id, values, now):
+        """Sets the given fields (names from PROFILE_FIELDS), creating the row if needed."""
+        names = [name for name in values if name in PROFILE_FIELDS]
+        if not names:
+            return
+        columns = ", ".join(names)
+        placeholders = ", ".join(["%s"] * len(names))
+        updates = ", ".join(f"{name}=VALUES({name})" for name in names)
+        with connection.cursor() as cursor:
+            cursor.execute(
+                f"""INSERT INTO member_profile (member_id, {columns}, updated_at)
+                    VALUES (%s, {placeholders}, %s)
+                    ON DUPLICATE KEY UPDATE {updates}, updated_at=VALUES(updated_at)""",  # noqa: S608 - names checked above
+                (member_id, *[values[name] for name in names], now),
+            )
+        connection.commit()
 
 
 class EmailToken:
@@ -1229,6 +1278,12 @@ class Images:
             cursor.execute("SELECT member_img FROM member WHERE member_id=%s", (member_id,))
             row = cursor.fetchone()
         return bool(row and row["member_img"])
+
+    def has_cover(member_id):
+        with connection.cursor() as cursor:
+            cursor.execute("SELECT cover_img FROM member_profile WHERE member_id=%s", (member_id,))
+            row = cursor.fetchone()
+        return bool(row and row["cover_img"])
 
     def has_block_image(block_id):
         with connection.cursor() as cursor:

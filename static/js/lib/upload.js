@@ -7,7 +7,7 @@ const MAX_BYTES = 5 * 1024 * 1024; // what S3 accepts (MAX_IMAGE_BYTES on the se
 const MAX_PICK_BYTES = 25 * 1024 * 1024; // before shrinking
 export const IMAGE_TYPES = ["image/png", "image/jpeg", "image/gif", "image/webp"];
 // Longest side in pixels: avatars are shown at 96px at most, posts at feed width.
-const MAX_SIDE = { avatar: 512, block: 1600 };
+const MAX_SIDE = { avatar: 512, block: 1600, cover: 1200 };
 const QUALITY = 0.82;
 
 /** Why `file` cannot be used as an image, or null. */

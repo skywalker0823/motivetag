@@ -269,8 +269,21 @@ rate-limiting rule `API flood guard` (`/api/`, 60 requests / 10 s per IP → blo
   Note: `from api.blueprints import api_images` is the Blueprint, not the module;
   import names from `api.blueprints.api_images`.
 
+**Done in PR #44:** Dockerfile `apt-get upgrade` + weekly `SECURITY_REFRESH` so Trivy
+passes (see Gotchas); main went green and deployed.
+
 **On branch `claude/focused-fermat-jjmmy8` (not merged yet)**
-- Dockerfile `apt-get upgrade` + weekly `SECURITY_REFRESH` so Trivy passes (see Gotchas).
+- Personal cards and site look (`api/v1/profile.py`, `member_profile`, migration 0008):
+  card colours for everyone (accent, cover gradient from/to, name colour; `#rrggbb`
+  only), cover photo from Lv 5 (`levels.COVER_LEVEL`; upload type `cover` → key
+  `cover_<id>`, `/images/cover_<id>?v=<updated_at>`). Shown on my profile card, the
+  settings preview and others' member cards (`get_user_sp` returns `card`;
+  `static/js/pages/member/card.js` sets CSS variables). Look in 帳號設定 → 外觀:
+  mode dark/light/black, accent sky/violet/green/pink/orange/gold, text normal/large;
+  saved with the account (`PUT /api/v1/me/ui`), set on `<html data-mode/accent/text>`
+  by the member page template and, on other pages, by an inline script in
+  `_head.html` from a localStorage copy. Light-mode and accent tokens in `base.css`;
+  `--accent-soft`, `--focus` and the bar backgrounds are `color-mix()` of the tokens.
 - Next: privacy policy and terms pages; "示範" badge or removal for demo accounts;
   maybe account suspension on `/admin`.
 

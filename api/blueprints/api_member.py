@@ -175,9 +175,12 @@ def sign_out_member():
 def get_user_sp():
     target_id = request.args.get("member_id")
     member_id = session.get("member_id")
+    from api.v1.profile import card_of  # v1 imports the blueprints
+
     user_basic_data = Member.getting_data_without_private(target_id)
     checker = Friend.friend_ship_checker(member_id, target_id)
     return {
+        "card": card_of(int(target_id)) if user_basic_data else None,
         "ok": True,
         "data": user_basic_data,
         "is_friend": checker,

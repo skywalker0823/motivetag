@@ -25,7 +25,8 @@ meant little.
   posts' likes or comments. Deleting a post no longer costs exp: the cap already
   makes post-and-delete pointless.
 - **Unlocks**, enforced by the server: below Lv 3 at most 10 posts a day and no tag
-  topics; Lv 5 an avatar frame; Lv 10 reports weigh double
+  topics; Lv 5 an avatar frame and a cover photo on one's personal card (added
+  2026-10-05); Lv 10 reports weigh double
   ([0014](0014-blocking-and-reporting.md)). Badge colours by tier: plain, green
   (3+), blue (5+), purple (10+), gold (20+).
 - **Visible**: a level badge next to names on posts, comments, chat and member

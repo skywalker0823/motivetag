@@ -1,11 +1,11 @@
 <!DOCTYPE html>
-<html lang="zh-TW">
+<html lang="zh-TW" data-ui-server="1"{% for key, value in settings.ui.items() if value %} data-{{ key }}="{{ value }}"{% endfor %}>
 <head>
     {% with entry="/js/pages/member/main.js", stylesheets=['/css/member.css'] %}{% include "_head.html" %}{% endwith %}
     <title>MotiveTag</title>
 </head>
 <body data-view="feed">
-    <script type="application/json" id="bootstrap">{{ {"me": me, "levels": levels, "avatar": asset("/img/avatar.svg"), "anon": asset("/img/anon.svg")} | tojson }}</script>
+    <script type="application/json" id="bootstrap">{{ {"me": me, "levels": levels, "settings": settings, "avatar": asset("/img/avatar.svg"), "anon": asset("/img/anon.svg")} | tojson }}</script>
     <header class="topbar">
         <a class="topbar__logo" href="/" aria-label="MotiveTag 首頁">
             <img src="{{ asset('/img/title-member.webp') }}" alt="MotiveTag" width="320" height="57">
@@ -44,6 +44,7 @@
     <div class="layout">
         <aside class="col col--left" data-panel="tags me">
             <section class="card profile" id="profile" data-panel="me" aria-label="我的資料">
+                <div class="card-cover profile__cover" id="my-cover"></div>
                 <div class="profile__head">
                     <label class="profile__avatar" title="更換大頭貼">
                         <img class="avatar avatar--lg" id="my-avatar" src="{{ asset('/img/avatar.svg') }}" alt="" width="72" height="72">
@@ -51,7 +52,7 @@
                         <input class="visually-hidden" id="avatar-input" type="file" accept="image/png,image/jpeg,image/gif,image/webp" aria-label="更換大頭貼">
                     </label>
                     <div class="profile__who">
-                        <p class="profile__name" id="my-account"></p>
+                        <p class="profile__name card-name" id="my-account"></p>
                         <p class="profile__meta" id="my-email"></p>
                         <p class="profile__meta" id="my-joined"></p>
                     </div>
@@ -184,6 +185,52 @@
             <h2 class="dialog__title" id="settings-title">帳號設定</h2>
             <form method="dialog"><button class="icon-btn" data-icon="x" aria-label="關閉"></button></form>
         </div>
+        <section class="dialog__body settings-section" aria-labelledby="look-title">
+            <h3 class="settings__title" id="look-title">外觀</h3>
+            <p class="settings__hint">跟著帳號走，換手機或電腦也一樣。</p>
+            <div class="settings__row">
+                <span class="settings__label">模式</span>
+                <div class="segmented" role="radiogroup" aria-label="模式" id="ui-mode">
+                    <label><input type="radio" name="ui-mode" value="dark"><span>深色</span></label>
+                    <label><input type="radio" name="ui-mode" value="light"><span>淺色</span></label>
+                    <label><input type="radio" name="ui-mode" value="black"><span>純黑</span></label>
+                </div>
+            </div>
+            <div class="settings__row">
+                <span class="settings__label">主題色</span>
+                <div class="swatches" role="radiogroup" aria-label="主題色" id="ui-accent"></div>
+            </div>
+            <div class="settings__row">
+                <span class="settings__label">文字大小</span>
+                <div class="segmented" role="radiogroup" aria-label="文字大小" id="ui-text">
+                    <label><input type="radio" name="ui-text" value="normal"><span>標準</span></label>
+                    <label><input type="radio" name="ui-text" value="large"><span>大</span></label>
+                </div>
+            </div>
+        </section>
+        <section class="dialog__body settings-section" aria-labelledby="card-title">
+            <h3 class="settings__title" id="card-title">個人卡片</h3>
+            <p class="settings__hint">別人點開你的頭像時看到的卡片。</p>
+            <div class="card-preview" id="card-preview">
+                <div class="card-cover" id="card-preview-cover"></div>
+                <div class="card-preview__who">
+                    <img class="avatar avatar--lg" id="card-preview-avatar" alt="">
+                    <strong class="card-name" id="card-preview-name"></strong>
+                </div>
+            </div>
+            <div class="card-colors" id="card-colors"></div>
+            <div class="settings__row">
+                <span class="settings__label">封面照片</span>
+                <div class="card-cover-actions">
+                    <label class="btn btn--secondary btn--sm" id="cover-pick">
+                        <span data-icon="image"></span>上傳照片
+                        <input class="visually-hidden" id="cover-input" type="file" accept="image/png,image/jpeg,image/gif,image/webp">
+                    </label>
+                    <button class="btn btn--ghost btn--sm" type="button" id="cover-remove" hidden>移除照片</button>
+                    <span class="settings__hint" id="cover-lock" hidden></span>
+                </div>
+            </div>
+        </section>
         <section class="dialog__body blocked-list" aria-labelledby="blocked-title">
             <h3 class="danger-zone__title" id="blocked-title">封鎖名單</h3>
             <ul class="people" id="blocked-members"></ul>
@@ -207,12 +254,13 @@
         </form>
     </dialog>
 
-    <dialog class="dialog" id="member-dialog" aria-labelledby="member-dialog-name">
+    <dialog class="dialog member-dialog" id="member-dialog" aria-labelledby="member-dialog-name">
+        <div class="card-cover" id="member-dialog-cover"></div>
         <div class="dialog__header">
             <div class="member-card__who">
                 <img class="avatar avatar--lg" id="member-dialog-avatar" alt="">
                 <div>
-                    <p class="dialog__title" id="member-dialog-name"></p>
+                    <p class="dialog__title card-name" id="member-dialog-name"></p>
                     <p class="profile__meta" id="member-dialog-mood"></p>
                 </div>
             </div>

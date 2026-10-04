@@ -7,9 +7,10 @@ from botocore.config import Config
 from botocore.exceptions import ClientError
 from flask import abort, redirect, request, session
 
-from data.data import Block, DirectMessage, Images
+from data.data import Block, DirectMessage, Images, Profile
 from module import admin
 from module.auth import login_required
+from module.clock import taipei_datetime
 
 from . import api_images
 
@@ -24,7 +25,7 @@ UPLOAD_EXPIRES = 300
 # images are served through short-lived presigned URLs.
 BUCKET_NAME = os.getenv("IMAGE_BUCKET")
 REGION = os.getenv("AWS_REGION")
-IMAGE_KEY = re.compile(r"^(avatar|block)_\d+$")
+IMAGE_KEY = re.compile(r"^(avatar|block|cover)_\d+$")
 # Chat photos: the sender's id and a random part, so nobody can guess another's key.
 CHAT_KEY = re.compile(r"^dm_(\d+)_[0-9a-f]{32}$")
 s3 = boto3.client(
@@ -41,6 +42,12 @@ def image_key(member_id, kind, target_id):
     """The S3 key this member may write for kind/target_id, or an error response."""
     if kind == "avatar":
         return f"avatar_{member_id}", None
+    if kind == "cover":
+        from api.v1.profile import may_have_cover  # v1 imports this module
+
+        if not may_have_cover(member_id):
+            return None, ({"error": "升到 Lv 5 才能上傳封面照片"}, 403)
+        return f"cover_{member_id}", None
     if kind == "block":
         try:
             block_id = int(target_id)
@@ -146,6 +153,8 @@ def show_img(key):
         return response
     elif kind == "block" and (not BUCKET_NAME or not Images.has_block_image(int(ident))):
         abort(404)
+    elif kind == "cover" and (not BUCKET_NAME or not Images.has_cover(int(ident))):
+        abort(404)
     else:
         url = signed_image_url(key)
     response = redirect(url)
@@ -183,6 +192,9 @@ def finish_upload():
     forget_signed(key)
     if key.startswith("avatar_"):
         result = Images.post_image(member_id, key)
+    elif key.startswith("cover_"):
+        Profile.update(member_id, {"cover_img": key}, taipei_datetime())
+        result = "ok"
     else:
         result = Block.modify_block(int(key.removeprefix("block_")), key)
     return {"ok": result}

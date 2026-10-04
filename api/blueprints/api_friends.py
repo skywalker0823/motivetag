@@ -21,8 +21,11 @@ def to_member(account):
         # feed, tags and friends can load.
         visit = levels.daily_visit(session["member_id"])
         me = with_verification(Member.get_member(account))
+        from api.v1.profile import settings_of  # v1 imports the blueprints
+
         me["visit"] = visit
-        return rt("member.html", me=me, levels=levels_bootstrap())
+        settings = settings_of(session["member_id"])
+        return rt("member.html", me=me, levels=levels_bootstrap(), settings=settings)
     return redirect("/")
 
 
