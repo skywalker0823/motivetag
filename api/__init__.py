@@ -31,6 +31,26 @@ def init_sentry(config_name):
     )
 
 
+def init_suspension(app):
+    """A suspended member's open sessions end on their next request (module/suspension.py)."""
+    from flask import redirect as go
+
+    @app.before_request
+    def end_suspended_session():
+        member_id = session.get("member_id")
+        if member_id is None or request.endpoint in ("static", "healthz"):
+            return None
+        from module import suspension
+
+        state = suspension.current(member_id)
+        if state is None:
+            return None
+        session.clear()
+        if request.path.startswith("/api/"):
+            return {"error": {"code": "suspended", "message": suspension.message(state)}}, 401
+        return go("/")
+
+
 def create_app(config_name):
     init_sentry(config_name)
     app = Flask(
@@ -46,6 +66,7 @@ def create_app(config_name):
 
     init_assets(app)
     init_metrics(app)
+    init_suspension(app)
     from api.blueprints.api_blocks import api_blocks
     from api.blueprints.api_bricks import api_bricks
     from api.blueprints.api_chat import api_chat

@@ -303,16 +303,23 @@ passes (see Gotchas); main went green and deployed.
   notifications; tapping a chat push opens `/<me>?chat=<them>`. `Vapid.from_raw`
   takes the base64url string, not bytes.
 
-**On branch `claude/focused-fermat-jjmmy8` (not merged yet)**
-- Installed-app fix: `_head.html` uses `apple-mobile-web-app-status-bar-style:
-  black-translucent` with `viewport-fit=cover`, so the page draws under the iPhone
-  status bar and the top bar (logout, bell, chat) could not be tapped. `base.css`
-  now has `--safe-top: env(safe-area-inset-top)` and `--topbar-h` includes it; the
-  member `.topbar` (both the wide and the phone rule), `.page-bar` (tag, legal,
-  admin, brick pages) and `.lightbox__close` pad by it; a hidden top bar leaves a
-  strip behind the status bar. Checked in Playwright by setting `--safe-top: 47px`
-  (headless Chromium has no safe area), not yet on a real iPhone.
-- UI/UX ideas given to the owner (2026-10-04), none started; see the list below.
+**Done in PR #47:** installed-app top bar kept below the iPhone status bar
+(`--safe-top: env(safe-area-inset-top)` in `base.css`, used by `.topbar`, `.page-bar`,
+`.lightbox__close`). Deployed 2026-10-04; the owner's Run workflow for the VAPID keys
+also succeeded that day (push on the phone not yet confirmed).
+
+**On branch `claude/beautiful-faraday-a61bzb` (not merged yet)**: first step of the
+App Store road (owner, 2026-10-04: move towards the Apple app step by step):
+- Account suspension (`module/suspension.py`, migration 0010 `member.suspended_until`
+  / `suspended_reason`; for good = 9999-12-31). A suspended member cannot sign in (the
+  sign-in error says until when and why); an open session ends on its next request
+  (`before_request` in `api/__init__.py`: 401 `suspended` for `/api/`, redirect for
+  pages) and its sockets are disconnected (`end_sessions`; the member page goes to `/`).
+  State cached 30 s in memory, cleared on change (one worker). `/admin`: "停權帳號" on
+  report cards (1/3/7/30 days or for good, reason), tab 停權中 with lift and a form
+  to suspend by account name; admins cannot be suspended; suspending resolves the
+  open reports about the account. Posts and comments stay. Metric event
+  `login_suspended`.
 
 **UI/UX backlog (offered 2026-10-04, owner to pick)**
 - Phones: move 登出 out of the top bar into 我 / 帳號設定; put 聊天 and 通知 in the
@@ -326,7 +333,7 @@ passes (see Gotchas); main went green and deployed.
   an unread divider in chats, settings split into pages.
 
 **Roadmap (ADR 0010, phase 1 done)**
-1. Account suspension on `/admin` (terms promise it).
+1. ~~Account suspension on `/admin`~~ (on the branch above).
 2. Optional: a small "示範" badge on demo accounts, or remove them once real people join.
 3. Then phase 0/2/3: UTC timestamps, OpenAPI + shared TypeScript core, React + Vite
    (`apps/web`), token auth, cursor paging, Redis presence; phase 4 Expo app.

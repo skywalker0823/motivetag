@@ -1,12 +1,13 @@
-"""Reviewing reports (the /admin page). Anyone who is not an admin gets 404, so the
+"""Reviewing reports and suspending accounts (the /admin page). Anyone who is not an admin gets 404, so the
 endpoints do not reveal that they exist."""
 
 from functools import wraps
 
-from flask import request
+from flask import current_app, request
 
-from data.data import Moderation, Report
+from data.data import Member, Moderation, Report, Suspension
 from module import admin as admin_rights
+from module import suspension
 from module.clock import taipei_datetime
 
 from . import error, v1
@@ -50,7 +51,7 @@ def reports():
             groups[key] = {
                 "type": row["target_type"],
                 "id": row["target_id"],
-                "author": {"member_id": row["target_member_id"], "account": row["target_account"]},
+                "author": _author(row["target_member_id"], row["target_account"]),
                 "snapshot": row["snapshot"],
                 "image": bool(post and post["block_img"]),
                 # A chat photo is only reachable here; admins may open it (api_images).
@@ -74,6 +75,22 @@ def reports():
             }
         )
     return {"data": list(groups.values()), "open": Report.open_count()}
+
+
+def _author(member_id, account):
+    state = suspension.current(member_id) if account else None
+    return {
+        "member_id": member_id,
+        "account": account,
+        "suspended": state is not None,
+        "suspended_until": _until(state["until"]) if state else None,
+        "admin": account in current_app.config["ADMIN_ACCOUNTS"],
+    }
+
+
+def _until(value):
+    """The end of a suspension; None means for good."""
+    return None if suspension.is_permanent(value) else _time(value)
 
 
 def _exists(kind, target_id):
@@ -104,3 +121,55 @@ def decide(kind, target_id):
         closed = Report.close_all(kind, target_id, "resolved", now)
         return {"data": {"closed": closed, "removed": bool(removed)}}
     return error("bad_action", "action 需為 remove 或 dismiss", 400)
+
+
+@v1.route("/admin/suspensions", methods=["GET"])
+@admin_required
+def suspensions():
+    """Accounts suspended right now, the ones ending soonest first."""
+    rows = Suspension.listing(taipei_datetime())
+    return {
+        "data": [
+            {
+                "account": row["account"],
+                "until": _until(row["suspended_until"]),
+                "reason": row["suspended_reason"],
+            }
+            for row in rows
+        ]
+    }
+
+
+@v1.route("/admin/members/<account>/suspension", methods=["PUT"])
+@admin_required
+def suspend(account):
+    """{days: 1 | 3 | 7 | 30 | null (for good), reason}. Ends the member's open
+    sessions and resolves the open reports about the account."""
+    body = request.get_json(silent=True) or {}
+    days = body.get("days", 0)
+    if days is not None and (isinstance(days, bool) or days not in suspension.DURATIONS):
+        return error("bad_days", "days 需為 1、3、7、30 或 null（永久）", 400)
+    reason = body.get("reason") or ""
+    if not isinstance(reason, str) or len(reason.strip()) > suspension.REASON_MAX:
+        return error("bad_reason", f"原因最多 {suspension.REASON_MAX} 個字", 400)
+    member_id = Member.id_for(account)
+    if member_id is None:
+        return error("no_such_member", "找不到這個帳號", 404)
+    if account in current_app.config["ADMIN_ACCOUNTS"]:
+        return error("cannot_suspend_admin", "管理員帳號不能停權", 400)
+    until = suspension.suspend(member_id, days, reason.strip() or None)
+    from api.blueprints.api_chat import end_sessions  # the blueprints import v1
+
+    end_sessions(account)
+    closed = Report.close_all("member", member_id, "resolved", taipei_datetime())
+    return {"data": {"account": account, "until": _until(until), "closed": closed}}
+
+
+@v1.route("/admin/members/<account>/suspension", methods=["DELETE"])
+@admin_required
+def lift(account):
+    member_id = Member.id_for(account)
+    if member_id is None:
+        return error("no_such_member", "找不到這個帳號", 404)
+    suspension.lift(member_id)
+    return {"data": {"account": account}}

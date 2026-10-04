@@ -96,6 +96,10 @@ async function start() {
   document.title = `${me.account} - MotiveTag`;
 
   initTopbar();
+  // The owner suspended this account (api/v1/admin.py): back to the sign-in page,
+  // which says why when they try to sign in.
+  socket.on("account:suspended", () => location.assign("/"));
+  socket.on("disconnect", (reason) => reason === "io server disconnect" && location.assign("/"));
   initProfile(result.data);
   initVerify(result.data);
   initSettings();
