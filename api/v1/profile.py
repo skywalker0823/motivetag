@@ -19,6 +19,8 @@ from . import error, login_required, v1
 from .account import remove_images
 
 HEX = re.compile(r"^#[0-9a-fA-F]{6}$")
+# Shown as a small icon next to the name (static/js/lib/gender.js); null shows nothing.
+GENDERS = {"male", "female", "nonbinary"}
 CARD_FIELDS = {
     "accent": "card_accent",
     "cover_from": "cover_from",
@@ -43,6 +45,7 @@ def card_of(member_id, profile=None):
     return {
         **{name: profile[column] for name, column in CARD_FIELDS.items()},
         "cover": cover,
+        "gender": profile["gender"],
     }
 
 
@@ -109,6 +112,18 @@ def update_ui():
     me = session["member_id"]
     Profile.update(me, values, taipei_datetime())
     return {"data": ui_of(Profile.get(me))}
+
+
+@v1.route("/me/gender", methods=["PUT"])
+@login_required
+def update_gender():
+    """{gender: "male" | "female" | "nonbinary" | null}; null shows no icon."""
+    gender = (request.get_json(silent=True) or {}).get("gender")
+    if gender is not None and gender not in GENDERS:
+        return error("bad_gender", "性別選項無效", 400)
+    me = session["member_id"]
+    Profile.update(me, {"gender": gender}, taipei_datetime())
+    return {"data": {"gender": gender}}
 
 
 def may_have_cover(member_id):

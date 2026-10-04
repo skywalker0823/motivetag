@@ -48,6 +48,11 @@ class Config_dev(object):
     # Cloudflare Turnstile on sign-up (module/turnstile.py): off unless both are set.
     TURNSTILE_SITE_KEY = os.getenv("TURNSTILE_SITE_KEY")
     TURNSTILE_SECRET = os.getenv("TURNSTILE_SECRET")
+    # Web Push (module/push.py): off unless both keys are set (base64url, P-256).
+    VAPID_PUBLIC_KEY = os.getenv("VAPID_PUBLIC_KEY") or None
+    VAPID_PRIVATE_KEY = os.getenv("VAPID_PRIVATE_KEY") or None
+    # Shown on /privacy and /terms; Apple wants a way to contact the developer.
+    CONTACT_EMAIL = os.getenv("CONTACT_EMAIL") or None
     # Accounts that may review reports on /admin (comma-separated, no spaces).
     ADMIN_ACCOUNTS = frozenset(a for a in os.getenv("ADMIN_ACCOUNTS", "").split(",") if a)
 

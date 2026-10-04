@@ -5,6 +5,7 @@ import { api, errorMessage } from "../../lib/api.js";
 import { $, h, img } from "../../lib/dom.js";
 import { icon } from "../../lib/icons.js";
 import { emojiButton } from "../../lib/emoji.js";
+import { genderIcon } from "../../lib/gender.js";
 import { frameClass, levelBadge } from "../../lib/levels.js";
 import { openLightbox } from "../../lib/lightbox.js";
 import { reportDialog } from "../../lib/report.js";
@@ -253,7 +254,7 @@ function updateHeader(win) {
     const avatar = avatarFor(win.memberId);
     avatar.className += frameClass(win.level);
     win.avatarWrap.replaceChildren(avatar);
-    win.levelSlot.replaceChildren(levelBadge(win.level) ?? "");
+    win.levelSlot.replaceChildren(genderIcon(win.gender) ?? "", " ", levelBadge(win.level) ?? "");
     win.avatarSet = true;
   }
   updateReceipt(win);
@@ -337,6 +338,7 @@ async function loadHistory(win) {
   win.loaded = true;
   win.memberId = result.partner.member_id;
   win.level = result.partner.level;
+  win.gender = result.partner.gender;
   presence.set(win.account, result.online);
   setCanSend(win, result.can_send, result.blocked);
   renderAll(win);

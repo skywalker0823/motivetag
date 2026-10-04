@@ -1,3 +1,4 @@
+import mimetypes
 import os
 
 from dotenv import load_dotenv
@@ -9,6 +10,8 @@ from config import config_sets
 
 socketio = SocketIO()
 load_dotenv()
+# Not in every system's MIME table; browsers want it for the PWA manifest.
+mimetypes.add_type("application/manifest+json", ".webmanifest")
 
 
 def init_sentry(config_name):
@@ -102,6 +105,34 @@ def create_app(config_name):
                 inviter=inviter["account"] if inviter else None,
                 base_url=public_base_url(),
             )
+
+    # Privacy policy and terms (App Store Guideline 5.1.1; ADR 0010 phase 1).
+    LEGAL_UPDATED = "2026 年 10 月 5 日"
+
+    @app.route("/privacy")
+    def privacy():
+        return rt(
+            "privacy.html",
+            contact_email=app.config["CONTACT_EMAIL"],
+            updated=LEGAL_UPDATED,
+        )
+
+    @app.route("/terms")
+    def terms():
+        return rt("terms.html", contact_email=app.config["CONTACT_EMAIL"], updated=LEGAL_UPDATED)
+
+    # The service worker must live at the root to control every page, and must not
+    # be cached long, or a fixed version would take a year to arrive.
+    @app.route("/sw.js")
+    def service_worker():
+        response = app.send_static_file("sw.js")
+        response.headers["Cache-Control"] = "no-cache"
+        return response
+
+    # Files at the root would otherwise be taken for a member's page (/<account>).
+    @app.route("/manifest.webmanifest")
+    def manifest():
+        return app.send_static_file("manifest.webmanifest")
 
     @app.route("/admin")
     def admin_page():

@@ -44,7 +44,19 @@ def check_member():
 # Letters (any language), digits and _; the name becomes the member's page at
 # /<account>, so it must not shadow the site's own paths.
 ACCOUNT = re.compile(r"^\w{3,20}$")
-RESERVED = {"api", "tag", "images", "healthz", "js", "css", "img", "admin", "metrics"}
+RESERVED = {
+    "api",
+    "tag",
+    "images",
+    "healthz",
+    "js",
+    "css",
+    "img",
+    "admin",
+    "metrics",
+    "privacy",
+    "terms",
+}
 EMAIL = re.compile(r"^[^@\s]+@[^@\s]+\.[^@\s]+$")
 MIN_PASSWORD = 8
 MIN_AGE = 18

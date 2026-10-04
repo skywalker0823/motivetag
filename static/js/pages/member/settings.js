@@ -4,8 +4,11 @@ import { api, errorMessage } from "../../lib/api.js";
 import { $, busy, debounce, h, img } from "../../lib/dom.js";
 import { socket } from "../../lib/socket.js";
 import { toast, toastError } from "../../lib/toast.js";
+import * as push from "../../lib/push.js";
 import { uploadImage } from "../../lib/upload.js";
+import { genderIcon } from "../../lib/gender.js";
 import { applyCard } from "./card.js";
+import { showMyName } from "./profile.js";
 import { avatarUrl, bootstrap, DEFAULT_AVATAR, me } from "./state.js";
 
 // ---------- Look (api/v1/profile.py UI_CHOICES; colours in static/css/base.css) ----------
@@ -95,6 +98,16 @@ const PRESETS = ["#1cbfff", "#a78bfa", "#2ee59d", "#ff6fb5", "#ff9f43", "#ffc940
 let card = { ...(bootstrap.settings?.card ?? {}) };
 const coverLevel = bootstrap.settings?.cover_level ?? 5;
 
+function showPreviewName() {
+  $("#card-preview-name").replaceChildren(me.account, " ", genderIcon(me.gender) ?? "");
+}
+
+function showGender() {
+  for (const input of document.querySelectorAll('input[name="gender"]')) input.checked = input.value === (me.gender ?? "");
+  showPreviewName();
+  showMyName();
+}
+
 function showCard() {
   applyCard($("#card-preview"), card);
   applyCard($("#profile"), card);
@@ -142,7 +155,21 @@ function swatch(color, props) {
 function initCard() {
   $("#card-preview-avatar").src = avatarUrl(me.id);
   $("#card-preview-avatar").addEventListener("error", (e) => (e.target.src = DEFAULT_AVATAR), { once: true });
-  $("#card-preview-name").textContent = me.account;
+  showPreviewName();
+  for (const input of document.querySelectorAll('input[name="gender"]')) {
+    input.addEventListener("change", async () => {
+      const before = me.gender;
+      me.gender = input.value || null;
+      showGender();
+      try {
+        await api("/api/v1/me/gender", { method: "PUT", body: { gender: me.gender } });
+      } catch (error) {
+        me.gender = before;
+        showGender();
+        toastError(error, "性別圖示儲存失敗");
+      }
+    });
+  }
   $("#card-colors").replaceChildren(
     ...CARD_SLOTS.map(([slot, label]) =>
       h(
@@ -247,7 +274,51 @@ async function loadBlocked() {
   );
 }
 
+// ---------- Phone notifications ----------
+
+async function showPush() {
+  const button = $("#push-toggle");
+  const state = $("#push-state");
+  if (push.needsHomeScreen()) {
+    button.hidden = true;
+    state.textContent = "iPhone 請先在 Safari 按「分享 → 加入主畫面」，再從主畫面打開 MotiveTag 開啟通知。";
+    return;
+  }
+  if (!push.supported()) {
+    button.hidden = true;
+    state.textContent = "這個瀏覽器不支援通知。";
+    return;
+  }
+  const on = await push.isOn();
+  button.hidden = false;
+  button.textContent = on ? "關閉通知" : "開啟通知";
+  button.className = on ? "btn btn--secondary btn--sm" : "btn btn--sm";
+  state.textContent = on ? "這台裝置已開啟通知" : Notification.permission === "denied" ? "通知被封鎖了，請到瀏覽器設定允許 motivetag.com 的通知" : "";
+}
+
+function initPush() {
+  $("#push-toggle").addEventListener("click", (event) =>
+    busy(event.currentTarget, async () => {
+      try {
+        if (await push.isOn()) {
+          await push.turnOff();
+          toast("已關閉這台裝置的通知");
+        } else {
+          await push.turnOn();
+          toast("已開啟通知", { type: "success" });
+        }
+      } catch (error) {
+        toastError(error, "通知設定失敗");
+      }
+      showPush();
+    }),
+  );
+  // Registered on every visit: it is also what lets the site be installed as an app.
+  push.registerWorker().then(() => push.refresh());
+}
+
 export function initSettings() {
+  initPush();
   initLook();
   initCard();
   const dialog = $("#settings-dialog");
@@ -259,6 +330,8 @@ export function initSettings() {
     errorBox.textContent = "";
     showUiChoices();
     showCard(); // the level may have changed since the page loaded
+    showGender();
+    showPush();
     dialog.showModal();
     loadBlocked();
   });

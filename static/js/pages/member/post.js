@@ -7,6 +7,7 @@ import { confirmDialog } from "../../lib/confirm.js";
 import { h, img } from "../../lib/dom.js";
 import { icon } from "../../lib/icons.js";
 import { emojiButton } from "../../lib/emoji.js";
+import { genderIcon } from "../../lib/gender.js";
 import { frameClass, levelBadge } from "../../lib/levels.js";
 import { openLightbox } from "../../lib/lightbox.js";
 import { reportDialog } from "../../lib/report.js";
@@ -58,6 +59,8 @@ export function renderPost(post) {
             "span",
             { class: "post__name" },
             anonymous ? (mine ? "匿名（你）" : "匿名") : `@${post.account}`,
+            " ",
+            genderIcon(post.gender),
             " ",
             levelBadge(post.level),
           ),
@@ -396,6 +399,7 @@ function renderComments(post, score) {
       given_score: given,
       liked: false,
       level: me.level,
+      gender: me.gender,
     });
     pending.classList.add("is-pending");
     list.append(pending);
@@ -482,6 +486,7 @@ function renderComment(comment) {
         "div",
         { class: "comment__head" },
         h("span", { class: "comment__name" }, comment.account),
+        genderIcon(comment.gender),
         levelBadge(comment.level),
         given !== 0 &&
           h(

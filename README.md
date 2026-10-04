@@ -158,6 +158,10 @@ Every pull request runs lint, tests, a dependency audit and an image scan
 * Block members and report posts, comments, messages or accounts; reports are
   reviewed on `/admin` ([ADR 0014](docs/adr/0014-blocking-and-reporting.md)).
 * Personal custom message.
+* Optional gender icon next to your name.
+* Install it on a phone's home screen (PWA) and get notifications for new messages
+  and friend requests (Web Push, [ADR 0016](docs/adr/0016-pwa-and-web-push.md)).
+* [Privacy policy](https://motivetag.com/privacy) and [terms](https://motivetag.com/terms).
 * Personal card: choose its colours (accent, cover gradient, name), and a cover photo
   from Lv 5. The site's look (dark / light / black, six accent colours, larger text)
   is kept with the account.

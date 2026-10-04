@@ -1,0 +1,24 @@
+<!DOCTYPE html>
+<html lang="zh-TW">
+<head>
+    {% with entry="/js/pages/legal.js", stylesheets=['/css/tag.css', '/css/legal.css'] %}{% include "_head.html" %}{% endwith %}
+    <title>{% block title %}{% endblock %} - MotiveTag</title>
+</head>
+<body>
+    <header class="page-bar">
+        <a class="btn btn--ghost btn--sm" href="/" data-icon="arrow-left">回到 MotiveTag</a>
+    </header>
+    <main class="page legal">
+        <article class="card legal__body">
+            {% block body %}{% endblock %}
+            <h2>聯絡我們</h2>
+            {% if contact_email %}
+            <p>對本文件、你的個人資料或帳號有任何問題，請寄信到 <a href="mailto:{{ contact_email }}">{{ contact_email }}</a>，我們會盡快回覆。</p>
+            {% else %}
+            <p>對本文件、你的個人資料或帳號有任何問題，請在網站內使用「檢舉」功能聯絡管理者。</p>
+            {% endif %}
+            <p class="legal__meta">最後更新：{{ updated }}・<a href="/privacy">隱私權政策</a>・<a href="/terms">服務條款</a></p>
+        </article>
+    </main>
+</body>
+</html>

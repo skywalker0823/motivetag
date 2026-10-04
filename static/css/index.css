@@ -198,3 +198,7 @@ body {
   border-color: rgba(28, 191, 255, 0.4);
   background: var(--accent-soft);
 }
+
+.auth__legal {
+  text-align: center;
+}

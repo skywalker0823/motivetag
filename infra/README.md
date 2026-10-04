@@ -258,6 +258,50 @@ to be handled within 24 hours once there is an iOS app.
    report counts twice) is hidden until you decide: **刪除內容** deletes it for good,
    **保留** closes the reports and shows it again.
 
+## Contact e-mail for the privacy policy (one time, free)
+
+`/privacy` and `/terms` show an address people can write to (Apple requires one for
+the App Store). Until it is set they point to the in-site report instead.
+
+```bash
+aws ssm put-parameter --name /motivetag/contact-email --type String --value 'you@example.com' --region ap-east-2 --profile motivetag
+```
+
+Then **Run workflow** (GitHub → Actions → CI, branch `main`).
+
+## Phone notifications (Web Push, one time, free)
+
+Notifications for new chat messages and friend requests (ADR 0016) need a key pair
+that only the server knows. In AWS CloudShell (or on the Mac), make one:
+
+```bash
+openssl ecparam -name prime256v1 -genkey -noout -out vapid.pem
+python3 - <<'PY'
+import base64, re, subprocess
+text = subprocess.run(["openssl", "ec", "-in", "vapid.pem", "-text", "-noout"], capture_output=True, text=True).stdout
+hexes = lambda part: bytes.fromhex(re.sub(r"[^0-9a-f]", "", part))
+b64 = lambda raw: base64.urlsafe_b64encode(raw).decode().rstrip("=")
+private = hexes(re.search(r"priv:(.*?)pub:", text, re.S).group(1))[-32:].rjust(32, b"\0")
+public = hexes(re.search(r"pub:(.*?)ASN1", text, re.S).group(1))
+print("PUBLIC=" + b64(public))
+print("PRIVATE=" + b64(private))
+PY
+rm vapid.pem
+```
+
+It prints two lines, `PUBLIC=` (87 characters) and `PRIVATE=` (43 characters). Store
+them (replace the values; in CloudShell leave out `--profile motivetag`):
+
+```bash
+aws ssm put-parameter --name /motivetag/vapid-public-key --type String --value 'PUBLIC_VALUE' --region ap-east-2 --profile motivetag
+aws ssm put-parameter --name /motivetag/vapid-private-key --type SecureString --value 'PRIVATE_VALUE' --region ap-east-2 --profile motivetag
+```
+
+Each prints `{"Version": 1, "Tier": "Standard"}`. Then **Run workflow**. In 帳號設定 →
+手機通知, 開啟通知 now asks for permission. Never change the keys once people have
+subscribed: their subscriptions would stop working until they turn notifications on
+again.
+
 ## Backups
 
 - Daily at 03:00 Taipei time: `mysqldump` → gzip → `s3://<backup_bucket>/mysql/`

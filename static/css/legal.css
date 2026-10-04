@@ -1,0 +1,34 @@
+/* Privacy policy and terms (templates/legal.html). */
+
+.legal__body {
+  display: grid;
+  gap: var(--space-3);
+  padding: var(--space-5);
+  line-height: 1.75;
+}
+
+.legal__body h1 {
+  margin: 0;
+  font-size: var(--text-xl);
+}
+
+.legal__body h2 {
+  margin: var(--space-3) 0 0;
+  font-size: var(--text-lg);
+}
+
+.legal__body p,
+.legal__body ul {
+  margin: 0;
+}
+
+.legal__body ul {
+  display: grid;
+  gap: var(--space-1);
+  padding-left: 1.3em;
+}
+
+.legal__meta {
+  color: var(--text-muted);
+  font-size: var(--text-sm);
+}
