@@ -13,7 +13,7 @@
   height: var(--topbar-h);
   padding: 0 var(--space-4);
   border-bottom: 1px solid var(--border);
-  background: rgba(7, 10, 22, 0.85);
+  background: var(--bar-bg);
   backdrop-filter: blur(10px);
 }
 
@@ -236,7 +236,7 @@ html {
     height: calc(var(--tabbar-h) + env(safe-area-inset-bottom));
     padding-bottom: env(safe-area-inset-bottom);
     border-top: 1px solid var(--border);
-    background: rgba(7, 10, 22, 0.95);
+    background: color-mix(in srgb, var(--bg) 95%, transparent);
     backdrop-filter: blur(10px);
   }
 
@@ -519,7 +519,7 @@ html {
   position: absolute;
   top: 6px;
   right: 6px;
-  background: rgba(7, 10, 22, 0.8);
+  background: color-mix(in srgb, var(--bg) 80%, transparent);
   color: var(--text);
 }
 
@@ -639,7 +639,7 @@ html {
   justify-content: space-between;
   gap: var(--space-2);
   padding: var(--space-3) var(--space-4);
-  border: 1px solid rgba(28, 191, 255, 0.35);
+  border: 1px solid color-mix(in srgb, var(--accent) 35%, transparent);
   border-radius: var(--radius);
   background: var(--accent-soft);
   font-size: var(--text-sm);
@@ -982,7 +982,7 @@ button.poll__option:hover {
 }
 
 .poll__option--mine .poll__fill {
-  background: rgba(28, 191, 255, 0.25);
+  background: color-mix(in srgb, var(--accent) 25%, transparent);
 }
 
 .poll__footer {
@@ -1935,7 +1935,7 @@ button.poll__option:hover {
   place-items: center;
   border: 2px dashed var(--accent);
   border-radius: inherit;
-  background: rgba(7, 10, 22, 0.85);
+  background: var(--bar-bg);
   color: var(--accent);
   font-weight: 700;
 }
@@ -1994,4 +1994,151 @@ button.poll__option:hover {
 
 .profile__who {
   padding-right: 28px;
+}
+
+/* ---------- Personal cards (static/js/pages/member/card.js) ---------- */
+
+.card-cover {
+  height: 76px;
+  background-color: var(--surface-2);
+  background-image: linear-gradient(
+    135deg,
+    var(--cover-from, color-mix(in srgb, var(--accent) 45%, var(--surface))),
+    var(--cover-to, color-mix(in srgb, var(--anon) 35%, var(--surface)))
+  );
+  background-position: center;
+  background-size: cover;
+}
+
+.profile,
+.member-dialog,
+.card-preview {
+  border-color: var(--card-accent, var(--border));
+}
+
+.profile__cover {
+  margin: calc(var(--space-4) * -1) calc(var(--space-4) * -1) var(--space-3);
+  border-radius: var(--radius-lg) var(--radius-lg) 0 0;
+}
+
+.member-dialog .card-cover {
+  height: 96px;
+}
+
+.card-name {
+  color: var(--name-color, var(--text));
+}
+
+/* With a cover the avatar sits on its lower edge, as on most profile pages. */
+.profile .profile__avatar,
+.member-dialog #member-dialog-avatar,
+.card-preview .avatar {
+  box-shadow: 0 0 0 3px var(--card-accent, var(--surface));
+}
+
+.member-dialog #member-dialog-avatar,
+.profile .profile__avatar {
+  margin-top: -36px;
+}
+
+/* ---------- Settings: look and card ---------- */
+
+.settings-section {
+  border-bottom: 1px solid var(--border);
+}
+
+.settings__title {
+  margin: 0;
+  font-size: var(--text-md);
+}
+
+.settings__hint {
+  margin: calc(var(--space-3) * -1) 0 0;
+  color: var(--text-muted);
+  font-size: var(--text-xs);
+}
+
+.settings__row {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: var(--space-2) var(--space-3);
+}
+
+.settings__label {
+  min-width: 72px;
+  color: var(--text-muted);
+  font-size: var(--text-sm);
+}
+
+.swatches {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: var(--space-2);
+}
+
+.swatch {
+  width: 28px;
+  height: 28px;
+  padding: 0;
+  border: 2px solid var(--surface);
+  border-radius: 50%;
+  background: var(--swatch);
+  box-shadow: 0 0 0 1px var(--border-strong);
+  cursor: pointer;
+}
+
+.swatch[aria-checked="true"],
+.swatch[aria-pressed="true"] {
+  box-shadow: 0 0 0 2px var(--text);
+}
+
+.swatch:focus-visible {
+  outline: none;
+  box-shadow: var(--focus);
+}
+
+.color-input {
+  width: 32px;
+  height: 32px;
+  padding: 0;
+  border: 0;
+  background: none;
+  cursor: pointer;
+}
+
+.card-preview {
+  overflow: hidden;
+  border: 2px solid var(--card-accent, var(--border));
+  border-radius: var(--radius);
+  background: var(--surface);
+}
+
+.card-preview__who {
+  display: flex;
+  align-items: flex-end;
+  gap: var(--space-3);
+  padding: 0 var(--space-3) var(--space-3);
+}
+
+.card-preview .avatar {
+  margin-top: -28px;
+}
+
+.card-colors {
+  display: grid;
+  gap: var(--space-3);
+}
+
+.card-cover-actions {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: var(--space-2);
+}
+
+.card-cover-actions .btn[aria-disabled="true"] {
+  opacity: 0.5;
+  pointer-events: none;
 }

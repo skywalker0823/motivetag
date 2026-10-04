@@ -4,6 +4,7 @@ import { $, h } from "../../lib/dom.js";
 import { icon } from "../../lib/icons.js";
 import { frameClass, levelBadge, levelOf } from "../../lib/levels.js";
 import { blockMember, reportDialog } from "../../lib/report.js";
+import { applyCard } from "./card.js";
 import { socket } from "../../lib/socket.js";
 import { dateOnly, fromServer, relative } from "../../lib/time.js";
 import { toast, toastError } from "../../lib/toast.js";
@@ -60,6 +61,7 @@ export function initProfile(data) {
   avatar.addEventListener("error", () => (avatar.src = DEFAULT_AVATAR), { once: true });
 
   showLevel(data.exp ?? 0);
+  applyCard($("#profile"), bootstrap.settings?.card);
   socket.on("exp", onExp);
   if (data.visit?.gained) {
     const streak = data.visit.streak > 1 ? `連續登入 ${data.visit.streak} 天，` : "";
@@ -148,6 +150,7 @@ export async function showMember(memberId) {
   $("#member-dialog-facts").replaceChildren();
   $("#member-dialog-tags").hidden = true;
   $("#member-dialog-actions").replaceChildren();
+  applyCard(dialog, null);
   dialog.showModal();
 
   let result;
@@ -164,6 +167,7 @@ export async function showMember(memberId) {
   }
   $("#member-dialog-name").replaceChildren(user.account, " ", levelBadge(levelOf(user.exp ?? 0).level));
   $("#member-dialog-mood").textContent = user.mood || "";
+  applyCard(dialog, result.card);
   const { level } = levelOf(user.exp ?? 0);
   avatar.className = `avatar avatar--lg${frameClass(level)}`;
   const facts = [

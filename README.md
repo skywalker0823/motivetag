@@ -158,6 +158,9 @@ Every pull request runs lint, tests, a dependency audit and an image scan
 * Block members and report posts, comments, messages or accounts; reports are
   reviewed on `/admin` ([ADR 0014](docs/adr/0014-blocking-and-reporting.md)).
 * Personal custom message.
+* Personal card: choose its colours (accent, cover gradient, name), and a cover photo
+  from Lv 5. The site's look (dark / light / black, six accent colours, larger text)
+  is kept with the account.
 * Click on user avatar or friend status to show his/her personal information.
 ### Tag
 * Trend - Order by the number of subscribers.

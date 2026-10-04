@@ -35,5 +35,6 @@ from . import (  # noqa: E402,F401 - registers the routes on v1
     invites,
     members,
     posts,
+    profile,
     reports,
 )

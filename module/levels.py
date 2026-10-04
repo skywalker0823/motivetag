@@ -37,13 +37,14 @@ REWARDS = {
 TOPICS_LEVEL = 3  # also opens discussions on a tag's board
 NEWCOMER_POSTS_PER_DAY = 10
 FRAME_LEVEL = 5  # avatar frame in the tier's colour
+COVER_LEVEL = 5  # a cover photo on one's personal card
 TRUSTED_LEVEL = 10  # reports count double
 TRUSTED_REPORT_WEIGHT = 2
 
 # Shown on the level card: what the next levels unlock.
 PERKS = [
     (TOPICS_LEVEL, "發文不限篇數、在標籤討論區發起討論、綠色等級徽章"),
-    (FRAME_LEVEL, "頭像外框、藍色等級徽章"),
+    (FRAME_LEVEL, "頭像外框、個人卡片封面照片、藍色等級徽章"),
     (TRUSTED_LEVEL, "資深會員：檢舉加倍計算、紫色等級徽章"),
     (20, "金色等級徽章"),
 ]
