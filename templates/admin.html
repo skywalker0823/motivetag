@@ -3,7 +3,7 @@
 <head>
     {% with entry="/js/pages/admin.js", stylesheets=['/css/tag.css', '/css/admin.css'] %}{% include "_head.html" %}{% endwith %}
     <meta name="robots" content="noindex">
-    <title>檢舉審核 - MotiveTag</title>
+    <title>管理後台 - MotiveTag</title>
 </head>
 <body>
     <header class="page-bar">
@@ -12,20 +12,53 @@
     <main class="page">
         <section class="tag-hero">
             <div>
-                <p class="tag-hero__kicker">管理</p>
-                <h1 class="tag-hero__title">檢舉審核</h1>
+                <p class="tag-hero__kicker">MotiveTag</p>
+                <h1 class="tag-hero__title">管理後台</h1>
             </div>
         </section>
-        <p class="admin-hint">App Store 規定檢舉要在 24 小時內處理。「刪除內容」會永久刪除貼文、留言或訊息；「保留」會結案，被自動隱藏的貼文會重新顯示；「停權」會讓帳號立刻登出、無法再登入，內容不會自動刪除。</p>
-        <div class="status-tabs" id="status-tabs" role="group" aria-label="檢舉狀態">
-            <button type="button" data-status="open" aria-pressed="true">待處理</button>
-            <button type="button" data-status="resolved" aria-pressed="false">已處理</button>
-            <button type="button" data-status="dismissed" aria-pressed="false">已保留</button>
-            <button type="button" data-status="suspended" aria-pressed="false">停權中</button>
-        </div>
-        <div class="admin-list" id="reports" aria-live="polite">
+        <nav class="admin-nav" id="admin-nav" aria-label="管理功能">
+            <button type="button" data-section="overview">總覽</button>
+            <button type="button" data-section="reports">檢舉<span class="admin-nav__count" id="reports-count"></span></button>
+            <button type="button" data-section="members">會員</button>
+            <button type="button" data-section="announce">公告</button>
+            <button type="button" data-section="logs">紀錄</button>
+        </nav>
+
+        <section class="admin-section" data-section="overview" id="overview" aria-live="polite" hidden>
             <div class="spinner" role="status" aria-label="載入中"></div>
-        </div>
+        </section>
+
+        <section class="admin-section" data-section="reports" hidden>
+            <p class="admin-hint">App Store 規定檢舉要在 24 小時內處理。「刪除內容」會永久刪除貼文、留言或訊息；「保留」會結案，被自動隱藏的貼文會重新顯示；「停權」會讓帳號立刻登出、無法再登入，內容不會自動刪除。</p>
+            <div class="status-tabs" id="status-tabs" role="group" aria-label="檢舉狀態">
+                <button type="button" data-status="open" aria-pressed="true">待處理</button>
+                <button type="button" data-status="resolved" aria-pressed="false">已處理</button>
+                <button type="button" data-status="dismissed" aria-pressed="false">已保留</button>
+                <button type="button" data-status="suspended" aria-pressed="false">停權中</button>
+            </div>
+            <div class="admin-list" id="reports" aria-live="polite">
+                <div class="spinner" role="status" aria-label="載入中"></div>
+            </div>
+        </section>
+
+        <section class="admin-section" data-section="members" hidden>
+            <form class="card suspend-form" id="member-search" role="search">
+                <input class="input" name="q" type="search" placeholder="帳號或 Email 的一部分（空白：最新註冊）" autocomplete="off" aria-label="搜尋會員">
+                <button class="btn btn--sm" type="submit">搜尋</button>
+            </form>
+            <div class="admin-list" id="members" aria-live="polite"></div>
+        </section>
+
+        <section class="admin-section" data-section="announce" hidden>
+            <form class="card announce-form" id="announce-form">
+                <label class="field__label" for="announce-text">發公告給所有會員</label>
+                <textarea class="input" id="announce-text" name="message" rows="3" maxlength="300" placeholder="例如：今晚 23:00 維修 10 分鐘" required></textarea>
+                <p class="admin-hint">會出現在每個人的通知鈴鐺（示範帳號除外），不會傳手機推播。要單獨通知某個人，請到「會員」找到他按「傳通知」。</p>
+                <button class="btn" type="submit">發布公告</button>
+            </form>
+        </section>
+
+        <section class="admin-section" data-section="logs" id="logs" aria-live="polite" hidden></section>
     </main>
 </body>
 </html>

@@ -324,6 +324,27 @@ App Store road (owner, 2026-10-04: move towards the Apple app step by step):
   open reports about the account. Posts and comments stay. Metric event
   `login_suspended`.
 
+**Done in PR #49:** streak test uses Taiwan dates (see Gotchas).
+
+**On branch `claude/beautiful-faraday-a61bzb` (not merged yet)**: admin tools and
+sign-in protection (owner asked whether /admin is safe and for "god mode" tools):
+- `/admin` is now sections 總覽 / 檢舉 / 會員 / 公告 / 紀錄 (`static/js/pages/admin.js`
+  + `static/js/pages/admin/`). 總覽 (`GET /api/v1/admin/stats`): members (demo
+  excluded, demo = e-mail `@demo.motivetag.com`), online, active today/7 days
+  (`last_active_day`), new sign-ups, posts/comments/messages, open reports,
+  suspended; sign-ups and posts per day for 14 days (bar charts); top posters and
+  levels. 會員 (`GET /api/v1/admin/members?q=`): search by account or e-mail, facts,
+  and actions: set level (`PUT .../level {level|exp}`, pushes `exp` with action
+  `admin`), mark e-mail verified, send a notice (bell + Web Push), suspend/lift.
+  公告 (`POST /api/v1/admin/announcements`): one bell notification for every
+  non-demo member, no pushes. 紀錄: `admin_log` table (migration 0011) of every
+  admin action (`GET /api/v1/admin/logs`).
+- Sign-in lockout (`module/lockout.py`, in memory): 10 wrong passwords for an
+  account within 15 minutes → 429 for the rest of the window; metric
+  `login_locked`. Someone can lock another account out for 15 minutes this way.
+- Sign-up refuses a name in `ADMIN_ACCOUNTS` (case-insensitive), and admin checks
+  in `/admin` actions compare case-insensitively (MySQL matches accounts that way).
+
 **UI/UX backlog (offered 2026-10-04, owner to pick)**
 - Phones: move 登出 out of the top bar into 我 / 帳號設定; put 聊天 and 通知 in the
   bottom tab bar (5 tabs) so the top bar only holds logo + search; search as an icon

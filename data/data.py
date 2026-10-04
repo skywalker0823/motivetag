@@ -1356,6 +1356,152 @@ class Suspension:
             return cursor.fetchall()
 
 
+class AdminData:
+    """Counts, member lookups and the action log for /admin (api/v1/admin.py).
+    Demo members (scripts/demo_data.py) have e-mails at DEMO_DOMAIN."""
+
+    DEMO_DOMAIN = "%@demo.motivetag.com"
+
+    def overview(now, today, week_start):
+        with connection.cursor() as cursor:
+            cursor.execute(
+                """SELECT COUNT(*) AS members,
+                     SUM(email LIKE %s) AS demo,
+                     SUM(email_verified_at IS NOT NULL) AS verified,
+                     SUM(first_signup = %s) AS new_today,
+                     SUM(first_signup >= %s) AS new_week,
+                     SUM(last_active_day = %s) AS active_today,
+                     SUM(last_active_day >= %s) AS active_week,
+                     SUM(suspended_until > %s) AS suspended
+                   FROM member""",
+                (AdminData.DEMO_DOMAIN, today, week_start, today, week_start, now),
+            )
+            members = cursor.fetchone()
+            counts = {}
+            for name, table, column in (
+                ("posts", "block", "build_time"),
+                ("comments", "block_comment", "build_time"),
+                ("messages", "direct_message", "sent_at"),
+            ):
+                cursor.execute(
+                    f"""SELECT COUNT(*) AS total, SUM({column} >= %s) AS today,
+                        SUM({column} >= %s) AS week FROM {table}""",  # noqa: S608 - fixed names
+                    (today, week_start),
+                )
+                counts[name] = cursor.fetchone()
+            cursor.execute("SELECT COUNT(*) AS n FROM report WHERE status='open'")
+            counts["open_reports"] = cursor.fetchone()["n"]
+        return {
+            "members": {k: int(v or 0) for k, v in members.items()},
+            **{
+                k: ({kk: int(vv or 0) for kk, vv in v.items()} if isinstance(v, dict) else v)
+                for k, v in counts.items()
+            },
+        }
+
+    def daily(since):
+        """Sign-ups and posts per day since `since` (a date)."""
+        with connection.cursor() as cursor:
+            cursor.execute(
+                """SELECT first_signup AS day, COUNT(*) AS n FROM member
+                   WHERE first_signup >= %s AND email NOT LIKE %s GROUP BY first_signup""",
+                (since, AdminData.DEMO_DOMAIN),
+            )
+            signups = {row["day"]: row["n"] for row in cursor.fetchall()}
+            cursor.execute(
+                """SELECT DATE(build_time) AS day, COUNT(*) AS n FROM block
+                   WHERE build_time >= %s GROUP BY DATE(build_time)""",
+                (since,),
+            )
+            posts = {row["day"]: row["n"] for row in cursor.fetchall()}
+        return signups, posts
+
+    def top_posters(since, limit=5):
+        with connection.cursor() as cursor:
+            cursor.execute(
+                """SELECT m.account, COUNT(*) AS n FROM block b
+                   JOIN member m ON m.member_id = b.member_id
+                   WHERE b.build_time >= %s GROUP BY m.member_id, m.account
+                   ORDER BY n DESC, m.account LIMIT %s""",
+                (since, limit),
+            )
+            return cursor.fetchall()
+
+    def top_levels(limit=5):
+        with connection.cursor() as cursor:
+            cursor.execute(
+                """SELECT account, exp FROM member WHERE email NOT LIKE %s
+                   ORDER BY exp DESC, account LIMIT %s""",
+                (AdminData.DEMO_DOMAIN, limit),
+            )
+            return cursor.fetchall()
+
+    MEMBER_COLUMNS = """m.member_id, m.account, m.email, m.first_signup, m.last_signin,
+        m.exp, m.streak, m.last_active_day, m.email_verified_at, m.suspended_until,
+        m.suspended_reason,
+        (SELECT COUNT(*) FROM block b WHERE b.member_id = m.member_id) AS posts,
+        (SELECT COUNT(*) FROM block_comment c WHERE c.member_id = m.member_id) AS comments,
+        (SELECT COUNT(*) FROM friendship f WHERE f.status = '0'
+           AND (f.request_from = m.member_id OR f.request_to = m.member_id)) AS friends,
+        (SELECT COUNT(*) FROM report r WHERE r.target_member_id = m.member_id) AS reported"""
+
+    def members(query, limit=30):
+        """Members whose account or e-mail contains `query`, else the newest."""
+        with connection.cursor() as cursor:
+            if query:
+                like = (
+                    "%" + query.replace("\\", "\\\\").replace("%", "\\%").replace("_", "\\_") + "%"
+                )
+                cursor.execute(
+                    f"""SELECT {AdminData.MEMBER_COLUMNS} FROM member m
+                        WHERE m.account LIKE %s OR m.email LIKE %s
+                        ORDER BY m.account = %s DESC, m.last_signin DESC LIMIT %s""",  # noqa: S608
+                    (like, like, query, limit),
+                )
+            else:
+                cursor.execute(
+                    f"""SELECT {AdminData.MEMBER_COLUMNS} FROM member m
+                        ORDER BY m.member_id DESC LIMIT %s""",  # noqa: S608 - fixed columns
+                    (limit,),
+                )
+            return cursor.fetchall()
+
+    def set_exp(member_id, exp):
+        with connection.cursor() as cursor:
+            cursor.execute("UPDATE member SET exp=%s WHERE member_id=%s", (exp, member_id))
+        connection.commit()
+
+    def broadcast(sender_id, content, time):
+        """A bell notification to every member but demo ones and the sender."""
+        with connection.cursor() as cursor:
+            count = cursor.execute(
+                """INSERT INTO notifi (sender_id, reciever_id, content, send_time)
+                   SELECT %s, member_id, %s, %s FROM member
+                   WHERE member_id <> %s AND email NOT LIKE %s""",
+                (sender_id, content, time, sender_id, AdminData.DEMO_DOMAIN),
+            )
+        connection.commit()
+        return count
+
+    def log(admin, action, target, detail, time):
+        with connection.cursor() as cursor:
+            cursor.execute(
+                """INSERT INTO admin_log (admin, action, target, detail, created_at)
+                   VALUES (%s, %s, %s, %s, %s)""",
+                (admin, action, target, detail, time),
+            )
+        connection.commit()
+
+    def logs(limit=100):
+        with connection.cursor() as cursor:
+            cursor.execute(
+                """SELECT admin, action, target, detail, created_at FROM admin_log
+                   ORDER BY log_id DESC LIMIT %s""",
+                (limit,),
+            )
+            return cursor.fetchall()
+
+
 class Images:
     def has_avatar(member_id):
         with connection.cursor() as cursor:
