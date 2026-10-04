@@ -1,5 +1,14 @@
 FROM python:3.11-slim
 
+# Debian's security fixes, which reach apt before a rebuilt python image does (Trivy
+# fails the build on a fixed HIGH/CRITICAL). CI passes the ISO week, so the build cache
+# keeps this layer for at most a week.
+ARG SECURITY_REFRESH=""
+RUN echo "security updates: ${SECURITY_REFRESH}" \
+    && apt-get update \
+    && apt-get upgrade -y --no-install-recommends \
+    && rm -rf /var/lib/apt/lists/*
+
 # The app runs from .venv; drop the base image's own pip/setuptools so they can't ship CVEs.
 RUN pip install --no-cache-dir uv==0.8.17 \
     && pip uninstall -y pip setuptools wheel
