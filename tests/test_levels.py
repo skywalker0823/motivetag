@@ -1,9 +1,11 @@
 """Levels and exp (module/levels.py, ADR 0015)."""
 
 import importlib.util
+from datetime import timedelta
 from pathlib import Path
 
 from module import levels
+from module.clock import taipei_datetime
 
 
 def exp_of(query, member_id):
@@ -68,10 +70,10 @@ def test_liking_my_own_comment_gives_no_author_bonus(member, query):
 
 def test_first_visit_of_the_day_and_streaks(member, query):
     alice, alice_id, account = member()
-    query(
-        "UPDATE member SET last_active_day=CURDATE() - INTERVAL 1 DAY, streak=6 WHERE member_id=%s",
-        alice_id,
-    )
+    # Yesterday in Taiwan, as the app counts days; MySQL's CURDATE() is UTC, a day
+    # behind between midnight and 08:00 Taiwan time (CI failed at 00:04 once).
+    yesterday = taipei_datetime().date() - timedelta(days=1)
+    query("UPDATE member SET last_active_day=%s, streak=6 WHERE member_id=%s", yesterday, alice_id)
     before = exp_of(query, alice_id)
     page = alice.get(f"/{account}").get_data(as_text=True)
     assert '"streak": 7' in page

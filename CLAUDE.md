@@ -92,6 +92,9 @@ uses it as a portfolio project for interviews. Read this first, then `README.md`
   until fixed). The Dockerfile runs `apt-get upgrade`, rebuilt weekly through the
   `SECURITY_REFRESH` build argument (ISO week). The sandbox proxy blocks
   deb.debian.org, so that layer cannot be checked locally; CI shows it.
+- The app counts days in Taiwan time, MySQL's `CURDATE()` is UTC: tests must build
+  dates with `taipei_datetime()`, or they fail between 00:00 and 08:00 Taiwan time
+  (main's CI after PR #48 failed at 00:04 on the streak test).
 - Playwright's `route()` turns the browser HTTP cache off; block external hosts with
   `--host-resolver-rules` when measuring caching.
 
@@ -308,7 +311,7 @@ passes (see Gotchas); main went green and deployed.
 `.lightbox__close`). Deployed 2026-10-04; the owner's Run workflow for the VAPID keys
 also succeeded that day (push on the phone not yet confirmed).
 
-**On branch `claude/beautiful-faraday-a61bzb` (not merged yet)**: first step of the
+**Done in PR #48**: first step of the
 App Store road (owner, 2026-10-04: move towards the Apple app step by step):
 - Account suspension (`module/suspension.py`, migration 0010 `member.suspended_until`
   / `suspended_reason`; for good = 9999-12-31). A suspended member cannot sign in (the
@@ -333,7 +336,7 @@ App Store road (owner, 2026-10-04: move towards the Apple app step by step):
   an unread divider in chats, settings split into pages.
 
 **Roadmap (ADR 0010, phase 1 done)**
-1. ~~Account suspension on `/admin`~~ (on the branch above).
+1. ~~Account suspension on `/admin`~~ (PR #48).
 2. Optional: a small "示範" badge on demo accounts, or remove them once real people join.
 3. Then phase 0/2/3: UTC timestamps, OpenAPI + shared TypeScript core, React + Vite
    (`apps/web`), token auth, cursor paging, Redis presence; phase 4 Expo app.
