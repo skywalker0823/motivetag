@@ -5,7 +5,7 @@ from flask import current_app, request, session
 
 from api.metrics import auth_event
 from data.data import Friend, Member, Member_tags, MemberBlock, Notification
-from module import email_verification, invites, rules, suspension, turnstile
+from module import email_verification, invites, lockout, rules, suspension, turnstile
 from module.auth import login_required
 from module.clock import taipei_now
 from module.disposable import is_disposable
@@ -73,6 +73,9 @@ def signup_error(data):
         return "missing fields"
     if not ACCOUNT.match(data["account"]) or data["account"].lower() in RESERVED:
         return "帳號需為 3-20 個字母、數字或底線"
+    # An admin name nobody holds yet must not be taken by someone else.
+    if data["account"].lower() in {a.lower() for a in current_app.config["ADMIN_ACCOUNTS"]}:
+        return "這個帳號已經有人使用"
     if len(data["password"]) < MIN_PASSWORD:
         return f"密碼至少 {MIN_PASSWORD} 個字元"
     if len(data["email"]) > 254 or not EMAIL.match(data["email"]):
@@ -145,7 +148,16 @@ def sign_in_member():
     time = taipei_now()
     if not all(isinstance(v, str) for v in (account, password)):
         return {"error": "wrong account or password"}, 400
+    wait = lockout.locked(account)
+    if wait:
+        auth_event("login_locked")
+        minutes = (wait + 59) // 60
+        return {"error": {"msg": f"密碼錯誤次數太多，請 {minutes} 分鐘後再試"}}, 429
     result = Member.sign_in(account, password, time)
+    if result["msg"] != "ok":
+        lockout.failed(account)
+    else:
+        lockout.succeeded(account)
     if session.get("FIRST_TIME") and session["FIRST_TIME"] == "YES" and result["msg"] == "ok":
         Member_tags.new_bie_tag(result["data"]["member_id"], "新手引導")
         session["FIRST_TIME"] = "NO"

@@ -1,91 +1,23 @@
-// Reviewing reports and suspending accounts (/admin, api/v1/admin.py): one card per
-// reported thing; the 停權中 tab lists suspended accounts.
-import { api, errorMessage } from "../lib/api.js";
+// The /admin page (api/v1/admin.py): sections 總覽, 檢舉, 會員, 公告 and 紀錄. This file
+// holds the reports (one card per reported thing; the 停權中 tab lists suspended
+// accounts) and switches sections; the others live in ./admin/.
+import { api } from "../lib/api.js";
 import { confirmDialog } from "../lib/confirm.js";
 import { $, busy, h } from "../lib/dom.js";
 import { hydrateIcons } from "../lib/icons.js";
 import { timeAgo } from "../lib/time.js";
 import { toast, toastError } from "../lib/toast.js";
+import { initAnnounce } from "./admin/announce.js";
+import { loadLogs } from "./admin/logs.js";
+import { initMembers, loadMembers } from "./admin/members.js";
+import { loadStats } from "./admin/stats.js";
+import { suspendDialog, untilText } from "./admin/suspend.js";
 
 hydrateIcons();
 
 const KINDS = { post: "貼文", comment: "留言", message: "聊天訊息", member: "帳號" };
 const list = $("#reports");
 let status = "open";
-
-const DURATIONS = [
-  [1, "1 天"],
-  [3, "3 天"],
-  [7, "7 天"],
-  [30, "30 天"],
-  [null, "永久"],
-];
-
-function untilText(until) {
-  return until ? `至 ${until.slice(0, 16)}` : "永久";
-}
-
-/** Asks how long and why, then suspends `account`; resolves true when done. */
-function suspendDialog(account) {
-  return new Promise((resolve) => {
-    const error = h("p", { class: "field__hint field__hint--error", role: "alert" });
-    const reason = h("textarea", { class: "input", name: "reason", rows: "2", maxlength: "200", placeholder: "原因（對方登入時會看到）" });
-    const send = h("button", { class: "btn btn--danger", type: "submit" }, "停權");
-    let done = false;
-    const form = h(
-      "form",
-      { novalidate: true },
-      h("div", { class: "dialog__header" }, h("h2", { class: "dialog__title", id: "suspend-title" }, `停權 ${account}`)),
-      h(
-        "div",
-        { class: "dialog__body" },
-        h("p", { class: "dialog__message" }, "對方會立刻被登出，期間無法登入。貼文和留言不會刪除，需要的話請另外刪除。"),
-        h(
-          "fieldset",
-          { class: "suspend__durations" },
-          h("legend", { class: "field__label" }, "期間"),
-          DURATIONS.map(([days, label]) =>
-            h("label", null, h("input", { type: "radio", name: "days", value: days ?? "forever", checked: days === 7 }), label),
-          ),
-        ),
-        reason,
-        error,
-      ),
-      h(
-        "div",
-        { class: "dialog__footer" },
-        h("button", { class: "btn btn--secondary", type: "button", onClick: () => dialog.close() }, "取消"),
-        send,
-      ),
-    );
-    const dialog = h("dialog", { class: "dialog", "aria-labelledby": "suspend-title" }, form);
-    form.addEventListener("submit", async (event) => {
-      event.preventDefault();
-      const picked = form.elements.days.value;
-      send.disabled = true;
-      try {
-        await api(`/api/v1/admin/members/${encodeURIComponent(account)}/suspension`, {
-          method: "PUT",
-          body: { days: picked === "forever" ? null : Number(picked), reason: reason.value.trim() },
-        });
-      } catch (failure) {
-        error.textContent = errorMessage(failure, "停權失敗");
-        send.disabled = false;
-        return;
-      }
-      toast(`已停權 ${account}`, { type: "success" });
-      done = true;
-      dialog.close();
-    });
-    dialog.addEventListener("close", () => {
-      resolve(done);
-      dialog.remove();
-    });
-    dialog.addEventListener("click", (event) => event.target === dialog && dialog.close());
-    document.body.append(dialog);
-    dialog.showModal();
-  });
-}
 
 function suspendButton(account) {
   return h(
@@ -247,7 +179,7 @@ async function load() {
     list.replaceChildren(
       ...(result.data.length ? result.data.map(card) : [h("p", { class: "card admin-hint" }, "沒有檢舉 🎉")]),
     );
-    document.title = `檢舉審核（${result.open}） - MotiveTag`;
+    $("#reports-count").textContent = result.open ? String(result.open) : "";
   } catch (error) {
     toastError(error, "載入失敗");
   }
@@ -263,4 +195,38 @@ for (const tab of document.querySelectorAll("#status-tabs [data-status]")) {
   });
 }
 
-load();
+// ---------- Sections ----------
+
+const SECTIONS = {
+  overview: () => loadStats($("#overview")),
+  reports: load,
+  members: loadMembers,
+  announce: () => {},
+  logs: () => loadLogs($("#logs")),
+};
+
+function showSection(name) {
+  if (!(name in SECTIONS)) name = "overview";
+  for (const tab of document.querySelectorAll("#admin-nav [data-section]")) {
+    tab.setAttribute("aria-current", String(tab.dataset.section === name));
+  }
+  for (const section of document.querySelectorAll(".admin-section[data-section]")) {
+    section.hidden = section.dataset.section !== name;
+  }
+  SECTIONS[name]();
+}
+
+for (const tab of document.querySelectorAll("#admin-nav [data-section]")) {
+  tab.addEventListener("click", () => {
+    history.replaceState(null, "", `#${tab.dataset.section}`);
+    showSection(tab.dataset.section);
+  });
+}
+
+initMembers();
+initAnnounce();
+showSection(location.hash.slice(1));
+// The open-report count on the 檢舉 tab, whichever section opens first.
+api("/api/v1/admin/reports")
+  .then((result) => ($("#reports-count").textContent = result.open ? String(result.open) : ""))
+  .catch(() => {});
