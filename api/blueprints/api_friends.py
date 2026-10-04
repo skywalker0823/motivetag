@@ -3,6 +3,7 @@ from flask import render_template as rt
 
 from data.data import Friend, Member, MemberBlock
 from module import levels
+from module.admin import is_admin
 from module.auth import login_required, verified_required
 
 from . import api_friends
@@ -25,7 +26,13 @@ def to_member(account):
 
         me["visit"] = visit
         settings = settings_of(session["member_id"])
-        return rt("member.html", me=me, levels=levels_bootstrap(), settings=settings)
+        # Admins get a way into /admin, with the number of reports waiting.
+        admin = None
+        if is_admin():
+            from data.data import Report
+
+            admin = {"open_reports": Report.open_count()}
+        return rt("member.html", me=me, levels=levels_bootstrap(), settings=settings, admin=admin)
     return redirect("/")
 
 
