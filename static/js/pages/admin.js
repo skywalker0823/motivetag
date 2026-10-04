@@ -47,6 +47,8 @@ function card(item) {
     ),
     item.snapshot && h("p", { class: "report-card__snapshot" }, item.snapshot),
     item.image && h("p", { class: "admin-hint" }, "（貼文附有圖片）"),
+    item.photo &&
+      h("a", { href: item.photo, target: "_blank", rel: "noopener" }, h("img", { class: "report-card__photo", src: item.photo, alt: "被檢舉的聊天圖片", loading: "lazy" })),
     h(
       "ul",
       { class: "report-card__reports" },

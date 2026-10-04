@@ -184,7 +184,8 @@ Every pull request runs lint, tests, a dependency audit and an image scan
 ### Chat
 * Messenger-style one-to-one chat between friends: stored history, unread counts,
   "已讀" receipts and typing indicators, delivered to every open tab and to people who
-  were offline ([ADR 0013](docs/adr/0013-stored-direct-messages.md)).
+  were offline ([ADR 0013](docs/adr/0013-stored-direct-messages.md)). Photos too (button,
+  paste or drag and drop), visible only to the two people in the conversation.
 * Online status of friends.
 ### Notification
 * Informs you with friendship status update and offline calling.

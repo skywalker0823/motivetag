@@ -44,12 +44,17 @@ def reports():
         key = (row["target_type"], row["target_id"])
         if key not in groups:
             post = Moderation.post(row["target_id"]) if row["target_type"] == "post" else None
+            message = (
+                Moderation.message(row["target_id"]) if row["target_type"] == "message" else None
+            )
             groups[key] = {
                 "type": row["target_type"],
                 "id": row["target_id"],
                 "author": {"member_id": row["target_member_id"], "account": row["target_account"]},
                 "snapshot": row["snapshot"],
                 "image": bool(post and post["block_img"]),
+                # A chat photo is only reachable here; admins may open it (api_images).
+                "photo": f"/images/{message['image']}" if message and message["image"] else None,
                 "hidden": bool(post and post["hidden"]),
                 "exists": row["target_type"] == "member" or _exists(*key),
                 "weight": 0,

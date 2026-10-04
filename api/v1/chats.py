@@ -9,15 +9,31 @@ to join. Pushed events (api/blueprints/api_chat.py has the socket side):
 - `chat:read` {by, partner, up_to, read_at}: `by` read what `partner` sent up to `up_to`.
 - `chat:typing` {from}: the other member is typing (sent by the browser over the socket).
 
-A message: {id, from, to, content, sent_at, read_at}; `from` and `to` are accounts,
-times are Taipei wall-clock "YYYY-MM-DD HH:MM:SS" (see static/js/lib/time.js).
+A message: {id, from, to, content, image, sent_at, read_at}; `from` and `to` are
+accounts, `image` is a photo's URL (/images/dm_…) or null, times are Taipei wall-clock
+"YYYY-MM-DD HH:MM:SS" (see static/js/lib/time.js).
+
+Photos go straight from the browser to S3 like post images (ADR 0007): the browser
+asks POST …/images for a presigned upload, sends the file to S3, then sends the
+message with the key it was given. Only the two members (and admins reviewing a
+report) can open the photo.
 """
 
+import secrets
+import time
+from collections import defaultdict, deque
 from datetime import timedelta
 
 from flask import request, session
 
 from api.blueprints.api_chat import online, push_to
+from api.blueprints.api_images import (
+    ALLOWED_TYPES,
+    BUCKET_NAME,
+    CHAT_KEY,
+    presigned_post,
+    uploaded,
+)
 from data.data import DirectMessage, Friend, Level, Member, MemberBlock
 from module import email_verification, levels, rules
 from module.clock import taipei_datetime
@@ -37,6 +53,7 @@ def _message(row, accounts):
         "from": accounts[row["sender_id"]],
         "to": accounts[row["recipient_id"]],
         "content": row["content"],
+        "image": f"/images/{row['image']}" if row.get("image") else None,
         "sent_at": _time(row["sent_at"]),
         "read_at": _time(row["read_at"]),
     }
@@ -103,28 +120,85 @@ def history(account):
     }
 
 
+def _may_message(account):
+    """(partner_id, error response): may I send `account` anything right now?"""
+    partner_id, failure = _partner(account)
+    if failure:
+        return None, failure
+    me = session["member_id"]
+    if not email_verification.verified(me):
+        return None, error("email_not_verified", "請先到信箱完成 Email 驗證，才能開始聊天", 403)
+    if MemberBlock.between(me, partner_id):
+        return None, error("blocked", "無法傳訊息給這個帳號", 403)
+    if not Friend.are_friends(me, partner_id):
+        return None, error("not_friends", "成為好友後才能傳訊息", 403)
+    return partner_id, None
+
+
+PHOTO_UPLOADS = 20  # signed photo uploads per member …
+PHOTO_WINDOW = 600  # … per ten minutes; in memory, one worker (ADR 0008)
+_photo_uploads = defaultdict(deque)
+
+
+def _upload_allowed(member_id):
+    now = time.monotonic()
+    recent = _photo_uploads[member_id]
+    while recent and now - recent[0] > PHOTO_WINDOW:
+        recent.popleft()
+    if len(recent) >= PHOTO_UPLOADS:
+        return False
+    recent.append(now)
+    return True
+
+
+@v1.route("/chats/<account>/images", methods=["POST"])
+@login_required
+def sign_photo(account):
+    """{content_type} → {data: {key, url, fields}}: where the browser posts a photo."""
+    _, failure = _may_message(account)
+    if failure:
+        return failure
+    content_type = (request.get_json(silent=True) or {}).get("content_type")
+    if content_type not in ALLOWED_TYPES:
+        return error("bad_type", "只能傳 PNG、JPEG、GIF 或 WebP 圖片", 400)
+    if not BUCKET_NAME:
+        return error("uploads_off", "目前無法傳圖片", 503)
+    me = session["member_id"]
+    if not _upload_allowed(me):
+        return error("too_many", "圖片傳得太快了，請稍候再試", 429)
+    key = f"dm_{me}_{secrets.token_hex(16)}"
+    return {"data": {"key": key, **presigned_post(key, content_type)}}
+
+
 @v1.route("/chats/<account>/messages", methods=["POST"])
 @login_required
 def send(account):
-    """Sends a message to a friend: 201 with the stored message."""
-    partner_id, failure = _partner(account)
+    """{content?, image?} → 201 with the stored message; `image` is a key from POST
+    …/images, already uploaded. A message needs text, a photo or both."""
+    partner_id, failure = _may_message(account)
     if failure:
         return failure
     me = session["member_id"]
-    if not email_verification.verified(me):
-        return error("email_not_verified", "請先到信箱完成 Email 驗證，才能開始聊天", 403)
-    if MemberBlock.between(me, partner_id):
-        return error("blocked", "無法傳訊息給這個帳號", 403)
-    if not Friend.are_friends(me, partner_id):
-        return error("not_friends", "成為好友後才能傳訊息", 403)
     body = request.get_json(silent=True) or {}
-    content = rules.text(body.get("content"), rules.CHAT_MESSAGE_MAX)
-    if content is None:
-        return error("bad_content", f"訊息需為 1–{rules.CHAT_MESSAGE_MAX} 個字", 400)
+    image = body.get("image")
+    if image is not None:
+        match = CHAT_KEY.match(image) if isinstance(image, str) else None
+        # Only a photo I uploaded myself, used once, and really there.
+        if not match or int(match.group(1)) != me or DirectMessage.image_used(image):
+            return error("bad_image", "圖片無效，請重新選擇", 400)
+        if not uploaded(image):
+            return error("bad_image", "圖片還沒上傳完成，請再試一次", 400)
+    text = body.get("content")
+    if image and (text is None or (isinstance(text, str) and not text.strip())):
+        content = ""  # a photo on its own
+    else:
+        content = rules.text(body.get("content"), rules.CHAT_MESSAGE_MAX)
+        if content is None:
+            return error("bad_content", f"訊息需為 1–{rules.CHAT_MESSAGE_MAX} 個字", 400)
     now = taipei_datetime()
     if DirectMessage.sent_since(me, now - timedelta(minutes=1)) >= rules.CHAT_PER_MINUTE:
         return error("too_many", "訊息傳得太快了，請稍候再試", 429)
-    row = DirectMessage.send(me, partner_id, content, now)
+    row = DirectMessage.send(me, partner_id, content, now, image)
     message = _message(row, {me: session["account"], partner_id: account})
     push_to(account, "chat:message", message)
     push_to(session["account"], "chat:message", message)  # my other tabs and devices

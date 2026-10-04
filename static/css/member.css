@@ -1519,6 +1519,30 @@ button.poll__option:hover {
   color: var(--danger);
 }
 
+.bubble--photo {
+  padding: 4px;
+}
+
+.bubble--photo .bubble__text {
+  padding: 2px var(--space-2) 0;
+}
+
+.bubble--photo .bubble__time {
+  padding: 0 var(--space-2) 2px;
+}
+
+.bubble__photo {
+  display: block;
+  flex-basis: 100%;
+  max-width: 240px;
+  max-height: 280px;
+  min-height: 60px;
+  border-radius: 12px;
+  background: var(--surface-2);
+  object-fit: cover;
+  cursor: zoom-in;
+}
+
 .bubble--pending {
   opacity: 0.6;
 }

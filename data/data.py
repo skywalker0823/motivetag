@@ -212,7 +212,7 @@ class Member:
     def delete(member_id):
         """Deletes the member and, through the foreign keys, everything that is theirs.
 
-        Returns the S3 keys of their images (avatar and post images) for the caller to
+        Returns the S3 keys of their images (avatar, post images and chat photos either way) for the caller to
         remove, or None if there was no such member.
         """
         with connection.cursor() as cursor:
@@ -225,6 +225,13 @@ class Member:
                 (member_id,),
             )
             keys = [row["block_img"] for row in cursor.fetchall()]
+            # Their conversations are deleted both ways, photos included.
+            cursor.execute(
+                """SELECT image FROM direct_message WHERE image IS NOT NULL
+                   AND (sender_id=%s OR recipient_id=%s)""",
+                (member_id, member_id),
+            )
+            keys += [row["image"] for row in cursor.fetchall()]
             if member["member_img"]:
                 keys.append(member["member_img"])
             cursor.execute("DELETE FROM member WHERE member_id=%s", (member_id,))
@@ -901,18 +908,18 @@ class Message:
             return result
 
 
-DM_COLUMNS = "message_id, sender_id, recipient_id, content, sent_at, read_at"
+DM_COLUMNS = "message_id, sender_id, recipient_id, content, image, sent_at, read_at"
 
 
 class DirectMessage:
     """One-to-one chat messages (api/v1/chats.py). A conversation is a pair of members."""
 
-    def send(sender_id, recipient_id, content, now):
+    def send(sender_id, recipient_id, content, now, image=None):
         with connection.cursor() as cursor:
             cursor.execute(
-                "INSERT INTO direct_message (sender_id, recipient_id, content, sent_at)"
-                " VALUES (%s, %s, %s, %s)",
-                (sender_id, recipient_id, content, now),
+                "INSERT INTO direct_message (sender_id, recipient_id, content, image, sent_at)"
+                " VALUES (%s, %s, %s, %s, %s)",
+                (sender_id, recipient_id, content, image, now),
             )
             message_id = cursor.lastrowid
             connection.commit()
@@ -950,7 +957,7 @@ class DirectMessage:
         of theirs I have not read."""
         with connection.cursor() as cursor:
             cursor.execute(
-                f"""SELECT m.message_id, m.sender_id, m.recipient_id, m.content, m.sent_at,
+                f"""SELECT m.message_id, m.sender_id, m.recipient_id, m.content, m.image, m.sent_at,
                           m.read_at, p.member_id AS partner_id, p.account AS partner,
                           (SELECT COUNT(*) FROM direct_message u
                            WHERE u.recipient_id=%s AND u.sender_id=p.member_id
@@ -992,6 +999,22 @@ class DirectMessage:
                 (me,),
             )
             return cursor.fetchone()["n"]
+
+    def may_see_image(member_id, key):
+        """Whether a chat photo was sent to or by this member."""
+        with connection.cursor() as cursor:
+            got = cursor.execute(
+                """SELECT 1 FROM direct_message WHERE image=%s
+                   AND (sender_id=%s OR recipient_id=%s) LIMIT 1""",
+                (key, member_id, member_id),
+            )
+        return got != 0
+
+    def image_used(key):
+        with connection.cursor() as cursor:
+            return (
+                cursor.execute("SELECT 1 FROM direct_message WHERE image=%s LIMIT 1", (key,)) != 0
+            )
 
     def sent_since(sender_id, since):
         with connection.cursor() as cursor:
@@ -1167,7 +1190,7 @@ class Moderation:
     def message(message_id):
         with connection.cursor() as cursor:
             cursor.execute(
-                "SELECT message_id, sender_id, recipient_id, content FROM direct_message"
+                "SELECT message_id, sender_id, recipient_id, content, image FROM direct_message"
                 " WHERE message_id=%s",
                 (message_id,),
             )
@@ -1191,6 +1214,10 @@ class Moderation:
                 cursor.execute("SELECT block_img FROM block WHERE block_id=%s", (target_id,))
                 row = cursor.fetchone()
                 image = row and row["block_img"]
+            if target_type == "message":
+                cursor.execute("SELECT image FROM direct_message WHERE message_id=%s", (target_id,))
+                row = cursor.fetchone()
+                image = row and row["image"]
             count = cursor.execute(f"DELETE FROM {table} WHERE {key}=%s", (target_id,))  # noqa: S608 - fixed names
         connection.commit()
         return count, image

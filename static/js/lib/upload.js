@@ -54,22 +54,44 @@ export async function shrinkImage(file, maxSide) {
   return blob;
 }
 
-/** Uploads `file` as an avatar or a post image; throws ApiError with a readable message. */
-export async function uploadImage(file, type, targetId) {
+/** Checks and shrinks `file` for upload; throws ApiError with a readable message. */
+async function prepare(file, maxSide) {
   const error = imageError(file);
   if (error) throw new ApiError(error);
-  const image = await shrinkImage(file, MAX_SIDE[type] ?? MAX_SIDE.block);
+  const image = await shrinkImage(file, maxSide);
   if (image.size > MAX_BYTES) throw new ApiError("圖片不能超過 5 MB");
-  const signed = await api("/api/images/upload", {
-    method: "POST",
-    body: { type, target_id: targetId, content_type: image.type },
-  });
-  if (!signed.ok) throw new ApiError(errorMessage(signed.error, "圖片上傳失敗"));
+  return image;
+}
+
+/** Sends `image` to S3 with a presigned POST ({url, fields}). */
+async function postToS3(signed, image) {
   const form = new FormData();
   for (const [name, value] of Object.entries(signed.fields)) form.append(name, value);
   form.append("file", image); // S3 requires the file to be the last field
   const upload = await fetch(signed.url, { method: "POST", body: form }).catch(() => null);
   if (!upload?.ok) throw new ApiError("圖片上傳失敗，請再試一次");
+}
+
+/** Uploads a photo for a chat message to `account`; returns the key to send it with. */
+export async function uploadChatPhoto(file, account) {
+  const image = await prepare(file, MAX_SIDE.block);
+  const { data } = await api(`/api/v1/chats/${encodeURIComponent(account)}/images`, {
+    method: "POST",
+    body: { content_type: image.type },
+  });
+  await postToS3(data, image);
+  return data.key;
+}
+
+/** Uploads `file` as an avatar or a post image; throws ApiError with a readable message. */
+export async function uploadImage(file, type, targetId) {
+  const image = await prepare(file, MAX_SIDE[type] ?? MAX_SIDE.block);
+  const signed = await api("/api/images/upload", {
+    method: "POST",
+    body: { type, target_id: targetId, content_type: image.type },
+  });
+  if (!signed.ok) throw new ApiError(errorMessage(signed.error, "圖片上傳失敗"));
+  await postToS3(signed, image);
   const done = await api("/api/images", { method: "POST", body: { type, target_id: targetId } });
   if (!done.ok) throw new ApiError(errorMessage(done.error, "圖片上傳失敗"));
 }

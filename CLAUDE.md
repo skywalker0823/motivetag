@@ -247,11 +247,22 @@ rate-limiting rule `API flood guard` (`/api/`, 60 requests / 10 s per IP → blo
   comment) a day (`levels.once_today`, key `like:<id>` in `exp_daily`), so toggling
   earns nothing. The old `PATCH`/`PUT /api/blocks` also keep one reaction.
 
-**On branch `claude/focused-fermat-jjmmy8` (not merged yet)**
+**Done in PR #41:**
 - Emoji picker (`static/js/lib/emoji.js`, no library: emoji are text in the system
   font) on the post composer, comments, chat and tag-topic replies; "最近" tab kept in
   localStorage; bottom sheet on phones. Outside-click check uses `composedPath()`
   because switching tabs re-renders the clicked button away.
+
+**On branch `claude/focused-fermat-jjmmy8` (not merged yet)**
+- Photos in chat (ADR 0013 addendum, migration 0007 `direct_message.image`):
+  `POST /api/v1/chats/<account>/images` → presigned POST for `dm_<sender>_<hex32>`
+  (20 per 10 min in memory), browser uploads (shrunk to WebP by `upload.js`), then
+  `POST …/messages {image, content?}`. `/images/dm_…` only for sender, recipient or
+  admin; reports keep the key in the snapshot and `/admin` shows the photo; account
+  deletion removes photos both ways. UI: photo button, paste and drag-and-drop,
+  preview while uploading, tap to enlarge, "📷 照片" in lists and toasts.
+  Note: `from api.blueprints import api_images` is the Blueprint, not the module;
+  import names from `api.blueprints.api_images`.
 - Next: privacy policy and terms pages; "示範" badge or removal for demo accounts;
   maybe account suspension on `/admin`.
 
