@@ -87,6 +87,11 @@ uses it as a portfolio project for interviews. Read this first, then `README.md`
   a recreated app on a new address gave 502s (2026-09-28, when Alloy took the old
   address). deploy.sh now runs `nginx -t && nginx -s reload` after every `up`,
   which also applies a changed `nginx.conf`.
+- Trivy fails CI (and so skips the deploy) when the python base image ships a Debian
+  package with a fixed HIGH/CRITICAL CVE (2026-10-04, libpcre2: PR #43 did not deploy
+  until fixed). The Dockerfile runs `apt-get upgrade`, rebuilt weekly through the
+  `SECURITY_REFRESH` build argument (ISO week). The sandbox proxy blocks
+  deb.debian.org, so that layer cannot be checked locally; CI shows it.
 - Playwright's `route()` turns the browser HTTP cache off; block external hosts with
   `--host-resolver-rules` when measuring caching.
 
@@ -253,7 +258,7 @@ rate-limiting rule `API flood guard` (`/api/`, 60 requests / 10 s per IP → blo
   localStorage; bottom sheet on phones. Outside-click check uses `composedPath()`
   because switching tabs re-renders the clicked button away.
 
-**On branch `claude/focused-fermat-jjmmy8` (not merged yet)**
+**Done in PR #43** (deployed only after the Trivy fix below):
 - Photos in chat (ADR 0013 addendum, migration 0007 `direct_message.image`):
   `POST /api/v1/chats/<account>/images` → presigned POST for `dm_<sender>_<hex32>`
   (20 per 10 min in memory), browser uploads (shrunk to WebP by `upload.js`), then
@@ -263,6 +268,9 @@ rate-limiting rule `API flood guard` (`/api/`, 60 requests / 10 s per IP → blo
   preview while uploading, tap to enlarge, "📷 照片" in lists and toasts.
   Note: `from api.blueprints import api_images` is the Blueprint, not the module;
   import names from `api.blueprints.api_images`.
+
+**On branch `claude/focused-fermat-jjmmy8` (not merged yet)**
+- Dockerfile `apt-get upgrade` + weekly `SECURITY_REFRESH` so Trivy passes (see Gotchas).
 - Next: privacy policy and terms pages; "示範" badge or removal for demo accounts;
   maybe account suspension on `/admin`.
 
