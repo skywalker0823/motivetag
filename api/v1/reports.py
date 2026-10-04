@@ -50,7 +50,10 @@ def _target(kind, target_id, me):
         # Only messages I received: what I sent is mine to delete, not to report.
         if not message or message["recipient_id"] != me:
             return None, missing
-        return (message["sender_id"], message["content"]), None
+        snapshot = message["content"] or ""
+        if message["image"]:
+            snapshot = f"{snapshot}\n[圖片 {message['image']}]".strip()
+        return (message["sender_id"], snapshot), None
     if kind == "member":
         if not Member.getting_data_without_private(target_id):
             return None, missing

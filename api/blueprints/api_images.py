@@ -7,7 +7,8 @@ from botocore.config import Config
 from botocore.exceptions import ClientError
 from flask import abort, redirect, request, session
 
-from data.data import Block, Images
+from data.data import Block, DirectMessage, Images
+from module import admin
 from module.auth import login_required
 
 from . import api_images
@@ -24,6 +25,8 @@ UPLOAD_EXPIRES = 300
 BUCKET_NAME = os.getenv("IMAGE_BUCKET")
 REGION = os.getenv("AWS_REGION")
 IMAGE_KEY = re.compile(r"^(avatar|block)_\d+$")
+# Chat photos: the sender's id and a random part, so nobody can guess another's key.
+CHAT_KEY = re.compile(r"^dm_(\d+)_[0-9a-f]{32}$")
 s3 = boto3.client(
     "s3",
     region_name=REGION,
@@ -95,8 +98,40 @@ def forget_signed(key):
     _signed.pop(key, None)
 
 
+def presigned_post(key, content_type):
+    """The form fields a browser posts `content_type` (an allowed type) to S3 with."""
+    post = s3.generate_presigned_post(
+        BUCKET_NAME,
+        key,
+        Fields={"Content-Type": content_type},
+        Conditions=[
+            {"Content-Type": content_type},
+            ["content-length-range", 1, MAX_IMAGE_BYTES],
+        ],
+        ExpiresIn=UPLOAD_EXPIRES,
+    )
+    return {"url": post["url"], "fields": post["fields"]}
+
+
+def uploaded(key):
+    """Whether the browser's upload of `key` reached S3 as an allowed image type."""
+    try:
+        head = s3.head_object(Bucket=BUCKET_NAME, Key=key)
+    except ClientError:
+        return False
+    return head.get("ContentType") in ALLOWED_TYPES
+
+
 @api_images.route("/images/<key>")
 def show_img(key):
+    if CHAT_KEY.match(key):
+        # Only the two people in the conversation (and admins reviewing a report).
+        member_id = session.get("member_id")
+        if not member_id or not (DirectMessage.may_see_image(member_id, key) or admin.is_admin()):
+            abort(404)
+        response = redirect(signed_image_url(key))
+        response.headers["Cache-Control"] = REDIRECT_CACHE
+        return response
     if not IMAGE_KEY.match(key):
         abort(404)
     kind, _, ident = key.partition("_")
@@ -131,17 +166,7 @@ def sign_upload():
     key, error = image_key(session["member_id"], body.get("type"), body.get("target_id"))
     if error:
         return error
-    post = s3.generate_presigned_post(
-        BUCKET_NAME,
-        key,
-        Fields={"Content-Type": content_type},
-        Conditions=[
-            {"Content-Type": content_type},
-            ["content-length-range", 1, MAX_IMAGE_BYTES],
-        ],
-        ExpiresIn=UPLOAD_EXPIRES,
-    )
-    return {"ok": True, "url": post["url"], "fields": post["fields"]}
+    return {"ok": True, **presigned_post(key, content_type)}
 
 
 @api_images.route("/api/images", methods=["POST"])
@@ -153,12 +178,8 @@ def finish_upload():
     key, error = image_key(member_id, body.get("type"), body.get("target_id"))
     if error:
         return error
-    try:
-        head = s3.head_object(Bucket=BUCKET_NAME, Key=key)
-    except ClientError:
+    if not uploaded(key):
         return {"error": "upload not found"}, 400
-    if head.get("ContentType") not in ALLOWED_TYPES:
-        return {"error": "file type not allowed"}, 400
     forget_signed(key)
     if key.startswith("avatar_"):
         result = Images.post_image(member_id, key)

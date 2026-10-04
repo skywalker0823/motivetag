@@ -43,6 +43,12 @@ arrive whether or not the other side is looking, unread counts, "已讀" and "�
   several workers, `socketio.emit` needs the Redis message queue. The stored messages
   themselves already work with any number of workers.
 - Blocking members (ADR 0010 phase 1) must refuse sending in both directions.
+- Photos (migration 0007, 2026-10-04) follow [0007](0007-direct-browser-uploads-to-s3.md):
+  `POST /api/v1/chats/<account>/images` signs an upload to a key `dm_<sender>_<random>`,
+  the browser sends the file to S3, then the message carries the key (checked: mine,
+  uploaded, used once). `/images/dm_…` opens only for the two members and admins.
+  A photo that was uploaded but never sent stays in the bucket; an S3 lifecycle rule
+  can clean those up if they ever add up.
 
 ## Alternatives considered
 

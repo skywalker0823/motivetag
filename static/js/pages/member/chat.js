@@ -6,10 +6,12 @@ import { $, h, img } from "../../lib/dom.js";
 import { icon } from "../../lib/icons.js";
 import { emojiButton } from "../../lib/emoji.js";
 import { frameClass, levelBadge } from "../../lib/levels.js";
+import { openLightbox } from "../../lib/lightbox.js";
 import { reportDialog } from "../../lib/report.js";
 import { socket } from "../../lib/socket.js";
 import { fromServer, fullDateTime, timeAgo } from "../../lib/time.js";
 import { toast, toastError } from "../../lib/toast.js";
+import { IMAGE_TYPES, uploadChatPhoto } from "../../lib/upload.js";
 import { avatarUrl, DEFAULT_AVATAR, emit, me, on } from "./state.js";
 
 const TYPING_SEND_MS = 3000; // at most one "typing" signal every 3 s
@@ -33,6 +35,9 @@ let baseTitle = document.title;
 
 const chatUrl = (account, path) => `/api/v1/chats/${encodeURIComponent(account)}/${path}`;
 const isOnline = (account) => presence.get(account) ?? conversations.get(account)?.online ?? false;
+
+/** One line for lists and toasts: the text, or that it is a photo. */
+const preview = (message) => (message.image ? `📷 ${message.content || "照片"}` : message.content);
 
 const hhmm = (date) => date?.toLocaleTimeString("zh-TW", { hour: "2-digit", minute: "2-digit", hour12: false }) ?? "";
 
@@ -93,7 +98,7 @@ function conversationItem(c) {
         "span",
         { class: "chat-item__body" },
         h("span", { class: "chat-item__name" }, account),
-        h("span", { class: "chat-item__preview" }, (mine ? "你：" : "") + c.last.content),
+        h("span", { class: "chat-item__preview" }, (mine ? "你：" : "") + preview(c.last)),
       ),
       h(
         "span",
@@ -180,13 +185,26 @@ function bubble(win, message) {
   const sent = fromServer(message.sent_at);
   const el = h(
     "div",
-    { class: `bubble${mine ? " bubble--mine" : ""}`, title: fullDateTime(sent), dataset: { id: String(message.id) } },
-    h("span", { class: "bubble__text" }, message.content),
+    {
+      class: `bubble${mine ? " bubble--mine" : ""}${message.image ? " bubble--photo" : ""}`,
+      title: fullDateTime(sent),
+      dataset: { id: String(message.id) },
+    },
+    message.image && photo(win, message.image),
+    message.content && h("span", { class: "bubble__text" }, message.content),
     h("time", { class: "bubble__time", dateTime: sent?.toISOString() ?? "" }, hhmm(sent)),
   );
   // Tapping their message offers to report it.
   if (!mine) el.addEventListener("click", () => offerReport(win, message, el));
   return el;
+}
+
+/** A photo in a bubble: opens full size when tapped; keeps the chat at the bottom once loaded. */
+function photo(win, src) {
+  const stick = nearBottom(win);
+  const image = h("img", { class: "bubble__photo", src, alt: "照片", decoding: "async", onClick: () => openLightbox(src, "照片") });
+  image.addEventListener("load", () => stick && scrollToBottom(win), { once: true });
+  return image;
 }
 
 function offerReport(win, message, el) {
@@ -394,6 +412,55 @@ async function send(win, content, retrying) {
   updateReceipt(win);
 }
 
+/** Uploads a photo, then sends it; shown at once from the file, retried by a tap. */
+async function sendPhoto(win, file, retrying) {
+  const local = retrying?.dataset.local ?? URL.createObjectURL(file);
+  const temp =
+    retrying ??
+    h(
+      "div",
+      { class: "bubble bubble--mine bubble--photo bubble--pending", dataset: { local } },
+      h("img", { class: "bubble__photo", src: local, alt: "要傳送的照片" }),
+      h("span", { class: "bubble__time" }, "上傳中"),
+    );
+  temp.className = "bubble bubble--mine bubble--photo bubble--pending";
+  temp.lastChild.textContent = "上傳中";
+  temp.onclick = null;
+  win.pending.set(temp, "photo");
+  if (!retrying) win.body.append(temp);
+  win.empty.hidden = true;
+  updateReceipt(win);
+  scrollToBottom(win);
+  try {
+    let key = temp.dataset.key;
+    if (!key) {
+      key = await uploadChatPhoto(file, win.account);
+      temp.dataset.key = key;
+    }
+    win.pending.set(temp, `/images/${key}`); // its push may come before this answer
+    temp.lastChild.textContent = "傳送中";
+    const result = await api(chatUrl(win.account, "messages"), { method: "POST", body: { image: key } });
+    win.pending.delete(temp);
+    temp.remove();
+    URL.revokeObjectURL(local);
+    addMessage(win, result.data);
+    notePartnerMessage(result.data);
+  } catch (error) {
+    temp.className = "bubble bubble--mine bubble--photo bubble--failed";
+    temp.lastChild.textContent = "傳送失敗，點一下重試";
+    temp.title = errorMessage(error);
+    temp.onclick = () => sendPhoto(win, file, temp);
+    const code = error.data?.error?.code;
+    if (code === "not_friends" || code === "blocked") setCanSend(win, false);
+    toastError(error, "照片傳送失敗");
+  }
+  updateReceipt(win);
+}
+
+function sendPhotos(win, files) {
+  for (const file of files) if (IMAGE_TYPES.includes(file.type)) sendPhoto(win, file);
+}
+
 function createWindow(account) {
   const body = h("div", { class: "chat__body" });
   const older = h("button", { class: "btn btn--ghost btn--sm chat__older", type: "button", hidden: true }, "載入更早的訊息");
@@ -409,7 +476,13 @@ function createWindow(account) {
     maxlength: "1000",
     enterkeyhint: "send",
   });
-  const form = h("form", { class: "chat__form" }, input, emojiButton(input), h("button", { class: "icon-btn", type: "submit", "aria-label": "送出" }, icon("send")));
+  const picker = h("input", { class: "visually-hidden", type: "file", accept: IMAGE_TYPES.join(","), multiple: true, tabindex: "-1" });
+  const photoButton = h(
+    "button",
+    { class: "icon-btn", type: "button", "aria-label": "傳送照片", title: "傳送照片", onClick: () => picker.click() },
+    icon("image"),
+  );
+  const form = h("form", { class: "chat__form" }, input, picker, photoButton, emojiButton(input), h("button", { class: "icon-btn", type: "submit", "aria-label": "送出" }, icon("send")));
   const blocked = h("p", { class: "chat__blocked", hidden: true }, "你們目前不是好友，無法傳訊息");
   const avatarWrap = h("span", { class: "chat-item__avatar", dataset: { online: "false" } }, avatarFor(null));
   const status = h("span", { class: "chat__status" });
@@ -481,6 +554,26 @@ function createWindow(account) {
   log.addEventListener("scroll", () => log.scrollTop < 40 && loadOlder(win), { passive: true });
   el.addEventListener("focusin", () => markRead(win));
   el.addEventListener("pointerdown", () => markRead(win));
+
+  picker.addEventListener("change", () => {
+    sendPhotos(win, [...picker.files]);
+    picker.value = "";
+  });
+  // Pasting a screenshot or dropping a picture on the window sends it, as in Messenger.
+  input.addEventListener("paste", (event) => {
+    const files = [...(event.clipboardData?.files ?? [])].filter((f) => IMAGE_TYPES.includes(f.type));
+    if (!files.length) return;
+    event.preventDefault();
+    sendPhotos(win, files);
+  });
+  el.addEventListener("dragover", (event) => {
+    if (!form.hidden && event.dataTransfer?.types.includes("Files")) event.preventDefault();
+  });
+  el.addEventListener("drop", (event) => {
+    if (form.hidden || !event.dataTransfer?.files.length) return;
+    event.preventDefault();
+    sendPhotos(win, [...event.dataTransfer.files]);
+  });
 
   const submit = () => {
     const content = input.value.trim();
@@ -578,12 +671,13 @@ function onMessage(message) {
   let win = windows.get(partner);
   if (win) {
     // My own message from this tab: its send() is about to add it.
-    const sending = mine && [...win.pending.values()].includes(message.content);
+    const pending = [...win.pending.values()];
+    const sending = mine && (message.image ? pending.includes(message.image) : pending.includes(message.content));
     if (!sending) addMessage(win, message);
     if (!mine) hideTyping(win);
   } else if (!mine && !known) {
     if (!phone.matches) win = openChat(partner, { focus: false });
-    else toast(`${partner}：${message.content}`, { action: { label: "回覆", onClick: () => openChat(partner) } });
+    else toast(`${partner}：${preview(message)}`, { action: { label: "回覆", onClick: () => openChat(partner) } });
   }
   if (win) markRead(win);
   refreshBadges();
