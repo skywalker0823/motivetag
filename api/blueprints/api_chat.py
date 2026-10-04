@@ -10,6 +10,7 @@ from flask_socketio import emit, join_room
 
 from api.metrics import ONLINE
 from data.data import Friend, Member, MemberBlock
+from module import suspension
 
 from .. import socketio
 from . import api_chat  # noqa: F401 - re-exported for api/__init__.py
@@ -107,10 +108,17 @@ def typing(data):
     push_to(to, "chat:typing", {"from": me})
 
 
+def end_sessions(account):
+    """Signs a suspended member's open tabs out: they hear why, then the server hangs up."""
+    push_to(account, "account:suspended", {})
+    for sid in list(online.get(account, ())):
+        socketio.server.disconnect(sid, namespace="/")
+
+
 @socketio.on("connect")
 def test_connect():
     me = current_account()
-    if me is None:
+    if me is None or suspension.current(session["member_id"]):
         return False
     join_room(member_room(me))
     # Online from the moment the page connects, even for members without friends yet.

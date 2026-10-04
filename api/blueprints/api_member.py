@@ -5,7 +5,7 @@ from flask import current_app, request, session
 
 from api.metrics import auth_event
 from data.data import Friend, Member, Member_tags, MemberBlock, Notification
-from module import email_verification, invites, rules, turnstile
+from module import email_verification, invites, rules, suspension, turnstile
 from module.auth import login_required
 from module.clock import taipei_now
 from module.disposable import is_disposable
@@ -149,6 +149,11 @@ def sign_in_member():
     if session.get("FIRST_TIME") and session["FIRST_TIME"] == "YES" and result["msg"] == "ok":
         Member_tags.new_bie_tag(result["data"]["member_id"], "新手引導")
         session["FIRST_TIME"] = "NO"
+    if result["msg"] == "ok":
+        state = suspension.current(result["data"]["member_id"])
+        if state:
+            auth_event("login_suspended")
+            return {"error": {"msg": suspension.message(state)}}
     auth_event("login_ok" if result["msg"] == "ok" else "login_failed")
     if result["msg"] == "ok":
         result = result["data"]

@@ -1324,6 +1324,38 @@ class Moderation:
         return count, image
 
 
+class Suspension:
+    """Members the owner has locked out (module/suspension.py)."""
+
+    def of(member_id):
+        """{suspended_until, suspended_reason} for one member, or None if no such member."""
+        with connection.cursor() as cursor:
+            cursor.execute(
+                "SELECT suspended_until, suspended_reason FROM member WHERE member_id=%s",
+                (member_id,),
+            )
+            return cursor.fetchone()
+
+    def set(member_id, until, reason):
+        with connection.cursor() as cursor:
+            count = cursor.execute(
+                "UPDATE member SET suspended_until=%s, suspended_reason=%s WHERE member_id=%s",
+                (until, reason, member_id),
+            )
+        connection.commit()
+        return count
+
+    def listing(now):
+        """Members suspended right now, the ones ending soonest first."""
+        with connection.cursor() as cursor:
+            cursor.execute(
+                """SELECT member_id, account, suspended_until, suspended_reason FROM member
+                   WHERE suspended_until > %s ORDER BY suspended_until, account""",
+                (now,),
+            )
+            return cursor.fetchall()
+
+
 class Images:
     def has_avatar(member_id):
         with connection.cursor() as cursor:

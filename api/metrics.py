@@ -34,7 +34,8 @@ LATENCY = Histogram(
 )
 AUTH = Counter(
     "motivetag_auth_events_total",
-    "Sign-ins and sign-ups: login_ok, login_failed, signup_ok, signup_refused, signup_invited.",
+    "Sign-ins and sign-ups: login_ok, login_failed, login_suspended, signup_ok, signup_refused,"
+    " signup_invited.",
     ["event"],
 )
 REPORTS = Counter(
