@@ -1,0 +1,13 @@
+[Unit]
+Description=Daily NASA APOD post
+
+[Timer]
+# APOD changes around midnight US Eastern (12:00-13:00 in Taiwan); the evening run
+# catches a late update. A day already posted is skipped.
+OnCalendar=*-*-* 14:00:00 Asia/Taipei
+OnCalendar=*-*-* 20:00:00 Asia/Taipei
+RandomizedDelaySec=5min
+Persistent=true
+
+[Install]
+WantedBy=timers.target

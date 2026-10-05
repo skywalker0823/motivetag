@@ -124,16 +124,26 @@ export function removeAuthor(memberId) {
   }
 }
 
-/** Text with each #tag turned into a button that filters the feed by it. */
+// http(s) links in posts: ASCII only (so "。" or "）" after a link ends it), without
+// brackets, quotes or a trailing ".,!?;:".
+const LINK = /https?:\/\/[!#-&*-;=?-~]*[#-&*+\-/-9=@-~]/gu;
+const LINK_OR_TAG = new RegExp(`${LINK.source}|${HASHTAG.source}`, "gu");
+
+/** Text with each #tag turned into a button that filters the feed by it, and each
+ *  web address into a link that opens in a new tab. */
 function withHashtags(text) {
   const parts = [];
   let last = 0;
-  for (const match of text.matchAll(HASHTAG)) {
+  for (const match of text.matchAll(LINK_OR_TAG)) {
     parts.push(text.slice(last, match.index));
     const name = match[1];
-    parts.push(
-      h("button", { class: "hashtag", type: "button", onClick: () => emit("feed:tag", name) }, `#${name}`),
-    );
+    if (name === undefined) {
+      parts.push(h("a", { class: "post-link", href: match[0], target: "_blank", rel: "noopener noreferrer nofollow ugc" }, match[0]));
+    } else {
+      parts.push(
+        h("button", { class: "hashtag", type: "button", onClick: () => emit("feed:tag", name) }, `#${name}`),
+      );
+    }
     last = match.index + match[0].length;
   }
   parts.push(text.slice(last));

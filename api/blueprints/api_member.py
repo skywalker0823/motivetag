@@ -56,6 +56,7 @@ RESERVED = {
     "metrics",
     "privacy",
     "terms",
+    "nasa_apod",  # the APOD bot (module/apod.py)
 }
 EMAIL = re.compile(r"^[^@\s]+@[^@\s]+\.[^@\s]+$")
 MIN_PASSWORD = 8

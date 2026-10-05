@@ -31,6 +31,6 @@ def test_reads_all_parameters_in_batches_of_ten():
     assert len(names) > 10  # the case that broke a deploy
     ssm = FakeSsm({n: "value" for n in names[:-1]})
     found, invalid = fetch_params.get_parameters(ssm, names)
-    assert ssm.calls == 2
+    assert ssm.calls == -(-len(names) // 10)  # batches of ten, rounded up
     assert {p["Name"] for p in found} == set(names[:-1])
     assert invalid == [names[-1]]

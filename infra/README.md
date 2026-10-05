@@ -302,6 +302,37 @@ Each prints `{"Version": 1, "Tier": "Standard"}`. Then **Run workflow**. In 帳�
 subscribed: their subscriptions would stop working until they turn notifications on
 again.
 
+## Daily NASA picture (APOD, free)
+
+The member **NASA_APOD** posts NASA's Astronomy Picture of the Day every day
+(`module/apod.py`, `scripts/apod.py`), from the server's `motivetag-apod.timer` at
+14:00 and again at 20:00 Taiwan time (a day already posted is skipped). The account is
+created on its first run; nobody can sign in as it. It works with nothing set up.
+
+- **Post now** instead of waiting: GitHub → **Actions** → **APOD post** → **Run
+  workflow** (`dry-run` only shows the post). The GitHub app can do this too.
+- **Your own NASA key** (optional): without one the bot uses `DEMO_KEY`, which allows
+  30 calls an hour, plenty for two a day. A free key from https://api.nasa.gov raises
+  that:
+
+  ```bash
+  aws ssm put-parameter --name /motivetag/nasa-api-key --type SecureString --value 'YOUR_KEY' --region ap-east-2 --profile motivetag
+  ```
+
+- **Pictures that belong to their photographers**: NASA's own pictures are public
+  domain and are posted with the photo. Many APOD pictures are copyrighted by the
+  photographer (APOD shows their name); those days post the text, the credit and the
+  link only. To copy those pictures too (at your own risk; APOD asks you to get the
+  photographer's permission):
+
+  ```bash
+  aws ssm put-parameter --name /motivetag/apod-copyrighted-images --type String --value 1 --region ap-east-2 --profile motivetag
+  ```
+
+  (In CloudShell leave out `--profile motivetag`.) After either, **Run workflow** on CI.
+- Check the timer on the server: `systemctl list-timers motivetag-apod.timer` and
+  `journalctl -u motivetag-apod.service -n 20`.
+
 ## Backups
 
 - Daily at 03:00 Taipei time: `mysqldump` → gzip → `s3://<backup_bucket>/mysql/`
