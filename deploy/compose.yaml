@@ -44,7 +44,6 @@ services:
       CONTACT_EMAIL: ${CONTACT_EMAIL:-}
       VAPID_PUBLIC_KEY: ${VAPID_PUBLIC_KEY:-}
       VAPID_PRIVATE_KEY: ${VAPID_PRIVATE_KEY:-}
-      NASA_API_KEY: ${NASA_API_KEY:-}
       APOD_COPYRIGHTED_IMAGES: ${APOD_COPYRIGHTED_IMAGES:-}
     healthcheck:
       test: ["CMD", "python", "-c", "import urllib.request; urllib.request.urlopen('http://127.0.0.1:3000/healthz')"]

@@ -310,15 +310,10 @@ The member **NASA_APOD** posts NASA's Astronomy Picture of the Day every day
 created on its first run; nobody can sign in as it. It works with nothing set up.
 
 - **Post now** instead of waiting: GitHub → **Actions** → **APOD post** → **Run
-  workflow** (`dry-run` only shows the post). The GitHub app can do this too.
-- **Your own NASA key** (optional): without one the bot uses `DEMO_KEY`, which allows
-  30 calls an hour, plenty for two a day. A free key from https://api.nasa.gov raises
-  that:
-
-  ```bash
-  aws ssm put-parameter --name /motivetag/nasa-api-key --type SecureString --value 'YOUR_KEY' --region ap-east-2 --profile motivetag
-  ```
-
+  workflow** (`dry-run` only shows the post; `repost` deletes the bot's post for that
+  day and posts it again; **date** picks another day). The GitHub app can do this too.
+- The bot reads the day's page on apod.nasa.gov itself: api.nasa.gov's APOD API
+  returned NASA's logo and the title "NASA Science" on 2026-10-05.
 - **Pictures that belong to their photographers**: NASA's own pictures are public
   domain and are posted with the photo. Many APOD pictures are copyrighted by the
   photographer (APOD shows their name); those days post the text, the credit and the
@@ -329,7 +324,7 @@ created on its first run; nobody can sign in as it. It works with nothing set up
   aws ssm put-parameter --name /motivetag/apod-copyrighted-images --type String --value 1 --region ap-east-2 --profile motivetag
   ```
 
-  (In CloudShell leave out `--profile motivetag`.) After either, **Run workflow** on CI.
+  (In CloudShell leave out `--profile motivetag`.) Then **Run workflow** on CI.
 - Check the timer on the server: `systemctl list-timers motivetag-apod.timer` and
   `journalctl -u motivetag-apod.service -n 20`.
 

@@ -1,16 +1,21 @@
 # Posts today's NASA Astronomy Picture of the Day on the live site now, instead of
 # waiting for motivetag-apod.timer (scripts/apod.py): Actions → APOD post → Run
-# workflow. "dry-run" only shows the post. A day already posted is skipped.
+# workflow. "dry-run" only shows the post; "repost" deletes the bot's post for today
+# and posts it again (to fix a bad one). Otherwise a day already posted is skipped.
 name: APOD post
 
 on:
   workflow_dispatch:
     inputs:
       action:
-        description: post = post today's picture, dry-run = only show the post
+        description: post = post today's picture, dry-run = only show the post, repost = replace today's post
         type: choice
-        options: [post, dry-run]
+        options: [post, dry-run, repost]
         default: post
+      date:
+        description: Another day (YYYY-MM-DD), empty = today
+        type: string
+        required: false
 
 permissions:
   contents: read
@@ -33,14 +38,19 @@ jobs:
       - name: Run scripts/apod.py in the app container
         env:
           ACTION: ${{ inputs.action }}
+          DATE: ${{ inputs.date }}
         run: |
+          # The date becomes part of a shell command on the server: digits and dashes only.
+          if [ -n "$DATE" ] && ! [[ "$DATE" =~ ^[0-9]{4}-[0-9]{2}-[0-9]{2}$ ]]; then
+            echo "date must look like 2026-10-05"; exit 1
+          fi
           instance_id=$(aws ec2 describe-instances \
             --filters Name=tag:Project,Values=motivetag Name=instance-state-name,Values=running \
             --query 'Reservations[0].Instances[0].InstanceId' --output text)
-          params=$(jq -n --arg action "$ACTION" '{commands: [
+          params=$(jq -n --arg action "$ACTION" --arg date "$DATE" '{commands: [
             "set -e",
             "cd /srv/motivetag/app",
-            "docker compose exec -T app python scripts/apod.py \(if $action == "dry-run" then "--dry-run" else "" end)"
+            "docker compose exec -T app python scripts/apod.py \({"post": "", "dry-run": "--dry-run", "repost": "--replace"}[$action])\(if $date == "" then "" else " --date " + $date end)"
           ]}')
           command_id=$(aws ssm send-command --instance-ids "$instance_id" \
             --document-name AWS-RunShellScript --timeout-seconds 600 \
