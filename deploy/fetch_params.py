@@ -32,7 +32,6 @@ OPTIONAL = {
     "contact-email": "CONTACT_EMAIL",  # added by hand, see infra/README.md
     "vapid-public-key": "VAPID_PUBLIC_KEY",  # added by hand, see infra/README.md
     "vapid-private-key": "VAPID_PRIVATE_KEY",  # added by hand, see infra/README.md
-    "nasa-api-key": "NASA_API_KEY",  # added by hand, see infra/README.md
     "apod-copyrighted-images": "APOD_COPYRIGHTED_IMAGES",  # added by hand, see infra/README.md
 }
 

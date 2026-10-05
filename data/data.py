@@ -655,6 +655,15 @@ class Block:
             )
             return cursor.fetchone() is not None
 
+    def with_text(member_id, text):
+        """(block_id, block_img) of `member_id`'s posts containing `text`."""
+        with connection.cursor() as cursor:
+            cursor.execute(
+                "SELECT block_id, block_img FROM block WHERE member_id=%s AND content LIKE %s",
+                (member_id, "%" + text.replace("%", "\\%").replace("_", "\\_") + "%"),
+            )
+            return [(row["block_id"], row["block_img"]) for row in cursor.fetchall()]
+
     def modify_block(key, value):
         with connection.cursor() as cursor:
             result = cursor.execute("UPDATE block SET block_img=%s WHERE block_id=%s", (value, key))
