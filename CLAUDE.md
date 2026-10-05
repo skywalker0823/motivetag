@@ -345,9 +345,23 @@ sign-in protection (owner asked whether /admin is safe and for "god mode" tools)
 - Sign-up refuses a name in `ADMIN_ACCOUNTS` (case-insensitive), and admin checks
   in `/admin` actions compare case-insensitively (MySQL matches accounts that way).
 
-**On branch `claude/beautiful-faraday-a61bzb` (not merged yet)**: admins see a
-"管理後台" button on their profile card (under 我 on phones), with the number of open
-reports; the member page template gets `admin` only when `is_admin()`.
+**Done in PR #51:** admins see a "管理後台" button on their profile card (under 我 on
+phones), with the number of open reports.
+
+**On branch `claude/beautiful-faraday-a61bzb` (not merged yet)**: daily NASA APOD post.
+- Bot member `NASA_APOD` (`module/apod.py`; e-mail `nasa_apod@bots.motivetag.com`,
+  random unsaved password, name reserved at sign-up) posts the Astronomy Picture of
+  the Day as a PUBLIC post with #APOD #天文 #NASA: title, English explanation (cut to
+  `POST_MAX`), credit and the apod.nasa.gov page link (also the repeat check,
+  `Block.posted_with`). Public-domain pictures are copied to S3 as `block_<id>`;
+  copyrighted ones (APOD `copyright` field) post text + link only unless
+  `/motivetag/apod-copyrighted-images` = 1; videos post the link.
+- `scripts/apod.py` (`--dry-run`) runs from `motivetag-apod.timer` (14:00 and 20:00
+  Taiwan time, installed by deploy.sh) and from the **APOD post** workflow.
+  Optional `/motivetag/nasa-api-key` (else `DEMO_KEY`). infra/README.md "Daily NASA
+  picture". The sandbox blocks api.nasa.gov: tested with faked NASA/S3 only.
+- Links in posts are now clickable (`LINK` in `static/js/pages/member/post.js`,
+  http(s), ASCII only, `rel="noopener noreferrer nofollow ugc"`).
 
 **UI/UX backlog (offered 2026-10-04, owner to pick)**
 - Phones: move 登出 out of the top bar into 我 / 帳號設定; put 聊天 and 通知 in the

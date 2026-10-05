@@ -646,6 +646,15 @@ class Block:
             connection.commit()
             return got != 0
 
+    def posted_with(member_id, text):
+        """Whether `member_id` has a post containing `text` (bots check for repeats)."""
+        with connection.cursor() as cursor:
+            cursor.execute(
+                "SELECT 1 FROM block WHERE member_id=%s AND content LIKE %s LIMIT 1",
+                (member_id, "%" + text.replace("%", "\\%").replace("_", "\\_") + "%"),
+            )
+            return cursor.fetchone() is not None
+
     def modify_block(key, value):
         with connection.cursor() as cursor:
             result = cursor.execute("UPDATE block SET block_img=%s WHERE block_id=%s", (value, key))

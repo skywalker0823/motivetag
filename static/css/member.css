@@ -899,6 +899,11 @@ html {
   cursor: pointer;
 }
 
+.post-link {
+  color: var(--accent);
+  overflow-wrap: anywhere;
+}
+
 .hashtag:hover {
   text-decoration: underline;
 }

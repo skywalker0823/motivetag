@@ -43,7 +43,8 @@ mv certs/origin.key.new certs/origin.key
 # SECRET_KEY, DB_PASSWORD, DB_ROOT_PASSWORD, BACKUP_BUCKET, ALERT_TOPIC_ARN,
 # SENTRY_DSN, EMAIL_FROM, SES_REGION, TURNSTILE_SITE_KEY, TURNSTILE_SECRET,
 # GRAFANA_PROM_URL, GRAFANA_PROM_USER, GRAFANA_CLOUD_TOKEN, ADMIN_ACCOUNTS,
-# CONTACT_EMAIL, VAPID_PUBLIC_KEY, VAPID_PRIVATE_KEY
+# CONTACT_EMAIL, VAPID_PUBLIC_KEY, VAPID_PRIVATE_KEY, NASA_API_KEY,
+# APOD_COPYRIGHTED_IMAGES
 # shellcheck source=/dev/null
 . ./params.env
 rm params.env
@@ -76,11 +77,14 @@ ADMIN_ACCOUNTS=$ADMIN_ACCOUNTS
 CONTACT_EMAIL=$CONTACT_EMAIL
 VAPID_PUBLIC_KEY=$VAPID_PUBLIC_KEY
 VAPID_PRIVATE_KEY=$VAPID_PRIVATE_KEY
+NASA_API_KEY=$NASA_API_KEY
+APOD_COPYRIGHTED_IMAGES=$APOD_COPYRIGHTED_IMAGES
 COMPOSE_PROFILES=$PROFILES
 ENV
 }
 
-# Backup and restore-drill scripts and their systemd timers ship in the image too.
+# Backup and restore-drill scripts and the systemd timers (backup, restore drill, the
+# daily NASA APOD post) ship in the image too.
 install_jobs() {
   local cid
   cid=$(docker create "$IMAGE")
@@ -90,7 +94,7 @@ install_jobs() {
   docker rm "$cid" >/dev/null
   chmod 644 /etc/systemd/system/motivetag-*
   systemctl daemon-reload
-  systemctl enable --now motivetag-backup.timer motivetag-restore-drill.timer
+  systemctl enable --now motivetag-backup.timer motivetag-restore-drill.timer motivetag-apod.timer
 }
 
 # The public path (Cloudflare → origin certificate → security group → nginx) checked

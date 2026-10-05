@@ -1,0 +1,10 @@
+[Unit]
+Description=Post NASA's Astronomy Picture of the Day on motivetag (scripts/apod.py)
+Requires=docker.service
+After=docker.service
+
+[Service]
+Type=oneshot
+WorkingDirectory=/srv/motivetag/app
+ExecStart=/usr/bin/docker compose exec -T app python scripts/apod.py
+TimeoutStartSec=5min
