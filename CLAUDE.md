@@ -363,15 +363,20 @@ phones), with the number of open reports.
 - Links in posts are clickable (`LINK` in `static/js/pages/member/post.js`, http(s),
   ASCII only, `rel="noopener noreferrer nofollow ugc"`).
 
-**On branch `claude/beautiful-faraday-a61bzb` (not merged yet)**: the APOD bot reads
-apod.nasa.gov's day page itself (`apod.parse`). api.nasa.gov's APOD API broke on
-2026-10-05 (title "NASA Science", NASA's logo as the picture, no copyright for a
-photographer's picture), so the API and `/motivetag/nasa-api-key` are gone. Pictures
-only from `apod.nasa.gov/apod/image/`; an unreadable credit counts as copyrighted; an
-unreadable page posts nothing (error). The sandbox blocks apod.nasa.gov, so the
-parser is tested on hand-made pages in APOD's layout, not the live page. The broken
-2026-10-05 post (if the timer made one) is fixed with the workflow's `repost` +
-date 2026-10-05.
+**Done in PR #53:** the APOD bot stopped using api.nasa.gov (broken 2026-10-05) and
+gained `--replace` / `--date` (workflow: repost, date). Its guess at the old page
+layout was wrong: the first real run refused to post ("could not read the APOD page").
+
+**On branch `claude/beautiful-faraday-a61bzb` (not merged yet)**: APOD moved to NASA
+Science's WordPress site (apod.nasa.gov/apod/apYYMMDD.html redirects to
+science.nasa.gov/apod/). `apod.parse` now reads the "media-detail-hero" block: the
+picture (`assets.science.nasa.gov/.../apod/...`, fetched at `?w=2048&fit=clip`), the
+`<h2>` title, the `media-detail-hero__description` (up to "Your Sky Surprise"), the
+permalink (`science.nasa.gov/image-article/apod-...`, used as the post's link), and the
+meta table (Date must match, else "not up yet"; "Credit & Copyright" = copyrighted).
+Never the page's og:image (stale). Tested against the real page the owner pasted,
+kept as `tests/fixtures/apod_2026-10-05.html`. Posts are found again by their first
+line `NASA 每日天文圖 <date>` (`apod.heading`).
 
 **UI/UX backlog (offered 2026-10-04, owner to pick)**
 - Phones: move 登出 out of the top bar into 我 / 帳號設定; put 聊天 and 通知 in the

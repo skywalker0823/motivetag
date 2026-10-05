@@ -312,8 +312,11 @@ created on its first run; nobody can sign in as it. It works with nothing set up
 - **Post now** instead of waiting: GitHub → **Actions** → **APOD post** → **Run
   workflow** (`dry-run` only shows the post; `repost` deletes the bot's post for that
   day and posts it again; **date** picks another day). The GitHub app can do this too.
-- The bot reads the day's page on apod.nasa.gov itself: api.nasa.gov's APOD API
-  returned NASA's logo and the title "NASA Science" on 2026-10-05.
+- The bot reads the day's APOD page itself (apod.nasa.gov now redirects to
+  science.nasa.gov/apod/): api.nasa.gov's APOD API returned NASA's logo and the title
+  "NASA Science" on 2026-10-05. If NASA changes the page again, the bot posts nothing
+  and the workflow fails with "could not read the APOD page"; save the page's source
+  as a new file in `tests/fixtures/` so the parser can be fixed against it.
 - **Pictures that belong to their photographers**: NASA's own pictures are public
   domain and are posted with the photo. Many APOD pictures are copyrighted by the
   photographer (APOD shows their name); those days post the text, the credit and the
