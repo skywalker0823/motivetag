@@ -5,11 +5,14 @@ motivetag-apod.timer). The bot is an ordinary member nobody can sign in as (a ra
 password that is never stored), so its posts show in 探索 and under #APOD, and can be
 liked, commented on and reported like any other.
 
-The day's page on apod.nasa.gov is read directly. (api.nasa.gov's APOD API scrapes the
-same page and broke on 2026-10-05: title "NASA Science", NASA's logo as the picture,
-and no copyright for a photographer's picture.) APOD's pictures always live under
-apod.nasa.gov/apod/image/, and its credit line says "Copyright" when the picture
-belongs to the photographer.
+The day's page is read directly. APOD moved to NASA Science's WordPress site
+(science.nasa.gov; apod.nasa.gov/apod/apYYMMDD.html redirects there) and api.nasa.gov's
+APOD API broke with it on 2026-10-05 (title "NASA Science", NASA's logo as the picture,
+no copyright for a photographer's picture). On the new page everything lives in the
+"media-detail-hero" block: the picture (assets.science.nasa.gov/.../apod/...), an
+<h2> title, the "media-detail-hero__description" paragraph, and a table whose rows
+give the Date and the "Credit" or "Credit & Copyright". The page's og:image is stale
+and never used. A copy of the page is in tests/fixtures/apod_2026-10-05.html.
 
 Pictures without a copyright are copied to our bucket like an uploaded photo; a
 photographer's picture posts the credit and link only, unless
@@ -41,24 +44,24 @@ IMAGE_TYPES = {"image/jpeg", "image/png", "image/gif", "image/webp"}
 MAX_IMAGE_BYTES = 5 * 1024 * 1024
 TIMEOUT = 30
 
-IMAGE = re.compile(
-    r"""<img[^>]+src\s*=\s*["']?((?:https://apod\.nasa\.gov/apod/)?image/\d{4}/[^"'\s>]+)""", re.I
+HERO = re.compile(r'class="[^"]*\bmedia-detail-hero\b', re.I)
+MEDIA = re.compile(r"media-detail-hero__media(.*?)<h2", re.I | re.S)
+IMG = re.compile(r"""<img[^>]+?\ssrc\s*=\s*["']([^"']+)""", re.I)
+IFRAME = re.compile(r"""<iframe[^>]+?\ssrc\s*=\s*["']([^"']+)""", re.I)
+PERMALINK = re.compile(
+    r"""href\s*=\s*["'](https://science\.nasa\.gov/image-article/apod-[^"'#?]+)""", re.I
 )
-IMAGE_LINK = re.compile(
-    r"""href\s*=\s*["']?((?:https://apod\.nasa\.gov/apod/)?image/\d{4}/[^"'\s>]+\.(?:jpe?g|png|gif))""",
-    re.I,
+TITLE = re.compile(r"<h2[^>]*>(.*?)</h2>", re.I | re.S)
+DESCRIPTION = re.compile(r'media-detail-hero__description"[^>]*>(.*?)</p>', re.I | re.S)
+DESCRIPTION_END = re.compile(
+    r"<br\s*/?>\s*<br|Your Sky Surprise|Tomorrow(?:'|&#0?39;|&rsquo;|’)s picture", re.I
 )
-IFRAME = re.compile(r"""<iframe[^>]+src\s*=\s*["']?([^"'\s>]+)""", re.I)
-BOLD = re.compile(r"<b>(.*?)</b>", re.I | re.S)
-TITLE_TAG = re.compile(r"<title>\s*APOD:[^<]*?-\s*(.*?)\s*</title>", re.I | re.S)
-EXPLANATION = re.compile(r"Explanation\s*:?\s*(?:</b>)?(.*)", re.I | re.S)
-EXPLANATION_END = re.compile(
-    r"<p>\s*<center>|Tomorrow(?:'|&#0?39;|&rsquo;|’)s picture|Your Sky Surprise", re.I
+META_ROW = re.compile(r"<th[^>]*>(.*?)</th>\s*<td[^>]*>(.*?)</td>", re.I | re.S)
+# Where APOD's pictures may come from; anything else (a logo, a stale og:image) is not one.
+PICTURE = re.compile(
+    r"^https://(?:assets\.science\.nasa\.gov/[^?#]*/apod/|apod\.nasa\.gov/apod/image/)", re.I
 )
-CREDIT_LABEL = re.compile(
-    r"^(?:image|video|illustration|animation|data)?[\s,&]*credits?[\w\s,&]*?:\s*", re.I
-)
-NOT_TITLES = re.compile(r"credit|copyright|explanation|tomorrow|^nasa science$", re.I)
+PICTURE_WIDTH = 2048  # assets.science.nasa.gov resizes on request (?w=); originals are huge
 
 
 class _Missing(Exception):
@@ -96,44 +99,54 @@ def _text(fragment):
 
 
 def parse(page, date):
-    """The entry for one APOD page: {date, title, explanation, media_type, url, credit,
-    copyright}. `url` is the picture (only ever under apod.nasa.gov/apod/image/) or
-    the video; `copyright` is True when the credit says so or cannot be read."""
-    base = page_url(date)
-    image = IMAGE.search(page) or IMAGE_LINK.search(page)
-    start = image.end() if image else 0
-    title, title_end = "", None
-    for match in BOLD.finditer(page, start):
-        text = _text(match.group(1))
-        if text and not NOT_TITLES.search(text):
-            title, title_end = text, match.end()
-            break
-    if not title:
-        tag = TITLE_TAG.search(page)
-        title = _text(tag.group(1)) if tag else ""
-    explanation_match = EXPLANATION.search(page, title_end or start)
+    """The entry for one APOD page: {date, title, explanation, media_type, url, link,
+    credit, copyright}, or None when the page shows another day (not up yet).
+    `url` is the picture (only ever from PICTURE) or the video; `link` the day's
+    permanent page; `copyright` is True when the credit says so or cannot be read."""
+    hero = HERO.search(page)
+    body = page[hero.start() :] if hero else ""
+    rows = {_text(label).rstrip(":"): cell for label, cell in META_ROW.findall(body)}
+    shown = rows.get("Date")
+    if shown:
+        try:
+            if datetime.strptime(_text(shown), "%B %d, %Y").strftime("%Y-%m-%d") != date:
+                return None
+        except ValueError:
+            pass
+    media = MEDIA.search(body)
+    media_html = media.group(1) if media else ""
+    image = IMG.search(media_html)
+    video = IFRAME.search(media_html)
+    permalink = PERMALINK.search(media_html)
+    title = TITLE.search(body)
+    description = DESCRIPTION.search(body)
     explanation = ""
-    credit_html = None
-    if explanation_match:
-        body = explanation_match.group(1)
-        end = EXPLANATION_END.search(body)
-        explanation = _text(body[: end.start()] if end else body)
-        if title_end is not None:
-            credit_html = page[title_end : explanation_match.start()]
-    credit = _text(credit_html or "")
-    copyrighted = credit_html is None or "copyright" in credit.lower() or "©" in credit
-    credit = CREDIT_LABEL.sub("", credit).strip(" :")
-    if image:
-        media_type, url = "image", urllib.parse.urljoin(base, image.group(1))
+    if description:
+        text = description.group(1)
+        end = DESCRIPTION_END.search(text)
+        explanation = _text(text[: end.start()] if end else text)
+        explanation = re.sub(r"^Explanation\s*:\s*", "", explanation, flags=re.I)
+    credit_label = next((label for label in rows if "credit" in label.lower()), None)
+    credit = _text(rows[credit_label]) if credit_label else ""
+    copyrighted = (
+        credit_label is None
+        or "copyright" in credit_label.lower()
+        or "copyright" in credit.lower()
+        or "©" in credit
+    )
+    if image and PICTURE.match(html.unescape(image.group(1))):
+        media_type, url = "image", html.unescape(image.group(1))
+    elif video:
+        media_type, url = "video", html.unescape(video.group(1))
     else:
-        video = IFRAME.search(page)
-        media_type, url = ("video", video.group(1)) if video else ("other", None)
+        media_type, url = "other", None
     return {
         "date": date,
-        "title": title,
+        "title": _text(title.group(1)) if title else "",
         "explanation": explanation,
         "media_type": media_type,
         "url": url,
+        "link": permalink.group(1) if permalink else page_url(date),
         "credit": credit,
         "copyright": copyrighted,
     }
@@ -141,13 +154,18 @@ def parse(page, date):
 
 def fetch(date=None):
     """The APOD entry for `date` (default: today in APOD's time zone), or None when
-    that day's page is not up yet."""
+    that day's page is not up yet (missing, or showing another day)."""
     date = date or apod_today()
     try:
         body, _ = _get(page_url(date))
     except _Missing:
         return None
     return parse(body.decode("utf-8", "replace"), date)
+
+
+def heading(date):
+    """The first line of a day's post; also how the bot finds that post again."""
+    return f"NASA 每日天文圖 {date}"
 
 
 def compose(entry):
@@ -162,8 +180,9 @@ def compose(entry):
     elif entry.get("copyright") and not copyrighted_images():
         line += "\n請點連結觀看照片"
     title = entry.get("title") or "（無標題）"
-    head = f"🌌 NASA 每日天文圖 {entry['date']}\n{title}\n\n"
-    tail = f"\n\n{line}\n🔗 {page_url(entry['date'])}\n" + " ".join(f"#{t}" for t in TAGS)
+    head = f"🌌 {heading(entry['date'])}\n{title}\n\n"
+    link = entry.get("link") or page_url(entry["date"])
+    tail = f"\n\n{line}\n🔗 {link}\n" + " ".join(f"#{t}" for t in TAGS)
     explanation = " ".join((entry.get("explanation") or "").split())
     room = rules.POST_MAX - len(head) - len(tail)
     if len(explanation) > room:
@@ -199,8 +218,10 @@ def attach_image(block_id, entry):
     if entry.get("copyright") and not copyrighted_images():
         return False
     url = entry.get("url") or ""
-    if not url.startswith(SITE + "image/"):
+    if not PICTURE.match(url):
         return False
+    if url.startswith("https://assets.science.nasa.gov/"):
+        url = f"{url.split('?')[0]}?w={PICTURE_WIDTH}&fit=clip"
     body, content_type = _get(url, MAX_IMAGE_BYTES)
     if len(body) > MAX_IMAGE_BYTES or content_type not in IMAGE_TYPES:
         return False
@@ -221,15 +242,15 @@ def post_today(entry=None, replace=False):
         # The page looks nothing like APOD's: better no post than a wrong one.
         raise RuntimeError(f"could not read the APOD page for {entry['date']}")
     member_id = bot_id()
-    page = page_url(entry["date"])
+    marker = heading(entry["date"])
     if replace:
         from api.v1.account import remove_images  # the blueprints import v1
 
-        for block_id, image in Block.with_text(member_id, page):
+        for block_id, image in Block.with_text(member_id, marker):
             Block.delete_block(member_id, block_id)
             if image:
                 remove_images([image])
-    elif Block.posted_with(member_id, page):
+    elif Block.posted_with(member_id, marker):
         return {"posted": False, "date": entry["date"], "reason": "already posted"}
     content = compose(entry)
     result = Block.create_my_block(
