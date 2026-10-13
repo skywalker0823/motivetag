@@ -96,6 +96,11 @@ uses it as a portfolio project for interviews. Read this first, then `README.md`
   `date.today()` are UTC: code and tests must use `taipei_datetime()`, or they go
   wrong between 00:00 and 08:00 Taiwan time (main's CI after PR #48 failed at 00:04
   on the streak test; the 18+ rule refused people on their birthday until 08:00).
+- pip-audit fails CI (and so skips the deploy) as soon as a new CVE is published
+  for a locked package, even when nothing changed in the code (2026-10-13,
+  werkzeug). Fix: `uv lock --upgrade-package <name>`, then check with
+  `uv export --frozen --no-dev --no-hashes --format requirements-txt > r.txt &&
+  uvx pip-audit --strict -r r.txt`.
 - Playwright's `route()` turns the browser HTTP cache off; block external hosts with
   `--host-resolver-rules` when measuring caching.
 
@@ -379,13 +384,17 @@ Never the page's og:image (stale). Tested against the real page the owner pasted
 kept as `tests/fixtures/apod_2026-10-05.html`. Posts are found again by their first
 line `NASA 每日天文圖 <date>` (`apod.heading`).
 
-**On branch `claude/beautiful-faraday-a61bzb` (not merged yet)**: small fixes.
+**Done in PR #55** (deployed only with the werkzeug fix below): small fixes.
 - The 18+ sign-up rule and the age on member cards use Taiwan's date (they used the
   server's UTC date / MySQL `CURDATE()`, a day behind until 08:00).
 - Bots (`@bots.motivetag.com`, i.e. NASA_APOD) are left out of /admin member counts,
   daily sign-ups, top levels and announcements; 會員 shows a 機器人 badge; a bot's
   member card shows no age.
 - Links and #tags in comments are clickable, like in posts.
+
+**On branch `claude/beautiful-faraday-a61bzb` (not merged yet)**: werkzeug 3.1.8 →
+3.1.9 (CVE-2026-102598). pip-audit failed main's CI after PR #55, so that PR did not
+deploy until this one.
 
 **UI/UX backlog (offered 2026-10-04, owner to pick)**
 - Phones: move 登出 out of the top bar into 我 / 帳號設定; put 聊天 and 通知 in the
