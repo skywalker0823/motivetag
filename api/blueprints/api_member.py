@@ -7,7 +7,7 @@ from api.metrics import auth_event
 from data.data import Friend, Member, Member_tags, MemberBlock, Notification
 from module import email_verification, invites, lockout, rules, suspension, turnstile
 from module.auth import login_required
-from module.clock import taipei_now
+from module.clock import taipei_datetime, taipei_now
 from module.disposable import is_disposable
 
 from . import api_member
@@ -87,9 +87,10 @@ def signup_error(data):
         birthday = date(*map(int, data["birthday"].split("-")))
     except (TypeError, ValueError):
         return "生日格式不正確"
-    if not date(1900, 1, 1) <= birthday <= date.today():
+    today = taipei_datetime().date()  # the server's own clock is UTC
+    if not date(1900, 1, 1) <= birthday <= today:
         return "生日格式不正確"
-    if age_on(birthday, date.today()) < MIN_AGE:
+    if age_on(birthday, today) < MIN_AGE:
         return f"需年滿 {MIN_AGE} 歲才能註冊"
     return None
 

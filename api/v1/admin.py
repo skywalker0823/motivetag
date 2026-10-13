@@ -238,6 +238,7 @@ def _member(row):
         "account": row["account"],
         "email": row["email"],
         "demo": row["email"].endswith(AdminData.DEMO_DOMAIN[1:]),
+        "bot": row["email"].endswith(AdminData.BOT_DOMAIN[1:]),
         "admin": _is_admin_account(row["account"]),
         "verified": row["email_verified_at"] is not None,
         "joined": row["first_signup"].isoformat() if row["first_signup"] else None,

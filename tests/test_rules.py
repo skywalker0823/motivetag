@@ -221,3 +221,38 @@ def test_emoji_can_be_posted_and_commented(member):
         "/api/message", json={"block_id": block["block_id"], "message": "👍", "score": 0}
     )
     assert reply.get_json()["comment"]["content"] == "👍"
+
+
+def test_age_rule_uses_taiwan_dates(client, monkeypatch):
+    """The 18+ rule counts days in Taiwan time, not the server's UTC date (a day
+    behind until 08:00). The clock is frozen far from today, so only the Taiwan date
+    can let this birthday through."""
+    import importlib
+    import uuid
+    from datetime import datetime
+
+    # `from api.blueprints import api_member` would be the Blueprint, not the module.
+    api_member = importlib.import_module("api.blueprints.api_member")
+    monkeypatch.setattr(api_member, "taipei_datetime", lambda: datetime(2031, 1, 1, 1, 0))
+    tag = uuid.uuid4().hex[:8]
+    base = {"password": "long-enough-pw", "first_signup": "2031-01-01"}
+    ok = client.post(
+        "/api/member",
+        json={
+            **base,
+            "account": f"a{tag}",
+            "email": f"a{tag}@example.com",
+            "birthday": "2013-1-1",
+        },
+    )
+    assert ok.get_json().get("ok"), ok.get_json()
+    young = client.post(
+        "/api/member",
+        json={
+            **base,
+            "account": f"b{tag}",
+            "email": f"b{tag}@example.com",
+            "birthday": "2013-1-2",
+        },
+    )
+    assert young.status_code == 400

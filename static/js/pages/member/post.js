@@ -506,7 +506,7 @@ function renderComment(comment) {
           ),
         timeAgo(comment.build_time),
       ),
-      h("p", { class: "comment__text" }, comment.content),
+      h("p", { class: "comment__text" }, withHashtags(comment.content)),
       like,
       !mine &&
         comment.comment_id !== null &&
