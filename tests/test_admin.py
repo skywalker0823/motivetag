@@ -154,3 +154,24 @@ def test_member_page_links_admins_to_admin(admin, member):
     assert 'href="/admin"' in client.get(f"/{account}").get_data(as_text=True)
     alice, _, alice_account = member()
     assert 'href="/admin"' not in alice.get(f"/{alice_account}").get_data(as_text=True)
+
+
+def test_bots_are_not_counted_as_members_or_told_announcements(admin, app, query):
+    from module import apod
+
+    client, _ = admin
+    query("DELETE FROM member WHERE account=%s", apod.BOT_ACCOUNT)
+    with app.app_context():
+        bot_id = apod.bot_id()
+    try:
+        before = client.get("/api/v1/admin/stats").get_json()["data"]["members"]
+        assert before["bots"] >= 1
+        found = client.get(f"/api/v1/admin/members?q={apod.BOT_ACCOUNT}").get_json()["data"]
+        assert found[0]["bot"] is True
+        client.post("/api/v1/admin/announcements", json={"message": "bots skip this"})
+        assert not query("SELECT 1 FROM notifi WHERE reciever_id=%s", bot_id)
+        # The bot's member card shows no age.
+        card = client.get(f"/api/get_user_sp?member_id={bot_id}").get_json()["data"]
+        assert card["age"] is None
+    finally:
+        query("DELETE FROM member WHERE account=%s", apod.BOT_ACCOUNT)

@@ -85,7 +85,7 @@ export async function loadStats(root) {
       h(
         "div",
         { class: "stat-grid" },
-        tile("會員", m.members - m.demo, `另有示範帳號 ${m.demo}`),
+        tile("會員", m.members - m.demo - m.bots, `另有示範帳號 ${m.demo}、機器人 ${m.bots}`),
         tile("現在在線", data.online),
         tile("今日活躍", m.active_today, `7 天內 ${m.active_week}`),
         tile("今日新註冊", m.new_today, `7 天內 ${m.new_week}`),

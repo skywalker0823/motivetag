@@ -6,6 +6,7 @@ from flask import g
 from werkzeug.security import check_password_hash, generate_password_hash
 
 from config import db_settings
+from module.clock import taipei_datetime
 
 settings = db_settings()
 
@@ -247,10 +248,13 @@ class Member:
         """What any member may see about another: age, never the full birthday."""
         with connection.cursor() as cursor:
             cursor.execute(
-                """SELECT account, TIMESTAMPDIFF(YEAR, birthday, CURDATE()) AS age,
+                """SELECT account,
+                          IF(email LIKE %s, NULL, TIMESTAMPDIFF(YEAR, birthday, %s)) AS age,
                           first_signup, last_signin, mood, exp
                    FROM member WHERE member_id=%s""",
-                (member_id,),
+                # Bots have no age. Today is Taiwan's: MySQL's CURDATE() is UTC, a day
+                # behind until 08:00.
+                ("%@bots.motivetag.com", taipei_datetime().date(), member_id),
             )
             data = cursor.fetchone()
             return data
@@ -1376,15 +1380,18 @@ class Suspension:
 
 class AdminData:
     """Counts, member lookups and the action log for /admin (api/v1/admin.py).
-    Demo members (scripts/demo_data.py) have e-mails at DEMO_DOMAIN."""
+    Demo members (scripts/demo_data.py) have e-mails at DEMO_DOMAIN, bots such as
+    NASA_APOD (module/apod.py) at BOT_DOMAIN; neither counts as a real member."""
 
     DEMO_DOMAIN = "%@demo.motivetag.com"
+    BOT_DOMAIN = "%@bots.motivetag.com"
 
     def overview(now, today, week_start):
         with connection.cursor() as cursor:
             cursor.execute(
                 """SELECT COUNT(*) AS members,
                      SUM(email LIKE %s) AS demo,
+                     SUM(email LIKE %s) AS bots,
                      SUM(email_verified_at IS NOT NULL) AS verified,
                      SUM(first_signup = %s) AS new_today,
                      SUM(first_signup >= %s) AS new_week,
@@ -1392,7 +1399,15 @@ class AdminData:
                      SUM(last_active_day >= %s) AS active_week,
                      SUM(suspended_until > %s) AS suspended
                    FROM member""",
-                (AdminData.DEMO_DOMAIN, today, week_start, today, week_start, now),
+                (
+                    AdminData.DEMO_DOMAIN,
+                    AdminData.BOT_DOMAIN,
+                    today,
+                    week_start,
+                    today,
+                    week_start,
+                    now,
+                ),
             )
             members = cursor.fetchone()
             counts = {}
@@ -1422,8 +1437,9 @@ class AdminData:
         with connection.cursor() as cursor:
             cursor.execute(
                 """SELECT first_signup AS day, COUNT(*) AS n FROM member
-                   WHERE first_signup >= %s AND email NOT LIKE %s GROUP BY first_signup""",
-                (since, AdminData.DEMO_DOMAIN),
+                   WHERE first_signup >= %s AND email NOT LIKE %s AND email NOT LIKE %s
+                   GROUP BY first_signup""",
+                (since, AdminData.DEMO_DOMAIN, AdminData.BOT_DOMAIN),
             )
             signups = {row["day"]: row["n"] for row in cursor.fetchall()}
             cursor.execute(
@@ -1448,9 +1464,9 @@ class AdminData:
     def top_levels(limit=5):
         with connection.cursor() as cursor:
             cursor.execute(
-                """SELECT account, exp FROM member WHERE email NOT LIKE %s
+                """SELECT account, exp FROM member WHERE email NOT LIKE %s AND email NOT LIKE %s
                    ORDER BY exp DESC, account LIMIT %s""",
-                (AdminData.DEMO_DOMAIN, limit),
+                (AdminData.DEMO_DOMAIN, AdminData.BOT_DOMAIN, limit),
             )
             return cursor.fetchall()
 
@@ -1490,13 +1506,13 @@ class AdminData:
         connection.commit()
 
     def broadcast(sender_id, content, time):
-        """A bell notification to every member but demo ones and the sender."""
+        """A bell notification to every member but demo ones, bots and the sender."""
         with connection.cursor() as cursor:
             count = cursor.execute(
                 """INSERT INTO notifi (sender_id, reciever_id, content, send_time)
                    SELECT %s, member_id, %s, %s FROM member
-                   WHERE member_id <> %s AND email NOT LIKE %s""",
-                (sender_id, content, time, sender_id, AdminData.DEMO_DOMAIN),
+                   WHERE member_id <> %s AND email NOT LIKE %s AND email NOT LIKE %s""",
+                (sender_id, content, time, sender_id, AdminData.DEMO_DOMAIN, AdminData.BOT_DOMAIN),
             )
         connection.commit()
         return count

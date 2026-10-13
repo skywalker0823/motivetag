@@ -134,6 +134,7 @@ function memberCard(m) {
       m.online && badge("在線", "member-badge--online"),
       m.admin && badge("管理員"),
       m.demo && badge("示範"),
+      m.bot && badge("機器人"),
       !m.verified && badge("Email 未驗證", "member-badge--warn"),
       m.suspended && badge(`停權 ${untilText(m.suspended_until)}`, "member-badge--danger"),
     ),

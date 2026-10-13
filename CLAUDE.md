@@ -92,9 +92,10 @@ uses it as a portfolio project for interviews. Read this first, then `README.md`
   until fixed). The Dockerfile runs `apt-get upgrade`, rebuilt weekly through the
   `SECURITY_REFRESH` build argument (ISO week). The sandbox proxy blocks
   deb.debian.org, so that layer cannot be checked locally; CI shows it.
-- The app counts days in Taiwan time, MySQL's `CURDATE()` is UTC: tests must build
-  dates with `taipei_datetime()`, or they fail between 00:00 and 08:00 Taiwan time
-  (main's CI after PR #48 failed at 00:04 on the streak test).
+- The app counts days in Taiwan time, MySQL's `CURDATE()` and the container's
+  `date.today()` are UTC: code and tests must use `taipei_datetime()`, or they go
+  wrong between 00:00 and 08:00 Taiwan time (main's CI after PR #48 failed at 00:04
+  on the streak test; the 18+ rule refused people on their birthday until 08:00).
 - Playwright's `route()` turns the browser HTTP cache off; block external hosts with
   `--host-resolver-rules` when measuring caching.
 
@@ -367,7 +368,7 @@ phones), with the number of open reports.
 gained `--replace` / `--date` (workflow: repost, date). Its guess at the old page
 layout was wrong: the first real run refused to post ("could not read the APOD page").
 
-**On branch `claude/beautiful-faraday-a61bzb` (not merged yet)**: APOD moved to NASA
+**Done in PR #54**: APOD moved to NASA
 Science's WordPress site (apod.nasa.gov/apod/apYYMMDD.html redirects to
 science.nasa.gov/apod/). `apod.parse` now reads the "media-detail-hero" block: the
 picture (`assets.science.nasa.gov/.../apod/...`, fetched at `?w=2048&fit=clip`), the
@@ -377,6 +378,14 @@ meta table (Date must match, else "not up yet"; "Credit & Copyright" = copyright
 Never the page's og:image (stale). Tested against the real page the owner pasted,
 kept as `tests/fixtures/apod_2026-10-05.html`. Posts are found again by their first
 line `NASA 每日天文圖 <date>` (`apod.heading`).
+
+**On branch `claude/beautiful-faraday-a61bzb` (not merged yet)**: small fixes.
+- The 18+ sign-up rule and the age on member cards use Taiwan's date (they used the
+  server's UTC date / MySQL `CURDATE()`, a day behind until 08:00).
+- Bots (`@bots.motivetag.com`, i.e. NASA_APOD) are left out of /admin member counts,
+  daily sign-ups, top levels and announcements; 會員 shows a 機器人 badge; a bot's
+  member card shows no age.
+- Links and #tags in comments are clickable, like in posts.
 
 **UI/UX backlog (offered 2026-10-04, owner to pick)**
 - Phones: move 登出 out of the top bar into 我 / 帳號設定; put 聊天 and 通知 in the
