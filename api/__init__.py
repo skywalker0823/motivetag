@@ -63,10 +63,12 @@ def create_app(config_name):
 
     from api.assets import init_assets
     from api.metrics import init_metrics
+    from api.security import init_security
 
     init_assets(app)
     init_metrics(app)
     init_suspension(app)
+    init_security(app)
     from api.blueprints.api_blocks import api_blocks
     from api.blueprints.api_bricks import api_bricks
     from api.blueprints.api_chat import api_chat

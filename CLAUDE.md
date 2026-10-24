@@ -392,9 +392,23 @@ line `NASA 每日天文圖 <date>` (`apod.heading`).
   member card shows no age.
 - Links and #tags in comments are clickable, like in posts.
 
-**On branch `claude/beautiful-faraday-a61bzb` (not merged yet)**: werkzeug 3.1.8 →
-3.1.9 (CVE-2026-102598). pip-audit failed main's CI after PR #55, so that PR did not
-deploy until this one.
+**Done in PR #56:** werkzeug 3.1.8 → 3.1.9 (CVE-2026-102598).
+
+**On branch `claude/beautiful-faraday-a61bzb` (not merged yet)**: security pass
+(owner, 2026-10-24: "recent security incidents look serious, check what to harden").
+- aiohttp 3.14.3 → 3.14.5 and certifi → 2026.10.23 (pip-audit clean again).
+- Migration 0012 hashes any password still stored in plain text (old accounts from
+  before hashing; sign-in already accepted both). No downgrade needed.
+- Content-Security-Policy from the app (`api/security.py`), with a per-response
+  nonce: every `<script>` in templates needs `nonce="{{ csp_nonce() }}"`, or it does
+  not run. New outside hosts (a CDN, an embed) must be added to the policy there.
+  Inline event handlers (`onclick=`) never run; use `addEventListener`.
+- nginx: `server_tokens off`, Permissions-Policy (camera, mic, location, payment
+  off), Cross-Origin-Opener-Policy.
+- Checked and already fine: IMDSv2 required, EBS and S3 encrypted, S3 public access
+  blocked, 443 only from Cloudflare, no AWS keys in CI, HSTS, X-Frame-Options.
+- Suggested next (not built): TOTP two-factor for admin accounts, a "recent sign-ins"
+  list, signing out other devices / ending sessions on a password change.
 
 **UI/UX backlog (offered 2026-10-04, owner to pick)**
 - Phones: move 登出 out of the top bar into 我 / 帳號設定; put 聊天 and 通知 in the
