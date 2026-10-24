@@ -92,6 +92,10 @@ uses it as a portfolio project for interviews. Read this first, then `README.md`
   until fixed). The Dockerfile runs `apt-get upgrade`, rebuilt weekly through the
   `SECURITY_REFRESH` build argument (ISO week). The sandbox proxy blocks
   deb.debian.org, so that layer cannot be checked locally; CI shows it.
+  Trivy also scans Python packages outside the venv: uv itself failed it on
+  2026-10-24 (PR #58 did not deploy), so the Dockerfile now removes uv, pip and
+  setuptools right after `uv sync`. Trivy runs locally as
+  `mirror.gcr.io/aquasec/trivy:0.74.0` with the proxy CA in `SSL_CERT_FILE`.
 - The app counts days in Taiwan time, MySQL's `CURDATE()` and the container's
   `date.today()` are UTC: code and tests must use `taipei_datetime()`, or they go
   wrong between 00:00 and 08:00 Taiwan time (main's CI after PR #48 failed at 00:04
@@ -394,7 +398,7 @@ line `NASA 每日天文圖 <date>` (`apod.heading`).
 
 **Done in PR #56:** werkzeug 3.1.8 → 3.1.9 (CVE-2026-102598).
 
-**On branch `claude/beautiful-faraday-a61bzb` (not merged yet)**: security pass
+**Done in PR #58** (deployed only with the uv fix below): security pass
 (owner, 2026-10-24: "recent security incidents look serious, check what to harden").
 - aiohttp 3.14.3 → 3.14.5 and certifi → 2026.10.23 (pip-audit clean again).
 - Migration 0012 hashes any password still stored in plain text (old accounts from
@@ -409,6 +413,11 @@ line `NASA 每日天文圖 <date>` (`apod.heading`).
   blocked, 443 only from Cloudflare, no AWS keys in CI, HSTS, X-Frame-Options.
 - Suggested next (not built): TOTP two-factor for admin accounts, a "recent sign-ins"
   list, signing out other devices / ending sessions on a password change.
+
+**On branch `claude/beautiful-faraday-a61bzb` (not merged yet)**: Trivy failed main
+after PR #58 on uv 0.8.17 in the image (GHSA-hq85-5cpj-mr62, CRITICAL). uv 0.13.5
+now only exists during `uv sync` and is uninstalled with pip/setuptools; `--no-cache`
+keeps uv's download cache out of the image.
 
 **UI/UX backlog (offered 2026-10-04, owner to pick)**
 - Phones: move 登出 out of the top bar into 我 / 帳號設定; put 聊天 and 通知 in the
