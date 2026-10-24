@@ -9,10 +9,6 @@ RUN echo "security updates: ${SECURITY_REFRESH}" \
     && apt-get upgrade -y --no-install-recommends \
     && rm -rf /var/lib/apt/lists/*
 
-# The app runs from .venv; drop the base image's own pip/setuptools so they can't ship CVEs.
-RUN pip install --no-cache-dir uv==0.8.17 \
-    && pip uninstall -y pip setuptools wheel
-
 ENV UV_COMPILE_BYTECODE=1 \
     UV_LINK_MODE=copy \
     PATH="/app/.venv/bin:$PATH"
@@ -21,7 +17,12 @@ WORKDIR /app
 
 # Install dependencies first so code changes don't invalidate this layer.
 COPY pyproject.toml uv.lock ./
-RUN uv sync --frozen --no-dev
+# The app runs from .venv. uv is only needed for this step, so it leaves with the base
+# image's own pip/setuptools: none of them can then ship a CVE that fails Trivy
+# (2026-10-24: uv 0.8.17's bundled CA store, GHSA-hq85-5cpj-mr62).
+RUN pip install --no-cache-dir uv==0.13.5 \
+    && uv sync --frozen --no-dev --no-cache \
+    && pip uninstall -y uv pip setuptools wheel
 
 COPY . .
 
