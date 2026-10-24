@@ -40,7 +40,7 @@ def test_image_rejects_unexpected_keys(client):
 
 def test_assets_are_versioned_and_cached_for_a_year(client):
     page = client.get("/").get_data(as_text=True)
-    assert '<script type="importmap">' in page
+    assert '<script type="importmap" nonce=' in page
     assert 'rel="modulepreload" href="/js/lib/api.js?v=' in page
     css = next(
         part.split('"')[0] for part in page.split('href="') if part.startswith("/css/base.css?v=")

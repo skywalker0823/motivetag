@@ -19,15 +19,15 @@
     <meta property="og:image:alt" content="MotiveTag：用標籤找到志同道合的朋友">
     <meta name="twitter:card" content="summary_large_image">
     <link rel="canonical" href="{{ base_url }}/">
-    <script async src="https://www.googletagmanager.com/gtag/js?id=G-6WGHN61ENK"></script>
-    <script>
+    <script async nonce="{{ csp_nonce() }}" src="https://www.googletagmanager.com/gtag/js?id=G-6WGHN61ENK"></script>
+    <script nonce="{{ csp_nonce() }}">
         window.dataLayer = window.dataLayer || [];
         function gtag(){dataLayer.push(arguments);}
         gtag('js', new Date());
         gtag('config', 'G-6WGHN61ENK');
     </script>
     {% if turnstile_site_key %}
-    <script src="https://challenges.cloudflare.com/turnstile/v0/api.js" async defer></script>
+    <script nonce="{{ csp_nonce() }}" src="https://challenges.cloudflare.com/turnstile/v0/api.js" async defer></script>
     {% endif %}
 </head>
 <body>
