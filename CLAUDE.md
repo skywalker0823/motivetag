@@ -425,6 +425,9 @@ MySQL and Alloy are pinned by tag in `deploy/compose.yaml` and deploy.sh never r
 Scan them by hand (2026-10-26: nginx:1.30-alpine brotli-libs HIGH, unused by
 nginx; mysql:8.4 HIGH/CRITICAL only in bundled Python/Go tools, MySQL is not
 reachable from outside; neither fixed in the newest tag yet).
+Also: `test_signup_needs_age_18` took UTC `date.today()` while sign-up counts Taiwan
+days (PR #55), so it failed between 00:00 and 08:00 Taiwan time (Dependabot's
+PR #57 CI, 2026-10-15 19:55 UTC); it now uses `taipei_datetime()`.
 
 **UI/UX backlog (offered 2026-10-04, owner to pick)**
 - Phones: move 登出 out of the top bar into 我 / 帳號設定; put 聊天 and 通知 in the

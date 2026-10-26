@@ -1,9 +1,11 @@
 """Privacy and game rules the server enforces, whatever the browser sends."""
 
 import uuid
-from datetime import date, timedelta
+from datetime import timedelta
 
 from conftest import NOW
+
+from module.clock import taipei_datetime
 
 
 def post(client, content, kind="Normal", tags=None, vote_box=None):
@@ -111,7 +113,9 @@ def test_signup_validates_input(client):
 
 
 def test_signup_needs_age_18(client):
-    today = date.today()
+    # Taiwan's date, as the sign-up rule counts it (date.today() is UTC: a day behind
+    # between 00:00 and 08:00 Taiwan time, when this test used to fail).
+    today = taipei_datetime().date()
     day = 28 if (today.month, today.day) == (2, 29) else today.day
     turns_18_today = today.replace(year=today.year - 18, day=day)
     turns_18_tomorrow = turns_18_today + timedelta(days=1)
