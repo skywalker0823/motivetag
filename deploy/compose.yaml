@@ -75,7 +75,7 @@ services:
   # the Grafana settings are in Parameter Store: deploy.sh then sets
   # COMPOSE_PROFILES=monitoring. No Docker socket, no privileges, host paths read-only.
   alloy:
-    image: grafana/alloy:v1.20.0
+    image: grafana/alloy:v1.21.2
     profiles: [monitoring]
     restart: unless-stopped
     command:
