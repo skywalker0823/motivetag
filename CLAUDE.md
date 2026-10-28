@@ -414,10 +414,20 @@ line `NASA 每日天文圖 <date>` (`apod.heading`).
 - Suggested next (not built): TOTP two-factor for admin accounts, a "recent sign-ins"
   list, signing out other devices / ending sessions on a password change.
 
-**On branch `claude/beautiful-faraday-a61bzb` (not merged yet)**: Trivy failed main
-after PR #58 on uv 0.8.17 in the image (GHSA-hq85-5cpj-mr62, CRITICAL). uv 0.13.5
-now only exists during `uv sync` and is uninstalled with pip/setuptools; `--no-cache`
-keeps uv's download cache out of the image.
+**Done in PR #59:** uv removed from the production image (Trivy failed main after
+PR #58 on uv 0.8.17, GHSA-hq85-5cpj-mr62); `uv sync --no-cache`.
+
+**On branch `claude/beautiful-faraday-a61bzb` (not merged yet)**: Grafana Alloy
+v1.20.0 → v1.21.2 (v1.20.0: 7 HIGH + 1 CRITICAL fixed upstream, incl. Go crypto/tls
+CVE-2025-68121; v1.21.2 scans clean). CI's Trivy only scans the app image: nginx,
+MySQL and Alloy are pinned by tag in `deploy/compose.yaml` and deploy.sh never runs
+`compose pull`, so the server keeps the copy it first pulled until the tag changes.
+Scan them by hand (2026-10-26: nginx:1.30-alpine brotli-libs HIGH, unused by
+nginx; mysql:8.4 HIGH/CRITICAL only in bundled Python/Go tools, MySQL is not
+reachable from outside; neither fixed in the newest tag yet).
+Also: `test_signup_needs_age_18` took UTC `date.today()` while sign-up counts Taiwan
+days (PR #55), so it failed between 00:00 and 08:00 Taiwan time (Dependabot's
+PR #57 CI, 2026-10-15 19:55 UTC); it now uses `taipei_datetime()`.
 
 **UI/UX backlog (offered 2026-10-04, owner to pick)**
 - Phones: move 登出 out of the top bar into 我 / 帳號設定; put 聊天 and 通知 in the
