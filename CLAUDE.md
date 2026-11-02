@@ -429,17 +429,19 @@ Also: `test_signup_needs_age_18` took UTC `date.today()` while sign-up counts Ta
 days (PR #55), so it failed between 00:00 and 08:00 Taiwan time (Dependabot's
 PR #57 CI, 2026-10-15 19:55 UTC); it now uses `taipei_datetime()`.
 
-**On branch `claude/beautiful-faraday-a61bzb` (not merged yet)**: the owner is
-closing the site for now (2026-11-02) and wants a quick way back. Terraform
-`paused = true` (`infra/main/variables.tf`) removes the instance, its root disk,
-the EIP, the volume attachment and the 3 alarms (`count`, with `moved` blocks so
-existing state keeps its resources) and stops the backup lifecycle expiry; the
-data volume, buckets, ECR, Parameter Store, IAM/OIDC, SES and SNS stay. Repository
-variable `SITE_PAUSED=true` skips CI's deploy and the APOD/demo-data workflows.
-Runbook: infra/README.md "Pausing the site". Checked with `terraform validate` and a
-mocked `terraform test` (running → paused → resumed); not run against AWS. If the
-owner has paused, **the site is offline**: resuming needs `paused` removed + apply,
-the new IP in Cloudflare DNS, `SITE_PAUSED` deleted and Run workflow.
+**Done in PR #61, then on branch `claude/beautiful-faraday-a61bzb` (not merged
+yet): THE SITE IS OFFLINE (paused 2026-11-02).** Terraform `paused = true`
+(`infra/main/variables.tf`) removes the instance, both disks, the EIP, the volume
+attachment and the 3 alarms (`count`, with `moved` blocks for the old addresses);
+buckets, ECR, Parameter Store, IAM/OIDC, SES and SNS stay. The owner applied it on
+2026-11-02 (6 destroyed, the data volume kept), then said the data does not matter,
+only the cost: the branch also drops the data volume while paused (delete it by
+hand first, `prevent_destroy` stays) and the runbook empties the buckets and ECR.
+Repository variable `SITE_PAUSED=true` skips CI's deploy and the APOD/demo-data
+workflows. Resuming = infra/README.md "Pausing the site": apply, new IP in
+Cloudflare, `SITE_PAUSED` deleted, Run workflow, and an **empty database** (free the
+admin name in `/motivetag/admin-accounts` to sign up again). Checked with
+`terraform validate` and a mocked `terraform test`; the real pause plan matched.
 
 **UI/UX backlog (offered 2026-10-04, owner to pick)**
 - Phones: move 登出 out of the top bar into 我 / 帳號設定; put 聊天 and 通知 in the

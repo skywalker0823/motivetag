@@ -58,7 +58,7 @@ variable "ses_region" {
 }
 
 variable "paused" {
-  description = "Take the site offline at the lowest cost: the server, its root disk, public IP and alarms are removed; the MySQL data volume, buckets, images, parameters and IAM stay. false brings it all back (infra/README.md, \"Pausing the site\")."
+  description = "Take the site offline at the lowest cost: the server, its disks (the MySQL data volume must be deleted by hand first), public IP and alarms are removed; buckets, parameters and IAM stay. false brings it all back (infra/README.md, \"Pausing the site\")."
   type        = bool
   default     = false
 }

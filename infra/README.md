@@ -420,66 +420,80 @@ exist; about 400–1,500 series at one sample a minute, well inside the free tie
 
 ## Pausing the site (and bringing it back)
 
-`paused = true` in `terraform.tfvars` takes the site offline at the lowest cost. It
-removes what is billed by the hour (the server and its root disk, the public IP, the
-alarms) and keeps everything needed to come back: the MySQL data volume, the image
-and backup buckets (old dumps stop expiring), ECR images, Parameter Store (secrets,
-TLS certificate, keys), IAM/OIDC, SES and SNS. Roughly US$2–3 a month instead of
-~US$30. Resuming builds a new server around the same data volume; it gets a new
-public IP, so the Cloudflare DNS record changes once.
+`paused = true` in `terraform.tfvars` takes the site offline. Since 2026-11-02 the
+pause keeps no data (the owner chose no cost over keeping it): the server, both
+disks, the public IP and the alarms go; emptied buckets, an empty ECR repository,
+Parameter Store (secrets, TLS certificate, VAPID keys), IAM/OIDC, SES and SNS stay,
+all free. Resuming builds everything again with an **empty database**; members sign
+up again. The state bucket costs a fraction of a cent.
 
 ### Pause
 
 ```bash
-export AWS_PROFILE=motivetag AWS_REGION=ap-east-2   # CloudShell: only AWS_REGION
+export AWS_PROFILE=motivetag AWS_REGION=ap-east-2
 
-# 1. A last backup (MySQL is also kept on the data volume).
+# 1. Stop the server and delete the MySQL data volume (Terraform's prevent_destroy
+#    refuses to delete it itself, on purpose).
 ID=$(aws ec2 describe-instances --filters Name=tag:Project,Values=motivetag \
-  Name=instance-state-name,Values=running --query 'Reservations[0].Instances[0].InstanceId' --output text)
-CMD=$(aws ssm send-command --instance-ids "$ID" --document-name AWS-RunShellScript \
-  --parameters 'commands=["systemctl start motivetag-backup","ls -l /srv/motivetag/backups | tail -n 2"]' \
-  --query Command.CommandId --output text)
-sleep 90; aws ssm get-command-invocation --command-id "$CMD" --instance-id "$ID" \
-  --query '[Status,StandardOutputContent]' --output text      # Success + today's dump
-```
-
-2. GitHub → Settings → Secrets and variables → Actions → Variables: add
-   `SITE_PAUSED` = `true`. CI then skips the deploy, and the APOD and demo-data
-   workflows are skipped (there is no server to run them on).
-3. Shut the server down (MySQL stops cleanly), then remove it:
-
-```bash
+  Name=instance-state-name,Values=running,stopped --query 'Reservations[0].Instances[0].InstanceId' --output text)
 aws ec2 stop-instances --instance-ids "$ID" && aws ec2 wait instance-stopped --instance-ids "$ID"
+VOL=$(aws ec2 describe-volumes --filters Name=tag:Name,Values=motivetag-data --query 'Volumes[0].VolumeId' --output text)
+aws ec2 detach-volume --volume-id "$VOL" && aws ec2 wait volume-available --volume-ids "$VOL"
+aws ec2 delete-volume --volume-id "$VOL"
 
+# 2. Remove the rest
 cd infra/main && git pull
-echo 'paused = true' >> terraform.tfvars
-terraform plan    # expect: 6 to destroy (instance, volume attachment, EIP, 3 alarms),
-                  # 1 to change (backup lifecycle); never aws_ebs_volume.data
+echo 'paused = true' >> terraform.tfvars    # check the file: one argument per line
+terraform plan    # instance, attachment, EIP, 3 alarms destroyed; nothing added
 terraform apply
 ```
 
-(Later pauses would stop it on their own: the volume attachment now has
-`stop_instance_before_detaching`, but Terraform only knows that once a server has
-been created with it.) Visitors then get a Cloudflare error page; optionally delete the
-`motivetag.com` A record in Cloudflare (the old IP goes back to AWS's pool).
+3. Empty the buckets and ECR (commands below), and add the repository variable
+   `SITE_PAUSED` = `true` in GitHub (Settings → Secrets and variables → Actions →
+   Variables) so CI skips the deploy and the APOD and demo-data workflows.
+
+```bash
+aws s3 rm "s3://motivetag-images-$(aws sts get-caller-identity --query Account --output text)" --recursive
+B="motivetag-backups-$(aws sts get-caller-identity --query Account --output text)"
+for kind in Versions DeleteMarkers; do
+  aws s3api list-object-versions --bucket "$B" --output json \
+    --query "{Objects: $kind[].{Key: Key, VersionId: VersionId}}" > /tmp/objects.json
+  grep -q '"Key"' /tmp/objects.json && aws s3api delete-objects --bucket "$B" --delete file:///tmp/objects.json >/dev/null
+done
+aws ecr list-images --repository-name motivetag --query 'imageIds[*]' --output json > /tmp/images.json
+grep -q imageDigest /tmp/images.json && aws ecr batch-delete-image --repository-name motivetag --image-ids file:///tmp/images.json >/dev/null
+```
+
+Optionally delete the `motivetag.com` A record in Cloudflare.
 
 ### Resume
 
 ```bash
 cd infra/main && git pull
 sed -i.bak '/^paused/d' terraform.tfvars
-terraform apply                        # new server, same data volume
+terraform apply                        # new server and a blank data volume
 terraform output -raw public_ip        # the new address
 ```
 
 1. Cloudflare → DNS: point the `motivetag.com` A record (proxied) at the new
    address.
-2. Wait ~5 minutes for the server's first boot (Docker is installed), then delete
-   the `SITE_PAUSED` variable in GitHub and run Actions → **CI** → Run workflow on
-   `main`. The deploy brings the app, nginx, MySQL (with the old data), backups and
-   timers back.
-3. Open https://motivetag.com and sign in. If the data volume were ever lost, the
-   newest dump in the backup bucket restores it ("Restoring production" above).
+2. Wait ~5 minutes for the server's first boot, then delete the `SITE_PAUSED`
+   variable in GitHub and run Actions → **CI** → Run workflow on `main`. The image
+   is built and pushed again, MySQL starts empty and the migrations create the
+   tables; backups and timers come back with the deploy.
+3. Sign-up refuses the names in `/motivetag/admin-accounts`, which no longer exist
+   in the empty database. Before step 2's Run workflow, free the name, sign up as
+   yourself on https://motivetag.com, then put it back and run the workflow again:
+
+```bash
+NAME=$(aws ssm get-parameter --name /motivetag/admin-accounts --query Parameter.Value --output text)
+aws ssm put-parameter --name /motivetag/admin-accounts --value none --overwrite
+# ... Run workflow, sign up as "$NAME" on the site ...
+aws ssm put-parameter --name /motivetag/admin-accounts --value "$NAME" --overwrite
+# ... Run workflow again: /admin opens for you
+```
+
+4. Run the **Demo data** or **APOD post** workflows if wanted.
 
 ## Notes
 
