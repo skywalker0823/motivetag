@@ -455,11 +455,13 @@ terraform apply
 ```bash
 aws s3 rm "s3://motivetag-images-$(aws sts get-caller-identity --query Account --output text)" --recursive
 B="motivetag-backups-$(aws sts get-caller-identity --query Account --output text)"
-for kind in Versions DeleteMarkers; do
-  aws s3api list-object-versions --bucket "$B" --output json \
-    --query "{Objects: $kind[].{Key: Key, VersionId: VersionId}}" > /tmp/objects.json
-  grep -q '"Key"' /tmp/objects.json && aws s3api delete-objects --bucket "$B" --delete file:///tmp/objects.json >/dev/null
-done
+# One call per kind: in zsh "$kind[]" is an array subscript ("invalid subscript").
+aws s3api list-object-versions --bucket "$B" --output json \
+  --query '{Objects: Versions[].{Key: Key, VersionId: VersionId}}' > /tmp/v.json
+grep -q '"Key"' /tmp/v.json && aws s3api delete-objects --bucket "$B" --delete file:///tmp/v.json >/dev/null
+aws s3api list-object-versions --bucket "$B" --output json \
+  --query '{Objects: DeleteMarkers[].{Key: Key, VersionId: VersionId}}' > /tmp/m.json
+grep -q '"Key"' /tmp/m.json && aws s3api delete-objects --bucket "$B" --delete file:///tmp/m.json >/dev/null
 aws ecr list-images --repository-name motivetag --query 'imageIds[*]' --output json > /tmp/images.json
 grep -q imageDigest /tmp/images.json && aws ecr batch-delete-image --repository-name motivetag --image-ids file:///tmp/images.json >/dev/null
 ```
