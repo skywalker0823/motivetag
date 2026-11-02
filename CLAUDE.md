@@ -417,7 +417,7 @@ line `NASA 每日天文圖 <date>` (`apod.heading`).
 **Done in PR #59:** uv removed from the production image (Trivy failed main after
 PR #58 on uv 0.8.17, GHSA-hq85-5cpj-mr62); `uv sync --no-cache`.
 
-**On branch `claude/beautiful-faraday-a61bzb` (not merged yet)**: Grafana Alloy
+**Done in PR #60:** Grafana Alloy
 v1.20.0 → v1.21.2 (v1.20.0: 7 HIGH + 1 CRITICAL fixed upstream, incl. Go crypto/tls
 CVE-2025-68121; v1.21.2 scans clean). CI's Trivy only scans the app image: nginx,
 MySQL and Alloy are pinned by tag in `deploy/compose.yaml` and deploy.sh never runs
@@ -428,6 +428,18 @@ reachable from outside; neither fixed in the newest tag yet).
 Also: `test_signup_needs_age_18` took UTC `date.today()` while sign-up counts Taiwan
 days (PR #55), so it failed between 00:00 and 08:00 Taiwan time (Dependabot's
 PR #57 CI, 2026-10-15 19:55 UTC); it now uses `taipei_datetime()`.
+
+**On branch `claude/beautiful-faraday-a61bzb` (not merged yet)**: the owner is
+closing the site for now (2026-11-02) and wants a quick way back. Terraform
+`paused = true` (`infra/main/variables.tf`) removes the instance, its root disk,
+the EIP, the volume attachment and the 3 alarms (`count`, with `moved` blocks so
+existing state keeps its resources) and stops the backup lifecycle expiry; the
+data volume, buckets, ECR, Parameter Store, IAM/OIDC, SES and SNS stay. Repository
+variable `SITE_PAUSED=true` skips CI's deploy and the APOD/demo-data workflows.
+Runbook: infra/README.md "Pausing the site". Checked with `terraform validate` and a
+mocked `terraform test` (running → paused → resumed); not run against AWS. If the
+owner has paused, **the site is offline**: resuming needs `paused` removed + apply,
+the new IP in Cloudflare DNS, `SITE_PAUSED` deleted and Run workflow.
 
 **UI/UX backlog (offered 2026-10-04, owner to pick)**
 - Phones: move 登出 out of the top bar into 我 / 帳號設定; put 聊天 and 通知 in the

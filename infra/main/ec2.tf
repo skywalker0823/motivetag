@@ -2,7 +2,10 @@ data "aws_ssm_parameter" "ubuntu_ami" {
   name = "/aws/service/canonical/ubuntu/server/24.04/stable/current/amd64/hvm/ebs-gp3/ami-id"
 }
 
+# While paused (var.paused) there is no server; the data volume below is kept.
 resource "aws_instance" "app" {
+  count = var.paused ? 0 : 1
+
   ami                    = data.aws_ssm_parameter.ubuntu_ami.value
   instance_type          = var.instance_type
   subnet_id              = data.aws_subnet.app.id
@@ -52,17 +55,40 @@ resource "aws_ebs_volume" "data" {
 }
 
 resource "aws_volume_attachment" "data" {
+  count = var.paused ? 0 : 1
+
   device_name = "/dev/sdf"
   volume_id   = aws_ebs_volume.data.id
-  instance_id = aws_instance.app.id
+  instance_id = aws_instance.app[0].id
+  # Pausing detaches the disk: shut the server down first so MySQL stops cleanly.
+  stop_instance_before_detaching = true
 }
 
-# Fixed public IP for the Cloudflare DNS record.
+# Fixed public IP for the Cloudflare DNS record. Released while paused (an unused
+# address is billed too), so resuming gives a new one for the DNS record.
 resource "aws_eip" "app" {
-  instance = aws_instance.app.id
+  count = var.paused ? 0 : 1
+
+  instance = aws_instance.app[0].id
   domain   = "vpc"
 
   tags = {
     Name = var.project
   }
+}
+
+# These resources gained a count for var.paused; keep the existing ones in place.
+moved {
+  from = aws_instance.app
+  to   = aws_instance.app[0]
+}
+
+moved {
+  from = aws_volume_attachment.data
+  to   = aws_volume_attachment.data[0]
+}
+
+moved {
+  from = aws_eip.app
+  to   = aws_eip.app[0]
 }

@@ -28,7 +28,8 @@ concurrency:
 jobs:
   run:
     # The deploy role only trusts main.
-    if: github.ref == 'refs/heads/main'
+    # Skipped while the site is paused (no server; infra/README.md, "Pausing the site").
+    if: github.ref == 'refs/heads/main' && vars.SITE_PAUSED != 'true'
     runs-on: ubuntu-latest
     steps:
       - uses: aws-actions/configure-aws-credentials@e1253824e5c10ff9df46874f81ed3ec929e19cfd # v6.3.0

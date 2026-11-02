@@ -57,6 +57,12 @@ variable "ses_region" {
   default     = "ap-northeast-1"
 }
 
+variable "paused" {
+  description = "Take the site offline at the lowest cost: the server, its root disk, public IP and alarms are removed; the MySQL data volume, buckets, images, parameters and IAM stay. false brings it all back (infra/README.md, \"Pausing the site\")."
+  type        = bool
+  default     = false
+}
+
 variable "email_enabled" {
   description = "Require e-mail verification (creates /motivetag/email-from). Set true only once SES production access is granted."
   type        = bool

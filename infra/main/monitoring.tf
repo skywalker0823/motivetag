@@ -22,11 +22,13 @@ resource "aws_ssm_parameter" "alert_topic" {
 }
 
 locals {
-  instance = { InstanceId = aws_instance.app.id }
+  instance = { InstanceId = one(aws_instance.app[*].id) }
   alerts   = [aws_sns_topic.alerts.arn]
 }
 
 resource "aws_cloudwatch_metric_alarm" "cpu_high" {
+  count = var.paused ? 0 : 1
+
   alarm_name          = "${var.project}-cpu-high"
   alarm_description   = "CPU above 80% for 15 minutes."
   namespace           = "AWS/EC2"
@@ -43,6 +45,8 @@ resource "aws_cloudwatch_metric_alarm" "cpu_high" {
 
 # A failed host is moved to healthy hardware automatically (same ID, IP and volumes).
 resource "aws_cloudwatch_metric_alarm" "system_check" {
+  count = var.paused ? 0 : 1
+
   alarm_name          = "${var.project}-system-check-failed"
   alarm_description   = "AWS hardware or network problem; the instance is being recovered."
   namespace           = "AWS/EC2"
@@ -58,6 +62,8 @@ resource "aws_cloudwatch_metric_alarm" "system_check" {
 }
 
 resource "aws_cloudwatch_metric_alarm" "instance_check" {
+  count = var.paused ? 0 : 1
+
   alarm_name          = "${var.project}-instance-check-failed"
   alarm_description   = "The OS is not responding (out of memory, kernel problem); rebooting."
   namespace           = "AWS/EC2"
@@ -70,4 +76,20 @@ resource "aws_cloudwatch_metric_alarm" "instance_check" {
   threshold           = 1
   alarm_actions       = concat(local.alerts, ["arn:aws:automate:${var.region}:ec2:reboot"])
   ok_actions          = local.alerts
+}
+
+# The alarms gained a count for var.paused (no server, nothing to watch).
+moved {
+  from = aws_cloudwatch_metric_alarm.cpu_high
+  to   = aws_cloudwatch_metric_alarm.cpu_high[0]
+}
+
+moved {
+  from = aws_cloudwatch_metric_alarm.system_check
+  to   = aws_cloudwatch_metric_alarm.system_check[0]
+}
+
+moved {
+  from = aws_cloudwatch_metric_alarm.instance_check
+  to   = aws_cloudwatch_metric_alarm.instance_check[0]
 }

@@ -418,10 +418,73 @@ exist; about 400–1,500 series at one sample a minute, well inside the free tie
    → *Dashboards* → *New* → **Import** → paste → *Load* → pick the
    `grafanacloud-…-prom` data source → *Import*. Data appears within two minutes.
 
+## Pausing the site (and bringing it back)
+
+`paused = true` in `terraform.tfvars` takes the site offline at the lowest cost. It
+removes what is billed by the hour (the server and its root disk, the public IP, the
+alarms) and keeps everything needed to come back: the MySQL data volume, the image
+and backup buckets (old dumps stop expiring), ECR images, Parameter Store (secrets,
+TLS certificate, keys), IAM/OIDC, SES and SNS. Roughly US$2–3 a month instead of
+~US$30. Resuming builds a new server around the same data volume; it gets a new
+public IP, so the Cloudflare DNS record changes once.
+
+### Pause
+
+```bash
+export AWS_PROFILE=motivetag AWS_REGION=ap-east-2   # CloudShell: only AWS_REGION
+
+# 1. A last backup (MySQL is also kept on the data volume).
+ID=$(aws ec2 describe-instances --filters Name=tag:Project,Values=motivetag \
+  Name=instance-state-name,Values=running --query 'Reservations[0].Instances[0].InstanceId' --output text)
+CMD=$(aws ssm send-command --instance-ids "$ID" --document-name AWS-RunShellScript \
+  --parameters 'commands=["systemctl start motivetag-backup","ls -l /srv/motivetag/backups | tail -n 2"]' \
+  --query Command.CommandId --output text)
+sleep 90; aws ssm get-command-invocation --command-id "$CMD" --instance-id "$ID" \
+  --query '[Status,StandardOutputContent]' --output text      # Success + today's dump
+```
+
+2. GitHub → Settings → Secrets and variables → Actions → Variables: add
+   `SITE_PAUSED` = `true`. CI then skips the deploy, and the APOD and demo-data
+   workflows are skipped (there is no server to run them on).
+3. Shut the server down (MySQL stops cleanly), then remove it:
+
+```bash
+aws ec2 stop-instances --instance-ids "$ID" && aws ec2 wait instance-stopped --instance-ids "$ID"
+
+cd infra/main && git pull
+echo 'paused = true' >> terraform.tfvars
+terraform plan    # expect: 6 to destroy (instance, volume attachment, EIP, 3 alarms),
+                  # 1 to change (backup lifecycle); never aws_ebs_volume.data
+terraform apply
+```
+
+(Later pauses would stop it on their own: the volume attachment now has
+`stop_instance_before_detaching`, but Terraform only knows that once a server has
+been created with it.) Visitors then get a Cloudflare error page; optionally delete the
+`motivetag.com` A record in Cloudflare (the old IP goes back to AWS's pool).
+
+### Resume
+
+```bash
+cd infra/main && git pull
+sed -i.bak '/^paused/d' terraform.tfvars
+terraform apply                        # new server, same data volume
+terraform output -raw public_ip        # the new address
+```
+
+1. Cloudflare → DNS: point the `motivetag.com` A record (proxied) at the new
+   address.
+2. Wait ~5 minutes for the server's first boot (Docker is installed), then delete
+   the `SITE_PAUSED` variable in GitHub and run Actions → **CI** → Run workflow on
+   `main`. The deploy brings the app, nginx, MySQL (with the old data), backups and
+   timers back.
+3. Open https://motivetag.com and sign in. If the data volume were ever lost, the
+   newest dump in the backup bucket restores it ("Restoring production" above).
+
 ## Notes
 
 - There is no SSH; the only inbound port is 443, from Cloudflare's IP ranges.
 - The data volume has `prevent_destroy`; `terraform destroy` stops on it on purpose.
 - Changing the AMI or `user_data.sh.tftpl` does not replace a running server
-  (`ignore_changes`). To rebuild: `terraform apply -replace=aws_instance.app`
+  (`ignore_changes`). To rebuild: `terraform apply -replace='aws_instance.app[0]'`
   (the data volume is kept and re-attached).
