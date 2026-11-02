@@ -2,7 +2,7 @@ data "aws_ssm_parameter" "ubuntu_ami" {
   name = "/aws/service/canonical/ubuntu/server/24.04/stable/current/amd64/hvm/ebs-gp3/ami-id"
 }
 
-# While paused (var.paused) there is no server; the data volume below is kept.
+# While paused (var.paused) there is no server and no data volume.
 resource "aws_instance" "app" {
   count = var.paused ? 0 : 1
 
@@ -13,7 +13,7 @@ resource "aws_instance" "app" {
   iam_instance_profile   = aws_iam_instance_profile.app.name
 
   user_data = templatefile("${path.module}/user_data.sh.tftpl", {
-    data_volume_id = aws_ebs_volume.data.id
+    data_volume_id = aws_ebs_volume.data[0].id
   })
 
   root_block_device {
@@ -39,7 +39,12 @@ resource "aws_instance" "app" {
 }
 
 # MySQL data lives on its own volume so the instance can be rebuilt without losing it.
+# Paused, it goes too (2026-11-02: the owner chose no cost over keeping the data), but
+# prevent_destroy still stops Terraform from deleting it: delete it by hand first
+# (infra/README.md, "Pausing the site"). Resuming creates a blank one.
 resource "aws_ebs_volume" "data" {
+  count = var.paused ? 0 : 1
+
   availability_zone = data.aws_subnet.app.availability_zone
   size              = var.data_volume_size
   type              = "gp3"
@@ -58,7 +63,7 @@ resource "aws_volume_attachment" "data" {
   count = var.paused ? 0 : 1
 
   device_name = "/dev/sdf"
-  volume_id   = aws_ebs_volume.data.id
+  volume_id   = aws_ebs_volume.data[0].id
   instance_id = aws_instance.app[0].id
   # Pausing detaches the disk: shut the server down first so MySQL stops cleanly.
   stop_instance_before_detaching = true
@@ -81,6 +86,11 @@ resource "aws_eip" "app" {
 moved {
   from = aws_instance.app
   to   = aws_instance.app[0]
+}
+
+moved {
+  from = aws_ebs_volume.data
+  to   = aws_ebs_volume.data[0]
 }
 
 moved {
