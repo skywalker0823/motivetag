@@ -1,15 +1,15 @@
 output "instance_id" {
-  value = aws_instance.app.id
+  value = one(aws_instance.app[*].id)
 }
 
 output "public_ip" {
-  description = "Point the Cloudflare DNS record here."
-  value       = aws_eip.app.public_ip
+  description = "Point the Cloudflare DNS record here (null while paused)."
+  value       = one(aws_eip.app[*].public_ip)
 }
 
 output "connect" {
   description = "Open a shell on the server (needs the Session Manager plugin)."
-  value       = "aws ssm start-session --target ${aws_instance.app.id} --region ${var.region} --profile motivetag"
+  value       = var.paused ? null : "aws ssm start-session --target ${aws_instance.app[0].id} --region ${var.region} --profile motivetag"
 }
 
 output "github_variables" {

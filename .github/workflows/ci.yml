@@ -123,8 +123,9 @@ jobs:
 
   deploy:
     # Runs after every check passes on main, once the AWS side is set up
-    # (repository variables from `terraform output github_variables`).
-    if: github.event_name != 'pull_request' && github.ref == 'refs/heads/main' && vars.AWS_DEPLOY_ROLE_ARN != ''
+    # (repository variables from `terraform output github_variables`), and not while
+    # the site is paused (repository variable SITE_PAUSED=true; infra/README.md).
+    if: github.event_name != 'pull_request' && github.ref == 'refs/heads/main' && vars.AWS_DEPLOY_ROLE_ARN != '' && vars.SITE_PAUSED != 'true'
     needs: [lint, test, terraform, audit, image]
     runs-on: ubuntu-latest
     permissions:
