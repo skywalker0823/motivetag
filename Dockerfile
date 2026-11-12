@@ -1,4 +1,4 @@
-FROM python:3.11-slim
+FROM python:3.15-slim
 
 # Debian's security fixes, which reach apt before a rebuilt python image does (Trivy
 # fails the build on a fixed HIGH/CRITICAL). CI passes the ISO week, so the build cache
