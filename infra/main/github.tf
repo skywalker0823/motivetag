@@ -52,7 +52,7 @@ data "aws_iam_policy_document" "github_deploy" {
   }
   statement {
     sid       = "FindServer"
-    actions   = ["ec2:DescribeInstances"]
+    actions   = ["ssm:DescribeInstanceInformation"]
     resources = ["*"]
   }
   statement {
@@ -63,7 +63,7 @@ data "aws_iam_policy_document" "github_deploy" {
   statement {
     sid       = "OnProjectServersOnly"
     actions   = ["ssm:SendCommand"]
-    resources = ["arn:aws:ec2:${var.region}:${data.aws_caller_identity.current.account_id}:instance/*"]
+    resources = ["arn:aws:ssm:${var.region}:${data.aws_caller_identity.current.account_id}:managed-instance/*"]
     condition {
       test     = "StringEquals"
       variable = "ssm:resourceTag/Project"

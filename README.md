@@ -11,30 +11,36 @@ flowchart LR
     user([Browser])
 
     subgraph edge[Cloudflare]
-        cf[Proxy · Full strict TLS]
+        cf[Proxy · TLS · WAF]
+    end
+
+    subgraph pi[Raspberry Pi 4 at home · Ubuntu · docker compose · no open ports]
+        tunnel[cloudflared<br/>outbound tunnel]
+        nginx[nginx<br/>rate limits · headers]
+        app[Flask + Socket.IO<br/>gunicorn · gevent]
+        mysql[(MySQL 8.4)]
+        creds[credential relay<br/>SSM agent's role]
+        jobs[systemd timers<br/>backup · restore drill · APOD]
     end
 
     subgraph aws[AWS ap-east-2 Taipei]
-        subgraph ec2[EC2 t3.small · Ubuntu 24.04 · docker compose]
-            nginx[nginx<br/>origin certificate]
-            app[Flask + Socket.IO<br/>gunicorn · gevent]
-            mysql[(MySQL 8.4<br/>own EBS volume)]
-            jobs[systemd timers<br/>backup · restore drill]
-        end
         images[(S3 images<br/>private)]
         backups[(S3 backups<br/>versioned)]
-        params[(Parameter Store<br/>secrets · TLS)]
+        params[(Parameter Store<br/>secrets)]
         ecr[(ECR<br/>immutable SHA tags)]
-        cw[CloudWatch alarms<br/>EC2 status · CPU] --> sns[SNS → e-mail]
+        ssm[SSM hybrid activation<br/>Run Command]
+        sns[SNS → e-mail]
     end
 
-    user -->|HTTPS| cf -->|443, Cloudflare IPs only| nginx --> app --> mysql
+    user -->|HTTPS| cf -->|Tunnel| tunnel --> nginx --> app --> mysql
+    app -.-> creds
     user -.->|presigned POST / GET| images
     app -.->|signs URLs| images
     jobs -->|mysqldump| mysql
     jobs -->|daily dump · weekly restore test| backups
-    params -->|on deploy| ec2
-    ecr -->|image pull on deploy| ec2
+    params -->|on deploy| pi
+    ecr -->|image pull on deploy| pi
+    ssm -->|deploy.sh| pi
     jobs -->|failures · disk > 85 %| sns
     app -->|errors| sentry[Sentry]
 ```
@@ -45,25 +51,26 @@ sequenceDiagram
     participant GH as GitHub Actions
     participant AWS as AWS (OIDC role)
     participant ECR
-    participant EC2 as EC2 via SSM
+    participant Pi as Raspberry Pi via SSM
     Dev->>GH: merge to main
     GH->>GH: lint · tests + migrations · terraform validate · pip-audit · Trivy · image smoke test
     GH->>AWS: OIDC token → short-lived credentials
     GH->>ECR: push image :<git sha>
-    GH->>EC2: SSM Run Command → deploy.sh from that image
-    EC2->>ECR: pull image
-    EC2->>EC2: compose up --wait (roll back to previous image if unhealthy)
-    EC2->>EC2: curl https://motivetag.com/healthz through Cloudflare
+    GH->>Pi: SSM Run Command → deploy.sh from that image (arm64)
+    Pi->>ECR: pull image
+    Pi->>Pi: compose up --wait (roll back to previous image if unhealthy)
+    Pi->>Pi: curl https://motivetag.com/healthz through Cloudflare
 ```
 
 | Concern | How | Where |
 |---|---|---|
 | Infrastructure as code | Terraform, state in S3 with native locking | [`infra/`](infra/README.md) |
-| Delivery | GitHub OIDC → ECR → SSM Run Command, automatic rollback, no SSH | [`.github/workflows/ci.yml`](.github/workflows/ci.yml), [`deploy/`](deploy/) |
-| Edge & TLS | Cloudflare Full (strict), origin cert, security group allows Cloudflare only | [`deploy/nginx.conf`](deploy/nginx.conf), [`infra/main/network.tf`](infra/main/network.tf) |
-| Data | MySQL on its own EBS volume, Alembic migrations on start | [`migrations/`](migrations/) |
+| Hosting | Raspberry Pi 4 behind a Cloudflare Tunnel, no open ports; AWS access through SSM hybrid activation (no keys) | [ADR 0017](docs/adr/0017-raspberry-pi-behind-cloudflare-tunnel.md) |
+| Delivery | GitHub OIDC → ECR (arm64) → SSM Run Command, automatic rollback | [`.github/workflows/ci.yml`](.github/workflows/ci.yml), [`deploy/`](deploy/) |
+| Edge & TLS | Cloudflare terminates TLS; Cloudflare Tunnel to nginx on the compose network | [`deploy/compose.yaml`](deploy/compose.yaml), [`deploy/nginx.conf`](deploy/nginx.conf) |
+| Data | MySQL on the Pi (`/srv/motivetag`), Alembic migrations on start | [`migrations/`](migrations/) |
 | Backups | Daily `mysqldump` to S3, weekly automated restore drill into a throwaway MySQL | [`deploy/backup.sh`](deploy/backup.sh), [`deploy/restore_drill.sh`](deploy/restore_drill.sh) |
-| Monitoring ($0) | EC2 status-check alarms with auto-recovery, CPU alarm, backup and disk alerts by e-mail, Sentry free tier | [`infra/main/monitoring.tf`](infra/main/monitoring.tf) |
+| Monitoring ($0) | Backup and disk alerts by e-mail, Grafana Cloud dashboard, Sentry free tier | [`infra/main/monitoring.tf`](infra/main/monitoring.tf) |
 | Dashboard ($0) | Grafana Cloud free tier: CPU, memory, disk, requests, errors, latency, sign-ins; Grafana Alloy ships the metrics | [`deploy/alloy.alloy`](deploy/alloy.alloy), [`api/metrics.py`](api/metrics.py), [`deploy/grafana/`](deploy/grafana/) |
 | Images | Private bucket; browsers upload directly with presigned POSTs | [`api/blueprints/api_images.py`](api/blueprints/api_images.py) |
 | Sign-up protection | E-mail verification through SES (capped at 500/day), Cloudflare Turnstile, disposable-domain list | [`module/email_verification.py`](module/email_verification.py), [`infra/main/ses.tf`](infra/main/ses.tf) |
@@ -216,9 +223,10 @@ This idea comes when the website is almost done. The final goal is to create a �
 * boto3 for S3 presigned URLs, Sentry for error reporting
 
 ### Infrastructure
-* AWS: EC2, EBS, S3, ECR, IAM (OIDC), Systems Manager (Session Manager, Run Command,
-  Parameter Store), CloudWatch alarms, SNS
-* Cloudflare DNS, proxy and TLS
+* Raspberry Pi 4 (arm64, Ubuntu) at home; until 2026-11 AWS EC2 (tag `aws-ec2-final`)
+* AWS: S3, ECR, IAM (OIDC), Systems Manager (hybrid activation, Run Command,
+  Parameter Store), SES, SNS
+* Cloudflare DNS, proxy, TLS and Tunnel
 * Terraform, Docker, docker compose, GitHub Actions, Trivy, pip-audit, ruff, uv
 
 ---

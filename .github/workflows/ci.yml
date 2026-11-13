@@ -79,7 +79,7 @@ jobs:
           uvx pip-audit --strict -r requirements-audit.txt
 
   image:
-    runs-on: ubuntu-latest
+    runs-on: ubuntu-24.04-arm  # the Raspberry Pi is arm64: test and ship that image
     services:
       mysql:
         image: mysql:8.4
@@ -127,7 +127,7 @@ jobs:
     # the site is paused (repository variable SITE_PAUSED=true; infra/README.md).
     if: github.event_name != 'pull_request' && github.ref == 'refs/heads/main' && vars.AWS_DEPLOY_ROLE_ARN != '' && vars.SITE_PAUSED != 'true'
     needs: [lint, test, terraform, audit, image]
-    runs-on: ubuntu-latest
+    runs-on: ubuntu-24.04-arm  # builds the arm64 image for the Raspberry Pi
     permissions:
       contents: read
       id-token: write # OIDC token for AWS; no stored keys
@@ -173,11 +173,14 @@ jobs:
             GIT_SHA=${{ github.sha }}
             SECURITY_REFRESH=${{ steps.week.outputs.iso }}
           cache-from: type=gha
-      - name: Deploy on the server via SSM
+      - name: Deploy on the Raspberry Pi via SSM
         run: |
-          instance_id=$(aws ec2 describe-instances \
-            --filters Name=tag:Project,Values=motivetag Name=instance-state-name,Values=running \
-            --query 'Reservations[0].Instances[0].InstanceId' --output text)
+          instance_id=$(aws ssm describe-instance-information \
+            --filters Key=tag:Project,Values=motivetag Key=PingStatus,Values=Online \
+            --query 'InstanceInformationList[0].InstanceId' --output text)
+          if [ -z "$instance_id" ] || [ "$instance_id" = None ]; then
+            echo "The Raspberry Pi is not online in SSM (is amazon-ssm-agent running?)"; exit 1
+          fi
           echo "Deploying $IMAGE to $instance_id"
           registry=${IMAGE%%/*}
           params=$(jq -n --arg image "$IMAGE" --arg region "$AWS_REGION" \

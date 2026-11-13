@@ -33,10 +33,9 @@ resource "aws_s3_bucket_lifecycle_configuration" "backups" {
   bucket     = aws_s3_bucket.backups.id
   depends_on = [aws_s3_bucket_versioning.backups]
 
-  # Paused, no new dumps arrive: stop expiring the old ones so the last backups stay.
   rule {
     id     = "expire-old-dumps"
-    status = var.paused ? "Disabled" : "Enabled"
+    status = "Enabled"
     filter {
       prefix = "mysql/"
     }

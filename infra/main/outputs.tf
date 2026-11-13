@@ -1,15 +1,11 @@
-output "instance_id" {
-  value = one(aws_instance.app[*].id)
-}
-
-output "public_ip" {
-  description = "Point the Cloudflare DNS record here (null while paused)."
-  value       = one(aws_eip.app[*].public_ip)
-}
-
-output "connect" {
-  description = "Open a shell on the server (needs the Session Manager plugin)."
-  value       = var.paused ? null : "aws ssm start-session --target ${aws_instance.app[0].id} --region ${var.region} --profile motivetag"
+output "pi_activation" {
+  description = "Registers the Raspberry Pi with SSM (infra/README.md). Single use, valid for 24 hours."
+  value = {
+    id     = aws_ssm_activation.pi.id
+    code   = aws_ssm_activation.pi.activation_code
+    region = var.region
+  }
+  sensitive = true
 }
 
 output "github_variables" {

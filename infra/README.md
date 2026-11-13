@@ -6,7 +6,11 @@ Terraform for the AWS side of motivetag. Everything runs from your Mac with the
 | Directory | What it creates | State |
 |---|---|---|
 | `bootstrap/` | S3 bucket that stores Terraform state (run once) | local file |
-| `main/` | EC2 server, data volume, Elastic IP, security group, IAM roles, ECR, S3 buckets, secrets, backups, monitoring | in that S3 bucket |
+| `main/` | SSM activation and role for the Raspberry Pi, GitHub deploy role, ECR, S3 buckets, secrets, SES, SNS alerts | in that S3 bucket |
+
+The site runs on a Raspberry Pi at home behind a Cloudflare Tunnel
+([ADR 0017](../docs/adr/0017-raspberry-pi-behind-cloudflare-tunnel.md)); until
+2026-11 it ran on EC2, kept as the git tag `aws-ec2-final`.
 
 Why things are set up this way: [`docs/adr/`](../docs/adr/README.md).
 
@@ -41,54 +45,100 @@ Commit the `.terraform.lock.hcl` files that `terraform init` creates.
 
 ## Check the server
 
+On the home network (the Pi accepts SSH from there only):
+
 ```bash
-$(terraform output -raw connect)   # shell on the server via Session Manager, no SSH
-docker --version && docker compose version
-df -h /srv/motivetag               # the separate data volume
+ssh pikxl@192.168.0.145
+sudo docker --version && sudo docker compose version
+systemctl is-active amazon-ssm-agent   # active
+df -h /srv/motivetag
 ```
 
-## Going live (one time)
+## Moving to the Raspberry Pi (one time)
 
-Do these in order; the last step (merging to `main`) triggers the first deploy.
+Do these in order. Nothing here opens a port on the Pi or the router. The site is
+offline until step 6, and starts with an **empty database** (the EC2 data was
+discarded in November 2026).
 
-1. **Apply the deploy stack.** After pulling the latest `main`:
+1. **Terraform** (Mac). Removes what is left of the EC2 setup (instance profile,
+   security group) and creates the Pi's SSM activation.
 
    ```bash
+   cd ~/Desktop/dev/motivetag
+   git fetch origin && git switch pi-migration     # main once the PR is merged
    cd infra/main
-   terraform init        # installs the new http and random providers
-   terraform plan        # ~16 to add, 1 to change (security group gets port 443)
-   terraform apply
+   export AWS_PROFILE=motivetag
+   aws sso login --profile motivetag               # if the session expired
+   sed -i '' '/^paused/d' terraform.tfvars         # the variable no longer exists
+   terraform init
+   terraform plan
    ```
 
-   It creates the ECR repository, the private image bucket, generated secrets in
-   Parameter Store, and the GitHub OIDC deploy role, and opens 443 to Cloudflare only.
+   Expect roughly: **add** `aws_ssm_activation.pi`; **change** `aws_iam_role.app`
+   (trusted by SSM instead of EC2), `aws_iam_role_policy.github_deploy` and the backup
+   lifecycle rule; **destroy** `aws_iam_instance_profile.app` and
+   `aws_security_group.app` (plus the old data volume if it was never deleted).
+   Nothing else may be destroyed. Then `terraform apply`.
 
-2. **Cloudflare origin certificate.** Cloudflare → your domain → SSL/TLS →
-   Origin Server → Create Certificate (keep the defaults: `motivetag.com`,
-   `*.motivetag.com`, 15 years). Save the two text boxes as `origin.pem` and
-   `origin.key`, then store them in Parameter Store and delete the local key:
+2. **Cloudflare Tunnel** (Cloudflare dashboard, works on a phone).
+   - DNS → delete the old `A` record `motivetag.com` (the EC2 address) and the
+     `www` `CNAME`, if they exist; the tunnel creates its own.
+   - Zero Trust → Networks → Tunnels → **Create a tunnel** → Cloudflared → name
+     `motivetag-pi` → on the install page, copy only the **token** (the long text
+     after `--token`). Do not run the command shown; the token goes to Parameter
+     Store instead.
+   - **Public hostnames**: `motivetag.com` → Service `HTTP` · `nginx:8080`, and
+     `www.motivetag.com` → `HTTP` · `nginx:8080`.
+   - Store the token (Mac; `read -s` keeps it off the screen and out of the shell
+     history; paste, then Enter):
+
+     ```bash
+     read -rs TOKEN && aws ssm put-parameter --name /motivetag/cloudflare-tunnel-token \
+       --type SecureString --value "$TOKEN" --region ap-east-2 --profile motivetag; unset TOKEN
+     ```
+
+     It prints `{"Version": 1, "Tier": "Standard"}`.
+   - Free: Cloudflare Tunnel costs nothing. SSL/TLS mode, Always Use HTTPS, WAF and
+     rate-limiting rules stay as they are.
+
+3. **SSM agent on the Pi** (SSH from the home network):
 
    ```bash
-   aws ssm put-parameter --name /motivetag/tls/origin-cert --type SecureString --value file://origin.pem --region ap-east-2
-   aws ssm put-parameter --name /motivetag/tls/origin-key  --type SecureString --value file://origin.key --region ap-east-2
-   rm origin.key
+   cd /tmp && curl -fsSLO https://s3.ap-east-2.amazonaws.com/amazon-ssm-ap-east-2/latest/debian_arm64/amazon-ssm-agent.deb
+   sudo dpkg -i amazon-ssm-agent.deb && rm amazon-ssm-agent.deb
+   sudo snap install aws-cli --classic     # CI's deploy command uses it for the ECR login
    ```
 
-3. **Cloudflare settings.**
-   - SSL/TLS → Overview → encryption mode **Full (strict)**.
-   - SSL/TLS → Edge Certificates → **Always Use HTTPS** on.
-   - DNS → add `A` record `@` → the `public_ip` output, **Proxied** (orange cloud);
-     add `CNAME` `www` → `motivetag.com`, Proxied.
+4. **Register the Pi** (Mac, same `infra/main` directory). The activation code goes
+   from Terraform straight to the Pi over SSH and is never shown:
 
-4. **GitHub repository variables.** `terraform output github_variables`, then add
-   each key/value under Settings → Secrets and variables → Actions → **Variables**
-   (not secrets; none of them is sensitive).
+   ```bash
+   terraform output -json pi_activation | ssh pikxl@192.168.0.145 \
+     'python3 -c "import json,subprocess,sys; a=json.load(sys.stdin); subprocess.run([\"sudo\",\"amazon-ssm-agent\",\"-register\",\"-y\",\"-code\",a[\"code\"],\"-id\",a[\"id\"],\"-region\",a[\"region\"]],check=True)" && sudo systemctl restart amazon-ssm-agent'
+   aws ssm describe-instance-information --region ap-east-2 \
+     --query 'InstanceInformationList[].[InstanceId,PingStatus,PlatformName]' --output table
+   ```
 
-5. **Merge to `main`.** CI runs, then the `deploy` job builds the image, pushes it to
-   ECR tagged with the commit SHA, and runs `deploy/deploy.sh` on the server through
-   SSM. If the new version is unhealthy it rolls back to the previous image and the
-   job fails. To redeploy without a code change: Actions → CI → the latest `main`
-   run → Re-run all jobs.
+   The table shows one `mi-…` row, `Online`. On the Pi,
+   `sudo ls -l /root/.aws/credentials` shows the file the agent keeps fresh (owner
+   root, `-rw-------`). The code works once and for 24 hours; for a new one:
+   `terraform apply -replace=aws_ssm_activation.pi`. Free: standard-tier hybrid
+   nodes cost nothing (do not switch on the advanced tier, about US$5/month).
+
+5. **GitHub** (works in the app): Settings → Secrets and variables → Actions →
+   Variables: delete `SITE_PAUSED`. The other variables (`AWS_REGION`,
+   `AWS_DEPLOY_ROLE_ARN`, `ECR_REPOSITORY_URL`, `IMAGE_BUCKET`) stay as they are
+   (`terraform output github_variables`).
+
+6. **First deploy**: merge the pull request (or Actions → CI → Run workflow on
+   `main`). CI builds the arm64 image, pushes it to ECR and runs `deploy.sh` on the
+   Pi. The job ends with `https://motivetag.com/healthz through Cloudflare: HTTP 200`.
+
+7. **Admin account**: the database is empty; see "Resume" below.
+
+8. **Clean up (optional, free either way)**: the origin certificate is unused now.
+   `aws ssm delete-parameters --names /motivetag/tls/origin-cert /motivetag/tls/origin-key --region ap-east-2 --profile motivetag`,
+   and Cloudflare → SSL/TLS → Origin Server → revoke the old certificate.
 
 ## Purging the Cloudflare cache on deploy (one time)
 
@@ -120,11 +170,12 @@ posts, comments and subscriptions are not touched.
 ## Operating the server
 
 ```bash
-$(terraform output -raw connect)             # shell via Session Manager
-sudo -i && cd /srv/motivetag/app
-docker compose ps                            # service status
-docker compose logs -f app                   # app logs
-cat current_image                            # deployed image
+ssh pikxl@192.168.0.145
+cd /srv/motivetag/app
+sudo docker compose ps                           # service status
+sudo docker compose logs -f app                  # app logs
+sudo docker compose logs --tail 50 cloudflared   # tunnel: "Registered tunnel connection"
+cat current_image                                # deployed image
 ```
 
 Migrations run on container start. Write them so the previous release still works
@@ -155,7 +206,7 @@ this change to `main`**: image uploads need the bucket's new CORS rule.
 
    The next deploy picks it up; without it Sentry stays off.
 5. **Merge to `main`.** The deploy installs the backup and restore-drill timers.
-6. **Check on the server** (Session Manager shell, `sudo -i`):
+6. **Check on the server** (SSH to the Pi, `sudo -i`):
 
    ```bash
    systemctl list-timers 'motivetag-*'           # next backup / drill times
@@ -346,19 +397,19 @@ created on its first run; nobody can sign in as it. It works with nothing set up
 ### Restoring production
 
 ```bash
-$(terraform output -raw connect)
+ssh pikxl@192.168.0.145
 sudo -i && cd /srv/motivetag/app
 
 # 1. Pick a dump: a local one, or the newest from S3.
 ls -lt /srv/motivetag/backups/
-docker run --rm --user 0 -e AWS_REGION=ap-east-2 -v /srv/motivetag/backups:/backups \
-  --entrypoint python "$(cat current_image)" deploy/backup_s3.py latest \
+docker run --rm --user 0 -e AWS_REGION=ap-east-2 -v /root/.aws:/root/.aws:ro \
+  -v /srv/motivetag/backups:/backups --entrypoint python "$(cat current_image)" deploy/backup_s3.py latest \
   "$(grep ^BACKUP_BUCKET= .env | cut -d= -f2)" /backups
 # (An older one: aws s3 cp s3://<bucket>/mysql/<file> . on your Mac, then upload it.)
 
 # 2. Keep a copy of the current state, then stop writes.
 systemctl start motivetag-backup
-docker compose stop nginx app
+docker compose stop cloudflared nginx app
 
 # 3. Load it. The dump recreates every table it contains.
 zcat /srv/motivetag/backups/<file>.sql.gz \
@@ -374,9 +425,6 @@ The weekly drill times step 3; expect about the same.
 
 | Alert | When |
 |---|---|
-| `motivetag-system-check-failed` | AWS hardware problem; the instance is recovered automatically |
-| `motivetag-instance-check-failed` | The OS stops responding; the instance is rebooted automatically |
-| `motivetag-cpu-high` | CPU > 80 % for 15 minutes |
 | "MySQL backup failed" / "Restore drill failed" | The job failed; the e-mail has its last log lines |
 | "… is NN% full" | `/` or `/srv/motivetag` over 85 %, checked daily by the backup job |
 
@@ -411,7 +459,7 @@ exist; about 400–1,500 series at one sample a minute, well inside the free tie
    ```
 
 5. **Redeploy:** GitHub → Actions → CI → **Run workflow** on `main`. In the server
-   shell (`sudo -i`), `docker ps` now lists `motivetag-alloy-1`, and
+   Pi (`sudo -i`), `docker ps` now lists `motivetag-alloy-1`, and
    `docker logs --tail 20 motivetag-alloy-1` shows no `401`/`403`.
 6. **Import the dashboard:** open `deploy/grafana/motivetag-overview.json` on
    GitHub → *Raw* → copy everything. In your Grafana (`https://<stack>.grafana.net`)
@@ -420,70 +468,23 @@ exist; about 400–1,500 series at one sample a minute, well inside the free tie
 
 ## Pausing the site (and bringing it back)
 
-`paused = true` in `terraform.tfvars` takes the site offline. Since 2026-11-02 the
-pause keeps no data (the owner chose no cost over keeping it): the server, both
-disks, the public IP and the alarms go; emptied buckets, an empty ECR repository,
-Parameter Store (secrets, TLS certificate, VAPID keys), IAM/OIDC, SES and SNS stay,
-all free. Resuming builds everything again with an **empty database**; members sign
-up again. The state bucket costs a fraction of a cent.
-
-### Pause
+On the Pi nothing is billed while it runs, so pausing only takes the site offline:
 
 ```bash
-export AWS_PROFILE=motivetag AWS_REGION=ap-east-2
-
-# 1. Stop the server and delete the MySQL data volume (Terraform's prevent_destroy
-#    refuses to delete it itself, on purpose).
-ID=$(aws ec2 describe-instances --filters Name=tag:Project,Values=motivetag \
-  Name=instance-state-name,Values=running,stopped --query 'Reservations[0].Instances[0].InstanceId' --output text)
-aws ec2 stop-instances --instance-ids "$ID" && aws ec2 wait instance-stopped --instance-ids "$ID"
-VOL=$(aws ec2 describe-volumes --filters Name=tag:Name,Values=motivetag-data --query 'Volumes[0].VolumeId' --output text)
-aws ec2 detach-volume --volume-id "$VOL" && aws ec2 wait volume-available --volume-ids "$VOL"
-aws ec2 delete-volume --volume-id "$VOL"
-
-# 2. Remove the rest
-cd infra/main && git pull
-echo 'paused = true' >> terraform.tfvars    # check the file: one argument per line
-terraform plan    # instance, attachment, EIP, 3 alarms destroyed; nothing added
-terraform apply
+ssh pikxl@192.168.0.145
+cd /srv/motivetag/app && sudo docker compose stop     # data stays in /srv/motivetag/mysql
 ```
 
-3. Empty the buckets and ECR (commands below), and add the repository variable
-   `SITE_PAUSED` = `true` in GitHub (Settings → Secrets and variables → Actions →
-   Variables) so CI skips the deploy and the APOD and demo-data workflows.
+Add the repository variable `SITE_PAUSED` = `true` in GitHub so CI skips the deploy
+and the APOD and demo-data workflows. To bring it back, delete the variable and run
+Actions → CI → Run workflow on `main`.
 
-```bash
-aws s3 rm "s3://motivetag-images-$(aws sts get-caller-identity --query Account --output text)" --recursive
-B="motivetag-backups-$(aws sts get-caller-identity --query Account --output text)"
-for kind in Versions DeleteMarkers; do
-  aws s3api list-object-versions --bucket "$B" --output json \
-    --query "{Objects: $kind[].{Key: Key, VersionId: VersionId}}" > /tmp/objects.json
-  grep -q '"Key"' /tmp/objects.json && aws s3api delete-objects --bucket "$B" --delete file:///tmp/objects.json >/dev/null
-done
-aws ecr list-images --repository-name motivetag --query 'imageIds[*]' --output json > /tmp/images.json
-grep -q imageDigest /tmp/images.json && aws ecr batch-delete-image --repository-name motivetag --image-ids file:///tmp/images.json >/dev/null
-```
+### Resume with an empty database
 
-Optionally delete the `motivetag.com` A record in Cloudflare.
-
-### Resume
-
-```bash
-cd infra/main && git pull
-sed -i.bak '/^paused/d' terraform.tfvars
-terraform apply                        # new server and a blank data volume
-terraform output -raw public_ip        # the new address
-```
-
-1. Cloudflare → DNS: point the `motivetag.com` A record (proxied) at the new
-   address.
-2. Wait ~5 minutes for the server's first boot, then delete the `SITE_PAUSED`
-   variable in GitHub and run Actions → **CI** → Run workflow on `main`. The image
-   is built and pushed again, MySQL starts empty and the migrations create the
-   tables; backups and timers come back with the deploy.
-3. Sign-up refuses the names in `/motivetag/admin-accounts`, which no longer exist
-   in the empty database. Before step 2's Run workflow, free the name, sign up as
-   yourself on https://motivetag.com, then put it back and run the workflow again:
+After a move to a new machine the database starts empty. Sign-up refuses the names
+in `/motivetag/admin-accounts`, so free the name, sign up as yourself on
+https://motivetag.com, then put it back and run the workflow again (Mac, profile
+`motivetag`):
 
 ```bash
 NAME=$(aws ssm get-parameter --name /motivetag/admin-accounts --query Parameter.Value --output text)
@@ -493,12 +494,13 @@ aws ssm put-parameter --name /motivetag/admin-accounts --value "$NAME" --overwri
 # ... Run workflow again: /admin opens for you
 ```
 
-4. Run the **Demo data** or **APOD post** workflows if wanted.
+Then run the **Demo data** or **APOD post** workflows if wanted.
 
 ## Notes
 
-- There is no SSH; the only inbound port is 443, from Cloudflare's IP ranges.
-- The data volume has `prevent_destroy`; `terraform destroy` stops on it on purpose.
-- Changing the AMI or `user_data.sh.tftpl` does not replace a running server
-  (`ignore_changes`). To rebuild: `terraform apply -replace='aws_instance.app[0]'`
-  (the data volume is kept and re-attached).
+- No inbound port anywhere: the Pi's firewall admits only SSH from the home network,
+  the router forwards nothing, and visitors arrive through the Cloudflare Tunnel.
+- The Pi has no long-lived AWS keys; the SSM agent renews short-lived role
+  credentials in `/root/.aws/credentials` (ADR 0017).
+- The EC2 setup (Terraform, runbook) is the git tag `aws-ec2-final`.
+

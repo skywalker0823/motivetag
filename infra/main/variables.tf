@@ -15,24 +15,6 @@ variable "github_repository" {
   default     = "skywalker0823/motivetag"
 }
 
-variable "instance_type" {
-  description = "EC2 size. 2 GB of RAM is the practical minimum for MySQL plus the app."
-  type        = string
-  default     = "t3.small"
-}
-
-variable "root_volume_size" {
-  description = "Root disk in GB (OS, Docker images)."
-  type        = number
-  default     = 20
-}
-
-variable "data_volume_size" {
-  description = "Separate disk in GB for MySQL data; survives instance replacement."
-  type        = number
-  default     = 20
-}
-
 variable "domain" {
   description = "Public site name, served through Cloudflare."
   type        = string
@@ -55,12 +37,6 @@ variable "ses_region" {
   description = "Region for Amazon SES (sign-up e-mails). Tokyo by default: SES is not in every region."
   type        = string
   default     = "ap-northeast-1"
-}
-
-variable "paused" {
-  description = "Take the site offline at the lowest cost: the server, its disks (the MySQL data volume must be deleted by hand first), public IP and alarms are removed; buckets, parameters and IAM stay. false brings it all back (infra/README.md, \"Pausing the site\")."
-  type        = bool
-  default     = false
 }
 
 variable "email_enabled" {

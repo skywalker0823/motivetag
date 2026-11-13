@@ -17,9 +17,9 @@ REGION=$(env_value AWS_REGION)
 BUCKET=$(env_value BACKUP_BUCKET)
 TOPIC=$(env_value ALERT_TOPIC_ARN)
 
-# Runs a backup_s3.py command inside the app image (boto3 + the instance role).
+# Runs a backup_s3.py command inside the app image (boto3 + the SSM agent's credentials).
 s3() {
-  docker run --rm -i --user 0 -e AWS_REGION="$REGION" -v "$OUT:/backups" \
+  docker run --rm -i --user 0 -e AWS_REGION="$REGION" -v /root/.aws:/root/.aws:ro -v "$OUT:/backups" \
     --entrypoint python "$IMAGE" deploy/backup_s3.py "$@"
 }
 
