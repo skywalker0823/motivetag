@@ -36,5 +36,5 @@ resource "aws_ssm_parameter" "db_root_password" {
   value = random_password.db_root.result
 }
 
-# The Cloudflare origin certificate and key are added by hand (see infra/README.md)
-# under /motivetag/tls/ so the private key never enters Terraform state.
+# The Cloudflare Tunnel token is added by hand as /motivetag/cloudflare-tunnel-token
+# (see infra/README.md), so it never enters Terraform state.

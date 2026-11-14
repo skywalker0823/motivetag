@@ -18,7 +18,7 @@ BUCKET=$(env_value BACKUP_BUCKET)
 TOPIC=$(env_value ALERT_TOPIC_ARN)
 
 s3() {
-  docker run --rm -i --user 0 -e AWS_REGION="$REGION" -v "$WORK:/backups" \
+  docker run --rm -i --user 0 -e AWS_REGION="$REGION" -v /root/.aws:/root/.aws:ro -v "$WORK:/backups" \
     --entrypoint python "$IMAGE" deploy/backup_s3.py "$@"
 }
 

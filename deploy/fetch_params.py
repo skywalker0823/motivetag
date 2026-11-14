@@ -1,7 +1,7 @@
 """Write the deploy's secrets from Parameter Store into /out (run inside the app image).
 
-deploy.sh runs this as root with the server's app directory mounted at /out. It uses the
-instance role through IMDS, so the host's own AWS CLI is not involved.
+deploy.sh runs this as root with the server's app directory mounted at /out, and root's
+AWS credentials (kept fresh by the SSM agent, docs/adr/0017) mounted at /root/.aws.
 """
 
 import os
@@ -13,8 +13,7 @@ NAMES = {
     "secret-key": "SECRET_KEY",
     "db-password": "DB_PASSWORD",
     "db-root-password": "DB_ROOT_PASSWORD",
-    "tls/origin-cert": None,
-    "tls/origin-key": None,
+    "cloudflare-tunnel-token": "CLOUDFLARE_TUNNEL_TOKEN",  # added by hand, see infra/README.md
 }
 # Written empty when missing, so a deploy works before they are set up.
 OPTIONAL = {
@@ -62,15 +61,9 @@ def main():
             sys.exit(f"/motivetag/{name} is empty")
 
     os.umask(0o077)
-    os.makedirs("/out/certs", exist_ok=True)
-    with open("/out/certs/origin.pem.new", "w") as f:
-        f.write(values["tls/origin-cert"].strip() + "\n")
-    with open("/out/certs/origin.key.new", "w") as f:
-        f.write(values["tls/origin-key"].strip() + "\n")
     with open("/out/params.env", "w") as f:
         for name, env in NAMES.items():
-            if env:
-                f.write(f"{env}={values[name]}\n")
+            f.write(f"{env}={values[name]}\n")
         for name, env in OPTIONAL.items():
             f.write(f"{env}={values.get(name, '').strip()}\n")
 

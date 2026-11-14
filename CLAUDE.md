@@ -20,16 +20,22 @@ uses it as a portfolio project for interviews. Read this first, then `README.md`
 
 ## Architecture (see README.md for the diagram)
 
-- **Hosting:** one EC2 `t3.small` in Taipei (`ap-east-2`), Ubuntu, `docker compose`
-  with nginx (TLS with a Cloudflare origin cert), the Flask app (gunicorn + gevent,
-  one worker: chat presence is in memory, ADR 0008) and MySQL 8.4 on its own EBS volume.
-- **Edge:** Cloudflare Full (strict). The security group only admits Cloudflare's
-  ranges on 443. **The owner geo-blocks visitors in Cloudflare** (Taiwan only at
-  first; US traffic allowed since 2026-09-27), so checks from other regions may get
+- **Hosting (ADR 0017, since 2026-11):** the owner's Raspberry Pi 4 (4 GB, arm64,
+  Ubuntu 26.04) at home, `docker compose` in `/srv/motivetag/app`: cloudflared (Cloudflare
+  Tunnel, the only way in; no port published, the Pi's ufw admits only LAN SSH), nginx
+  on the compose network (8080, no TLS), the Flask app (gunicorn + gevent, one worker:
+  chat presence is in memory, ADR 0008), MySQL 8.4 in `/srv/motivetag/mysql`, and
+  `awscreds` (`deploy/aws_creds_relay.py`). The Pi is an SSM hybrid managed node: the
+  agent keeps short-lived `motivetag-app` role credentials in `/root/.aws/credentials`;
+  root jobs mount it, the app reads it through the relay (IMDSv2-compatible,
+  `AWS_EC2_METADATA_SERVICE_ENDPOINT`). The EC2 setup is the git tag `aws-ec2-final`.
+- **Edge:** Cloudflare terminates TLS; tunnel public hostnames point at `http://nginx:8080`.
+  **The owner geo-blocks visitors in Cloudflare** (Taiwan only at first; US traffic allowed since 2026-09-27), so checks from other regions may get
   403; deploy.sh checks the site from the server itself.
 - **Deploy:** push to `main` → CI (ruff, pytest against MySQL, Alembic up/down/up,
   terraform validate, pip-audit, Trivy, JS parse + import check, image smoke test) →
-  image to ECR (tag = git SHA) → SSM Run Command runs `deploy/deploy.sh` from that
+  arm64 image (built on `ubuntu-24.04-arm`) to ECR (tag = git SHA) → SSM Run Command
+  on the Pi (found by tag `Project=motivetag`) runs `deploy/deploy.sh` from that
   image → compose up, rollback on failure → Cloudflare cache purge. GitHub uses OIDC,
   no AWS keys.
 - **Infra:** Terraform in `infra/` (state in S3 `motivetag-tfstate-766995240060`,
@@ -38,7 +44,7 @@ uses it as a portfolio project for interviews. Read this first, then `README.md`
   `terraform.tfvars` there needs `region` and `alert_email`).
 - **Backups:** daily mysqldump to S3 + weekly automated restore drill (systemd timers
   installed by deploy.sh, ADR 0004). Failures e-mail through SNS.
-- **Monitoring ($0):** EC2 status/CPU alarms, script alerts, Sentry (only if a DSN is
+- **Monitoring ($0):** script alerts (backup, drill, disk), Sentry (only if a DSN is
   set). There is no outside uptime check (ADR 0006). Dashboard on Grafana Cloud's
   free tier (ADR 0012): Grafana Alloy (`deploy/alloy.alloy`, compose profile
   `monitoring`, on only with the three `/motivetag/grafana-*` parameters) ships host
@@ -129,7 +135,18 @@ Docker Hub may rate-limit image builds; cdnjs and challenges.cloudflare.com
 (Turnstile) are blocked, so stub Turnstile's script with Playwright `route()`.
 `dockerd` does not survive between turns: restart it and `docker start motivetag-mysql`.
 
-## Status and next steps (as of 2026-10-04)
+## Status and next steps (as of 2026-11-13)
+
+**Branch `pi-migration` (PR open): move from EC2 to the Raspberry Pi** (ADR 0017,
+runbook infra/README.md "Moving to the Raspberry Pi"). Owner decisions: keep
+containers; SSM hybrid for AWS access; static files to S3 + CloudFront later as a
+separate PR (sw.js and manifest must stay same-origin; CSP in `api/security.py`);
+MySQL data on the Pi's disk (SSD later), a NAS only as a second backup target.
+Tested: relay unit tests (botocore's real credential chain), ruff. Not yet tested:
+the arm64 image build and the stack on the Pi, `terraform plan`, the SSM agent's
+credentials file.
+
+## Earlier status (as of 2026-10-04)
 
 Everything above is merged and deployed except where noted.
 

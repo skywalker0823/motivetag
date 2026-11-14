@@ -28,7 +28,7 @@ concurrency:
 jobs:
   run:
     # The deploy role only trusts main.
-    # Skipped while the site is paused (no server; infra/README.md, "Pausing the site").
+    # Skipped while the site is paused (infra/README.md, "Pausing the site").
     if: github.ref == 'refs/heads/main' && vars.SITE_PAUSED != 'true'
     runs-on: ubuntu-latest
     steps:
@@ -45,9 +45,12 @@ jobs:
           if [ -n "$DATE" ] && ! [[ "$DATE" =~ ^[0-9]{4}-[0-9]{2}-[0-9]{2}$ ]]; then
             echo "date must look like 2026-10-05"; exit 1
           fi
-          instance_id=$(aws ec2 describe-instances \
-            --filters Name=tag:Project,Values=motivetag Name=instance-state-name,Values=running \
-            --query 'Reservations[0].Instances[0].InstanceId' --output text)
+          instance_id=$(aws ssm describe-instance-information \
+            --filters Key=tag:Project,Values=motivetag Key=PingStatus,Values=Online \
+            --query 'InstanceInformationList[0].InstanceId' --output text)
+          if [ -z "$instance_id" ] || [ "$instance_id" = None ]; then
+            echo "The Raspberry Pi is not online in SSM (is amazon-ssm-agent running?)"; exit 1
+          fi
           params=$(jq -n --arg action "$ACTION" --arg date "$DATE" '{commands: [
             "set -e",
             "cd /srv/motivetag/app",

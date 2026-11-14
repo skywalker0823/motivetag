@@ -1,11 +1,22 @@
-# Production stack. deploy.sh copies this file out of the app image and writes
-# the .env next to it (image tag, secrets from Parameter Store).
+# Production stack on the Raspberry Pi (docs/adr/0017). deploy.sh copies this file out
+# of the app image and writes the .env next to it (image tag, secrets from Parameter
+# Store). No port is published on the host: visitors arrive through the Cloudflare
+# Tunnel (cloudflared dials out to Cloudflare), so the Pi's firewall stays closed.
 name: motivetag
+
+networks:
+  default:
+    # Fixed so nginx can trust CF-Connecting-IP from cloudflared's address range only.
+    ipam:
+      config:
+        - subnet: 172.30.70.0/24
 
 services:
   mysql:
     image: mysql:8.4
     restart: unless-stopped
+    # Sized for a 4 GB Pi; performance_schema alone takes ~200 MB and nothing reads it.
+    command: ["--innodb-buffer-pool-size=256M", "--performance-schema=OFF"]
     environment:
       MYSQL_ROOT_PASSWORD: ${DB_ROOT_PASSWORD}
       MYSQL_DATABASE: motivetag
@@ -18,13 +29,34 @@ services:
       interval: 10s
       timeout: 5s
       retries: 30
-      start_period: 30s
+      start_period: 60s
+
+  # The app's AWS credentials (S3, SES, SNS), served like EC2's instance metadata from
+  # the SSM agent's credentials file (deploy/aws_creds_relay.py).
+  awscreds:
+    image: ${APP_IMAGE}
+    restart: unless-stopped
+    user: "0"
+    entrypoint: ["python", "deploy/aws_creds_relay.py"]
+    read_only: true
+    cap_drop: [ALL]
+    volumes:
+      # The directory, not the file: the agent replaces the file when it renews.
+      - /root/.aws:/aws:ro
+    healthcheck:
+      test: ["CMD", "python", "-c", "import urllib.request as u; u.urlopen(u.Request('http://127.0.0.1:8080/latest/api/token', method='PUT', headers={'X-aws-ec2-metadata-token-ttl-seconds': '60'}))"]
+      interval: 30s
+      timeout: 5s
+      retries: 3
+      start_period: 10s
 
   app:
     image: ${APP_IMAGE}
     restart: unless-stopped
     depends_on:
       mysql:
+        condition: service_healthy
+      awscreds:
         condition: service_healthy
     environment:
       FLASK_CONFIG: pro
@@ -35,6 +67,7 @@ services:
       DB_DATABASE: motivetag
       IMAGE_BUCKET: ${IMAGE_BUCKET}
       AWS_REGION: ${AWS_REGION}
+      AWS_EC2_METADATA_SERVICE_ENDPOINT: http://awscreds:8080/
       SENTRY_DSN: ${SENTRY_DSN:-}
       EMAIL_FROM: ${EMAIL_FROM:-}
       SES_REGION: ${SES_REGION:-}
@@ -50,7 +83,7 @@ services:
       interval: 10s
       timeout: 5s
       retries: 6
-      start_period: 30s
+      start_period: 60s
 
   nginx:
     image: nginx:1.30-alpine
@@ -58,18 +91,27 @@ services:
     depends_on:
       app:
         condition: service_healthy
-    ports:
-      - "443:443"
     # Without a health check, `compose up --wait` treats a crash-looping nginx as up.
     healthcheck:
-      test: ["CMD", "curl", "-fsk", "--resolve", "motivetag.com:443:127.0.0.1", "https://motivetag.com/healthz"]
+      test: ["CMD", "curl", "-fs", "-H", "Host: motivetag.com", "http://127.0.0.1:8080/healthz"]
       interval: 10s
       timeout: 5s
       retries: 6
       start_period: 10s
     volumes:
       - ./nginx.conf:/etc/nginx/conf.d/default.conf:ro
-      - ./certs:/etc/nginx/certs:ro
+
+  # Cloudflare Tunnel: the only way in. The tunnel's public hostnames (Cloudflare Zero
+  # Trust dashboard) point at http://nginx:8080; the token comes from Parameter Store.
+  cloudflared:
+    image: cloudflare/cloudflared:2026.10.7
+    restart: unless-stopped
+    depends_on:
+      nginx:
+        condition: service_healthy
+    command: ["tunnel", "--no-autoupdate", "run"]
+    environment:
+      TUNNEL_TOKEN: ${CLOUDFLARE_TUNNEL_TOKEN}
 
   # Server and app metrics to Grafana Cloud (deploy/alloy.alloy). Only started when
   # the Grafana settings are in Parameter Store: deploy.sh then sets

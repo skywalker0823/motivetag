@@ -1,5 +1,5 @@
 #!/bin/bash
-# Deploys one app image on the server. Run as root by SSM Run Command from CI:
+# Deploys one app image on the Raspberry Pi. Run as root by SSM Run Command from CI:
 #   deploy.sh <image-uri> <aws-region> <image-bucket>
 # The image is already pulled; this script ships inside it.
 set -euo pipefail
@@ -9,7 +9,7 @@ REGION=$2
 BUCKET=$3
 DIR=/srv/motivetag/app
 
-mkdir -p "$DIR/certs" /srv/motivetag/mysql
+mkdir -p "$DIR" /srv/motivetag/mysql
 cd "$DIR"
 umask 077
 
@@ -19,28 +19,12 @@ docker run --rm --entrypoint cat "$IMAGE" deploy/compose.yaml > compose.yaml
 docker run --rm --entrypoint cat "$IMAGE" deploy/nginx.conf > nginx.conf
 docker run --rm --entrypoint cat "$IMAGE" deploy/alloy.alloy > alloy.alloy
 
-# Check the Cloudflare origin certificate before touching the running stack:
-# nginx exits on a bad certificate, which would take the site down.
-# Secrets are read with boto3 inside the app image (instance role via IMDS); the host's
-# snap AWS CLI returned empty values when run from SSM.
-docker run --rm --user 0 -e AWS_REGION="$REGION" -v "$DIR:/out" \
+# Secrets are read with boto3 inside the app image, with root's AWS credentials that the
+# SSM agent keeps fresh (hybrid activation, docs/adr/0017).
+docker run --rm --user 0 -e AWS_REGION="$REGION" -v "$DIR:/out" -v /root/.aws:/root/.aws:ro \
   --entrypoint python "$IMAGE" deploy/fetch_params.py
-if ! openssl x509 -noout -in certs/origin.pem.new 2>/dev/null; then
-  echo "/motivetag/tls/origin-cert is not a PEM certificate (first line must be -----BEGIN CERTIFICATE-----)" >&2
-  exit 1
-fi
-if ! openssl pkey -noout -in certs/origin.key.new 2>/dev/null; then
-  echo "/motivetag/tls/origin-key is not a PEM private key (first line must be -----BEGIN PRIVATE KEY-----)" >&2
-  exit 1
-fi
-if [ "$(openssl x509 -noout -pubkey -in certs/origin.pem.new)" != "$(openssl pkey -pubout -in certs/origin.key.new)" ]; then
-  echo "/motivetag/tls/origin-cert and /motivetag/tls/origin-key are not a matching pair" >&2
-  exit 1
-fi
-mv certs/origin.pem.new certs/origin.pem
-mv certs/origin.key.new certs/origin.key
 
-# SECRET_KEY, DB_PASSWORD, DB_ROOT_PASSWORD, BACKUP_BUCKET, ALERT_TOPIC_ARN,
+# SECRET_KEY, DB_PASSWORD, DB_ROOT_PASSWORD, CLOUDFLARE_TUNNEL_TOKEN, BACKUP_BUCKET, ALERT_TOPIC_ARN,
 # SENTRY_DSN, EMAIL_FROM, SES_REGION, TURNSTILE_SITE_KEY, TURNSTILE_SECRET,
 # GRAFANA_PROM_URL, GRAFANA_PROM_USER, GRAFANA_CLOUD_TOKEN, ADMIN_ACCOUNTS,
 # CONTACT_EMAIL, VAPID_PUBLIC_KEY, VAPID_PRIVATE_KEY, APOD_COPYRIGHTED_IMAGES
@@ -62,6 +46,7 @@ IMAGE_BUCKET=$BUCKET
 SECRET_KEY=$SECRET_KEY
 DB_PASSWORD=$DB_PASSWORD
 DB_ROOT_PASSWORD=$DB_ROOT_PASSWORD
+CLOUDFLARE_TUNNEL_TOKEN=$CLOUDFLARE_TUNNEL_TOKEN
 BACKUP_BUCKET=$BACKUP_BUCKET
 ALERT_TOPIC_ARN=$ALERT_TOPIC_ARN
 SENTRY_DSN=$SENTRY_DSN
@@ -95,8 +80,8 @@ install_jobs() {
   systemctl enable --now motivetag-backup.timer motivetag-restore-drill.timer motivetag-apod.timer
 }
 
-# The public path (Cloudflare → origin certificate → security group → nginx) checked
-# from this server: CI runners are abroad, and the site may block non-Taiwan visitors.
+# The public path (Cloudflare → Tunnel → cloudflared → nginx) checked from this server:
+# CI runners are abroad, and the site may block non-Taiwan visitors.
 check_public() {
   local code
   for _ in $(seq 1 10); do
