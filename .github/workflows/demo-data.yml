@@ -34,9 +34,10 @@ jobs:
         env:
           ACTION: ${{ inputs.action }}
         run: |
+          # SSM refuses a tag filter combined with any other filter: pick Online here.
           instance_id=$(aws ssm describe-instance-information \
-            --filters Key=tag:Project,Values=motivetag Key=PingStatus,Values=Online \
-            --query 'InstanceInformationList[0].InstanceId' --output text)
+            --filters Key=tag:Project,Values=motivetag \
+            --query "InstanceInformationList[?PingStatus=='Online'] | [0].InstanceId" --output text)
           if [ -z "$instance_id" ] || [ "$instance_id" = None ]; then
             echo "The Raspberry Pi is not online in SSM (is amazon-ssm-agent running?)"; exit 1
           fi
