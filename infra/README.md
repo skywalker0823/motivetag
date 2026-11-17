@@ -104,20 +104,30 @@ discarded in November 2026).
 3. **SSM agent on the Pi** (SSH from the home network):
 
    ```bash
-   cd /tmp && curl -fsSLO https://s3.ap-east-2.amazonaws.com/amazon-ssm-ap-east-2/latest/debian_arm64/amazon-ssm-agent.deb
+   cd /tmp && curl -fsSLO https://s3.ap-east-2.amazonaws.com/amazon-ssm-ap-east-2/3.3.4793.0/debian_arm64/amazon-ssm-agent.deb
    sudo dpkg -i amazon-ssm-agent.deb && rm amazon-ssm-agent.deb
+   sudo apt-mark hold amazon-ssm-agent
    sudo snap install aws-cli --classic     # CI's deploy command uses it for the ECR login
    ```
+
+   **Pinned to 3.3.4793.0**: 3.3.5828.0 (built with Go 1.26) dies at start with
+   "Illegal instruction" on the Pi 4's Cortex-A72 (2026-11-14). Before upgrading,
+   unpack a newer `.deb` with `dpkg-deb -x` and check that
+   `usr/bin/amazon-ssm-agent -version` runs. Until registered, the agent restarts
+   every few seconds with "failed to find agent identity"; that is expected.
 
 4. **Register the Pi** (Mac, same `infra/main` directory). The activation code goes
    from Terraform straight to the Pi over SSH and is never shown:
 
    ```bash
    terraform output -json pi_activation | ssh pikxl@192.168.0.145 \
-     'python3 -c "import json,subprocess,sys; a=json.load(sys.stdin); subprocess.run([\"sudo\",\"amazon-ssm-agent\",\"-register\",\"-y\",\"-code\",a[\"code\"],\"-id\",a[\"id\"],\"-region\",a[\"region\"]],check=True)" && sudo systemctl restart amazon-ssm-agent'
+     'sudo systemctl stop amazon-ssm-agent && python3 -c "import json,subprocess,sys; a=json.load(sys.stdin); subprocess.run([\"sudo\",\"amazon-ssm-agent\",\"-register\",\"-y\",\"-code\",a[\"code\"],\"-id\",a[\"id\"],\"-region\",a[\"region\"]],check=True)" && sudo systemctl start amazon-ssm-agent'
    aws ssm describe-instance-information --region ap-east-2 \
      --query 'InstanceInformationList[].[InstanceId,PingStatus,PlatformName]' --output table
    ```
+
+   If SSH answers "Permission denied (publickey)", add `-i <your key for the Pi>`
+   after `ssh` (the Mac's default key is not the one the Pi trusts).
 
    The table shows one `mi-…` row, `Online`. On the Pi,
    `sudo ls -l /root/.aws/credentials` shows the file the agent keeps fresh (owner
